@@ -1,50 +1,54 @@
- 
- 
- ANIMATION_MENU_LIST = {
+ANIMATION_MENU_LIST = {
     'Boundary (Static)',
     'Boundary (Dynamic)',
     'Glitch',
-    'Expansion / Contraction'
-} 
- 
- DEFAULT_DELAY = 1
+    'Expansion / Contraction',
+    'Spectrum'
+}
+
+DEFAULT_DELAY = 1
 DEFAULT_OFFSET = 0
 DEFAULT_SPACING = 1.01
 DEFAULT_MSX_BOUNDS = { 0, 400 }
 DEFAULT_DISTANCE = { 15, 15 }
 DEFAULT_LINE_COUNT = 10
 DEFAULT_FPS = 90
+DEFAULT_CENTER = 200
+DEFAULT_MAX_SPREAD = 200
 
 INCREMENT = 64
 MAX_ITERATIONS = 1000
- 
- 
- DELETION_TYPE_LIST = {
+
+
+DELETION_TYPE_LIST = {
     'Timing Lines + Scroll Velocities',
     'Timing Lines Only',
     'Scroll Velocities Only',
 }
- 
- 
- FIXED_MENU_LIST = {
+
+
+FIXED_MENU_LIST = {
     'Manual',
     'Automatic',
     'Random'
-} 
- 
- MAIN_MENU_LIST = {
+}
+
+
+MAIN_MENU_LIST = {
     'Standard',
     'Fixed',
     'Animation (LAGGY)',
     'Deletion'
-} 
- 
- STANDARD_MENU_LIST = {
+}
+
+
+STANDARD_MENU_LIST = {
     'Spread',
     'At Notes'
-} 
- 
- function StandardSpreadMenu()
+}
+
+
+function StandardSpreadMenu()
     local settings = {
         distance = DEFAULT_DISTANCE
     }
@@ -76,9 +80,8 @@ MAX_ITERATIONS = 1000
 
     saveStateVariables("standard_spread", settings)
 end
- 
- 
- function StandardAtNotesMenu()
+
+function StandardAtNotesMenu()
     local offsets = getOffsets()
 
     if noteActivated(offsets) then
@@ -92,9 +95,8 @@ end
         actions.PlaceTimingPointBatch(lines)
     end
 end
- 
- 
- function teleport(time, dist)
+
+function teleport(time, dist)
     return {
         sv(time, INCREMENT * dist),
         sv(time + (1 / INCREMENT), 64000)
@@ -104,14 +106,12 @@ end
 function insertTeleport(svs, time, dist)
     return concatTables(svs, teleport(time, dist))
 end
- 
- 
- function sv(time, multiplier)
+
+function sv(time, multiplier)
     return utils.CreateScrollVelocity(time, multiplier)
 end
- 
- 
- function getAllSVs(lower, upper)
+
+function getAllSVs(lower, upper)
     local base = map.ScrollVelocities
 
     local tbl = {}
@@ -124,9 +124,8 @@ end
 
     return tbl
 end
- 
- 
- function cleanSVs(svs, lower, upper)
+
+function cleanSVs(svs, lower, upper)
     local tbl = {}
 
     for _, currentSV in pairs(svs) do
@@ -140,50 +139,48 @@ end
 
     return tbl
 end
- 
- 
- function strToTable(str, predicate) 
+
+function strToTable(str, predicate)
     t = {}
 
     for i in string.gmatch(str, predicate) do
         t[#t + 1] = i
     end
-    
+
     return t
-end 
- 
- function retrieveStateVariables(menu, variables)
+end
+
+function retrieveStateVariables(menu, variables)
     for key in pairs(variables) do
-        if (state.GetValue(menu..key) ~= nil) then
-            variables[key] = state.GetValue(menu..key)
+        if (state.GetValue(menu .. key) ~= nil) then
+            variables[key] = state.GetValue(menu .. key)
         end
     end
 end
 
 function saveStateVariables(menu, variables)
     for key in pairs(variables) do
-        state.SetValue(menu..key, variables[key])
+        state.SetValue(menu .. key, variables[key])
     end
-end 
- 
- function noteSelected(offsets)
+end
+
+function noteSelected(offsets)
     return offsets ~= -1
 end
 
 function rangeSelected(offsets)
-    return (offsets ~= -1) and (offsets.startOffset ~= offsets.endOffset) 
-end 
- 
- function mapProgress(starting, progress, ending)
+    return (offsets ~= -1) and (offsets.startOffset ~= offsets.endOffset)
+end
+
+function mapProgress(starting, progress, ending)
     return progress * (ending - starting) + starting
-end 
- 
- function getProgress(starting, value, ending)
+end
+
+function getProgress(starting, value, ending)
     return (value - starting) / (ending - starting)
 end
- 
- 
- function getStartAndEndNoteOffsets()
+
+function getStartAndEndNoteOffsets()
     local offsets = {}
 
     if (#state.SelectedHitObjects == 0) then
@@ -196,9 +193,8 @@ end
 
     return { startOffset = math.min(table.unpack(offsets)), endOffset = math.max(table.unpack(offsets)) }
 end
- 
- 
- function getOffsets()
+
+function getOffsets()
     local offsets = {}
 
     if (#state.SelectedHitObjects == 0) then
@@ -211,14 +207,12 @@ end
 
     return offsets
 end
- 
- 
- function line(time)
+
+function line(time)
     return utils.CreateTimingPoint(time, map.GetCommonBpm())
 end
- 
- 
- function getAllLines(lower, upper)
+
+function getAllLines(lower, upper)
     local base = map.TimingPoints
 
     local tbl = {}
@@ -231,9 +225,8 @@ end
 
     return tbl
 end
- 
- 
- function placeFixedLines(svTable, time, msxOffset, spacing)
+
+function placeFixedLines(svTable, time, msxOffset, spacing)
     local lines = {}
     local svs = {}
 
@@ -277,16 +270,15 @@ function returnFixedLines(svTable, time, msxOffset, spacing)
     }
     return tbl
 end
- 
- 
- function concatTables(t1, t2)
-    for i=1, #t2 do
-       t1[#t1+1] = t2[i]
+
+function concatTables(t1, t2)
+    for i = 1, #t2 do
+        t1[#t1 + 1] = t2[i]
     end
     return t1
- end 
- 
- function activationButton(text)
+end
+
+function activationButton(text)
     text = text or "Place"
     return imgui.Button(text .. " Lines")
 end
@@ -308,9 +300,8 @@ function noteActivated(offsets, text)
         return imgui.Text("Select a Note to " .. text .. " Lines.")
     end
 end
- 
- 
- function FixedRandomMenu()
+
+function FixedRandomMenu()
     local settings = {
         delay = DEFAULT_DELAY,
         msxBounds = DEFAULT_MSX_BOUNDS,
@@ -338,9 +329,8 @@ end
 
     saveStateVariables("fixed_random", settings)
 end
- 
- 
- function FixedManualMenu()
+
+function FixedManualMenu()
     local settings = {
         offset = DEFAULT_OFFSET,
         delay = DEFAULT_DELAY,
@@ -364,9 +354,8 @@ end
 
     saveStateVariables("fixed_manual", settings)
 end
- 
- 
- function FixedAutomaticMenu()
+
+function FixedAutomaticMenu()
     local settings = {
         offset = DEFAULT_OFFSET,
         delay = DEFAULT_DELAY,
@@ -405,9 +394,8 @@ end
 
     saveStateVariables("fixed_automatic", settings)
 end
- 
- 
- function StaticBoundaryMenu()
+
+function StaticBoundaryMenu()
     local settings = {
         msxBounds = DEFAULT_MSX_BOUNDS,
         spacing = DEFAULT_SPACING,
@@ -502,9 +490,110 @@ function placeStaticFrame(startTime, min, max, lineDistance, spacing, boundary, 
 
     return returnFixedLines(msxTable, startTime, 0, spacing)
 end
- 
- 
- function GlitchMenu()
+
+function SpectrumMenu()
+    local settings = {
+        center = DEFAULT_CENTER,
+        maxSpread = DEFAULT_MAX_SPREAD,
+        spacing = DEFAULT_SPACING,
+        distance = DEFAULT_DISTANCE,
+        polynomialCoefficients = { -4, 4, 0 },
+        inverse = false,
+        debug = 'Lines // SVs'
+    }
+
+    retrieveStateVariables("animation_polynomial", settings)
+
+    _, settings.center = imgui.InputInt("Center MSX", settings.center)
+    _, settings.maxSpread = imgui.InputInt("Max MSX Spread", settings.maxSpread)
+    _, settings.distance = imgui.InputInt2("Distance Between Lines", settings.distance)
+
+    _, settings.spacing = imgui.InputFloat("MS Spacing", settings.spacing)
+
+    _, settings.polynomialCoefficients = imgui.InputFloat3("Coefficients", settings.polynomialCoefficients, "%.2f")
+
+    _, settings.inverse = imgui.Checkbox("Inverse?", settings.inverse)
+
+    local offsets = getStartAndEndNoteOffsets()
+
+    if rangeActivated(offsets) then
+        local currentTime = offsets.startOffset + 1
+
+        local iterations = 0
+        local lines = {}
+        local svs = {}
+
+        while ((currentTime + (2 / INCREMENT)) <= offsets.endOffset) and (iterations < MAX_ITERATIONS) do
+            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset)
+
+            local heightDifferential = settings.maxSpread *
+                (settings.polynomialCoefficients[1] * progress ^ 2 + settings.polynomialCoefficients[2] * progress + settings.polynomialCoefficients[3])
+
+            local tbl = placeSpectrumFrame(currentTime, settings.center, settings.maxSpread, settings.distance,
+                settings.spacing, heightDifferential, settings.inverse)
+
+            if (tbl.time > offsets.endOffset) then break end
+
+            currentTime = tbl.time
+
+            lines = concatTables(lines, tbl.lines)
+            svs = concatTables(svs, tbl.svs)
+
+            insertTeleport(svs, currentTime + 1 / INCREMENT, 1000)
+
+            iterations = iterations + 1
+
+            currentTime = currentTime + 2
+        end
+
+        svs = cleanSVs(svs, offsets.startOffset, offsets.endOffset)
+
+        settings.debug = #lines .. ' // ' .. #svs
+
+        actions.PerformBatch({
+            utils.CreateEditorAction(action_type.AddTimingPointBatch, lines),
+            utils.CreateEditorAction(action_type.AddScrollVelocityBatch, svs)
+        })
+    end
+
+    imgui.Text(settings.debug)
+
+    saveStateVariables("animation_polynomial", settings)
+end
+
+function placeSpectrumFrame(startTime, center, maxSpread, lineDistance, spacing, boundary, inverse)
+    msxTable = {}
+
+    local iterations = 0
+
+    if (inverse) then
+        local msx = center + maxSpread
+
+        while (msx >= center + boundary) and (iterations < MAX_ITERATIONS) do
+            local progress = getProgress(center, msx, center + maxSpread)
+            table.insert(msxTable, msx)
+            table.insert(msxTable, 2 * center - msx)
+            msx = msx - mapProgress(lineDistance[1], progress, lineDistance[2])
+            iterations = iterations + 1
+        end
+
+        return returnFixedLines(msxTable, startTime, 0, spacing)
+    else
+        local msx = center
+
+        while (msx <= center + boundary) and (iterations < MAX_ITERATIONS) do
+            local progress = getProgress(center, msx, center + maxSpread)
+            table.insert(msxTable, msx)
+            table.insert(msxTable, 2 * center - msx)
+            msx = msx + mapProgress(lineDistance[1], progress, lineDistance[2])
+            iterations = iterations + 1
+        end
+
+        return returnFixedLines(msxTable, startTime, 0, spacing)
+    end
+end
+
+function GlitchMenu()
     local settings = {
         msxBounds = DEFAULT_MSX_BOUNDS,
         msxBounds2 = DEFAULT_MSX_BOUNDS,
@@ -567,9 +656,8 @@ end
 
     saveStateVariables("glitch", settings)
 end
- 
- 
- function ExpansionContractionMenu()
+
+function ExpansionContractionMenu()
     local settings = {
         msxBounds = DEFAULT_MSX_BOUNDS,
         spacing = DEFAULT_SPACING,
@@ -638,9 +726,8 @@ end
 
     saveStateVariables("animation_expansion_contraction", settings)
 end
- 
- 
- function DynamicBoundaryMenu()
+
+function DynamicBoundaryMenu()
     local settings = {
         msxBounds = DEFAULT_MSX_BOUNDS,
         spacing = DEFAULT_SPACING,
@@ -733,9 +820,8 @@ function placeDynamicFrame(startTime, min, max, lineDistance, spacing, polynomia
 
     return returnFixedLines(msxTable, startTime, 0, spacing)
 end
- 
- 
- function chooseMenu(tbl, menuID)
+
+function chooseMenu(tbl, menuID)
     if (tbl[menuID]) then
         tbl[menuID]();
     end
@@ -749,39 +835,50 @@ function draw()
     }
 
     -- IMPORTANT: DO NOT DELETE NEXT LINE BEFORE COMPILING.
-     
- 
- ANIMATION_MENU_FUNCTIONS = {
-    StaticBoundaryMenu,
-    DynamicBoundaryMenu,
-    GlitchMenu,
-    ExpansionContractionMenu
-}
- 
- 
-  
- 
-  
- 
- FIXED_MENU_FUNCTIONS = {
-    FixedManualMenu,
-    FixedAutomaticMenu,
-    FixedRandomMenu
-}
- 
- 
- MAIN_MENU_FUNCTIONS = {
-    StandardMenu,
-    FixedMenu,
-    AnimationMenu,
-    DeletionMenu
-}
- 
- 
- STANDARD_MENU_FUNCTIONS = {
-    StandardSpreadMenu,
-    StandardAtNotesMenu
-}
+
+
+    ANIMATION_MENU_FUNCTIONS = {
+        StaticBoundaryMenu,
+        DynamicBoundaryMenu,
+        GlitchMenu,
+        ExpansionContractionMenu,
+        SpectrumMenu
+    }
+
+
+    DEFAULT_DELAY = 1
+    DEFAULT_OFFSET = 0
+    DEFAULT_SPACING = 1.01
+    DEFAULT_MSX_BOUNDS = { 0, 400 }
+    DEFAULT_DISTANCE = { 15, 15 }
+    DEFAULT_LINE_COUNT = 10
+    DEFAULT_FPS = 90
+
+    INCREMENT = 64
+    MAX_ITERATIONS = 1000
+
+
+
+
+    FIXED_MENU_FUNCTIONS = {
+        FixedManualMenu,
+        FixedAutomaticMenu,
+        FixedRandomMenu
+    }
+
+
+    MAIN_MENU_FUNCTIONS = {
+        StandardMenu,
+        FixedMenu,
+        AnimationMenu,
+        DeletionMenu
+    }
+
+
+    STANDARD_MENU_FUNCTIONS = {
+        StandardSpreadMenu,
+        StandardAtNotesMenu
+    }
 
 
     retrieveStateVariables("main", settings)
