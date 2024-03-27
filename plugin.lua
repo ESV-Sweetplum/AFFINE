@@ -1,8 +1,8 @@
  
  
  ANIMATION_MENU_LIST = {
-    'Static (Polynomial)',
-    'Dynamic (Polynomial)',
+    'Boundary (Static)',
+    'Boundary (Dynamic)',
     'Glitch'
 } 
  
@@ -406,7 +406,7 @@ end
 end
  
  
- function StaticPolynomialMenu()
+ function StaticBoundaryMenu()
     local settings = {
         msxBounds = DEFAULT_MSX_BOUNDS,
         spacing = DEFAULT_SPACING,
@@ -568,7 +568,7 @@ end
 end
  
  
- function DynamicPolynomialMenu()
+ function DynamicBoundaryMenu()
     local settings = {
         msxBounds = DEFAULT_MSX_BOUNDS,
         spacing = DEFAULT_SPACING,
@@ -680,8 +680,8 @@ function draw()
      
  
  ANIMATION_MENU_FUNCTIONS = {
-    StaticPolynomialMenu,
-    DynamicPolynomialMenu,
+    StaticBoundaryMenu,
+    DynamicBoundaryMenu,
     GlitchMenu
 }
  
