@@ -1,11 +1,13 @@
 MAIN_MENU_LIST = {
     'Standard',
     'Fixed',
-    'Animation'
+    'Animation (LAGGY)',
+    'Deletion'
 }
 
 MAIN_MENU_FUNCTIONS = {
     StandardMenu,
     FixedMenu,
-    AnimationMenu
+    AnimationMenu,
+    DeletionMenu
 }

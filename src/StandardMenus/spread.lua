@@ -15,10 +15,10 @@ function StandardSpreadMenu()
 
         local iterations = 0
 
-        while (msx < offsets.endOffset) and (iterations < MAX_ITERATIONS) do
+        while (msx <= offsets.endOffset) and (iterations < MAX_ITERATIONS) do
             local progress = getProgress(offsets.startOffset, msx, offsets.endOffset)
 
-            table.insert(lines, utils.CreateTimingPoint(msx, map.GetCommonBpm()))
+            table.insert(lines, line(msx))
 
             msx = msx + mapProgress(settings.distance[1], progress, settings.distance[2])
 

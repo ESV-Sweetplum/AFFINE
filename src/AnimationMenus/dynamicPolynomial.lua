@@ -34,12 +34,10 @@ function DynamicPolynomialMenu()
 
         local iterations = 0
 
-
         local lines = {}
         local svs = {}
 
-
-        while ((currentTime + (2 / INCREMENT)) < offsets.endOffset) and (iterations < MAX_ITERATIONS) do
+        while ((currentTime + (2 / INCREMENT)) <= offsets.endOffset) and (iterations < MAX_ITERATIONS) do
             local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset)
 
             local polynomialHeight = (settings.polynomialCoefficients[1] * progress ^ 2 + settings.polynomialCoefficients[2] * progress + settings.polynomialCoefficients[3])
@@ -47,18 +45,21 @@ function DynamicPolynomialMenu()
             local tbl = placeDynamicFrame(currentTime, settings.msxBounds[1], settings.msxBounds[2], settings.distance,
                 settings.spacing, polynomialHeight, settings.evalOver)
 
+            if (tbl.time > offsets.endOffset) then break end
+
             currentTime = tbl.time
 
             lines = concatTables(lines, tbl.lines)
             svs = concatTables(svs, tbl.svs)
 
-            table.insert(svs, utils.CreateScrollVelocity(currentTime + (1 / INCREMENT), 64000))
-            table.insert(svs, utils.CreateScrollVelocity(currentTime + (2 / INCREMENT), 0))
+            insertTeleport(svs, currentTime + 1 / INCREMENT, 1000)
 
             iterations = iterations + 1
 
             currentTime = currentTime + 2
         end
+        svs = cleanSVs(svs, offsets.startOffset, offsets.endOffset)
+
         settings.debug = #lines .. ' // ' .. #svs
 
         actions.PerformBatch({
@@ -77,7 +78,7 @@ function placeDynamicFrame(startTime, min, max, lineDistance, spacing, polynomia
     local msx = min
     local iterations = 0
 
-    while (msx < max) and (iterations < MAX_ITERATIONS) do
+    while (msx <= max) and (iterations < MAX_ITERATIONS) do
         local progress = getProgress(min, msx, max)
         if (evalOver) then
             table.insert(msxTable, (msx - min) * polynomialHeight + min)

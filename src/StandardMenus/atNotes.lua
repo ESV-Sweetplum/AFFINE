@@ -7,7 +7,7 @@ function StandardAtNotesMenu()
         if (type(offsets) == "integer") then return end
 
         for _, offset in pairs(offsets) do
-            table.insert(lines, utils.CreateTimingPoint(offset, map.GetCommonBpm()))
+            table.insert(lines, line(offset))
         end
         actions.PlaceTimingPointBatch(lines)
     end

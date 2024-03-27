@@ -24,7 +24,7 @@ function GlitchMenu()
         local lines = {}
         local svs = {}
 
-        while (time < offsets.endOffset) do
+        while (time <= offsets.endOffset) do
             local progress = getProgress(offsets.startOffset, time, offsets.endOffset)
 
             local lowerBound = mapProgress(settings.msxBounds[1], progress, settings.msxBounds2[1])
@@ -36,16 +36,19 @@ function GlitchMenu()
             end
             local tbl = returnFixedLines(msxTable, time, 0, settings.spacing)
 
+            if (tbl.time > offsets.endOffset) then break end
+
             time = math.max(time + (1000 / settings.fps) - 2, tbl.time)
 
             lines = concatTables(lines, tbl.lines)
             svs = concatTables(svs, tbl.svs)
 
-            table.insert(svs, utils.CreateScrollVelocity(time + (1 / INCREMENT), 64000))
-            table.insert(svs, utils.CreateScrollVelocity(time + (2 / INCREMENT), 0))
+            insertTeleport(svs, time + 1 / INCREMENT, 1000)
 
             time = time + 2
         end
+
+        svs = cleanSVs(svs, offsets.startOffset, offsets.endOffset)
 
         settings.debug = #lines .. " // " .. #svs
         actions.PerformBatch({

@@ -37,7 +37,7 @@ function StaticPolynomialMenu()
         local svs = {}
 
 
-        while ((currentTime + (2 / INCREMENT)) < offsets.endOffset) and (iterations < MAX_ITERATIONS) do
+        while ((currentTime + (2 / INCREMENT)) <= offsets.endOffset) and (iterations < MAX_ITERATIONS) do
             local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset)
 
             local boundary = settings.msxBounds[2] *
@@ -46,18 +46,22 @@ function StaticPolynomialMenu()
             local tbl = placeStaticFrame(currentTime, settings.msxBounds[1], settings.msxBounds[2], settings.distance,
                 settings.spacing, boundary, settings.evalUnder)
 
+            if (tbl.time > offsets.endOffset) then break end
+
             currentTime = tbl.time
 
             lines = concatTables(lines, tbl.lines)
             svs = concatTables(svs, tbl.svs)
 
-            table.insert(svs, utils.CreateScrollVelocity(currentTime + (1 / INCREMENT), 64000))
-            table.insert(svs, utils.CreateScrollVelocity(currentTime + (2 / INCREMENT), 0))
+            insertTeleport(svs, currentTime + 1 / INCREMENT, 1000)
 
             iterations = iterations + 1
 
             currentTime = currentTime + 2
         end
+
+        svs = cleanSVs(svs, offsets.startOffset, offsets.endOffset)
+
         settings.debug = #lines .. ' // ' .. #svs
 
         actions.PerformBatch({
@@ -76,7 +80,7 @@ function placeStaticFrame(startTime, min, max, lineDistance, spacing, boundary, 
     local msx = min
     local iterations = 0
 
-    while (msx < max) and (iterations < MAX_ITERATIONS) do
+    while (msx <= max) and (iterations < MAX_ITERATIONS) do
         local progress = getProgress(min, msx, max)
         if (evalUnder) then
             if (msx <= boundary) then table.insert(msxTable, msx) end

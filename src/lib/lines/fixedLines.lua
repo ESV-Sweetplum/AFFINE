@@ -5,10 +5,10 @@ function placeFixedLines(svTable, time, msxOffset, spacing)
     for _, msx in pairs(svTable) do
         local speed = INCREMENT * (msx + msxOffset)
 
-        table.insert(lines, utils.CreateTimingPoint(time, map.GetCommonBpm()))
-        table.insert(svs, utils.CreateScrollVelocity(time, speed * -1))
-        table.insert(svs, utils.CreateScrollVelocity(time - (1 / INCREMENT), speed))
-        table.insert(svs, utils.CreateScrollVelocity(time + (1 / INCREMENT), 0))
+        table.insert(lines, line(time))
+        table.insert(svs, sv(time, speed * -1))
+        table.insert(svs, sv(time - (1 / INCREMENT), speed))
+        table.insert(svs, sv(time + (1 / INCREMENT), 0))
 
         time = time + spacing
     end
@@ -27,10 +27,10 @@ function returnFixedLines(svTable, time, msxOffset, spacing)
     for _, msx in pairs(svTable) do
         local speed = INCREMENT * (msx + msxOffset)
 
-        table.insert(lines, utils.CreateTimingPoint(time, map.GetCommonBpm()))
-        table.insert(svs, utils.CreateScrollVelocity(time, speed * -1))
-        table.insert(svs, utils.CreateScrollVelocity(time - (1 / INCREMENT), speed))
-        table.insert(svs, utils.CreateScrollVelocity(time + (1 / INCREMENT), 0))
+        table.insert(lines, line(time))
+        table.insert(svs, sv(time, speed * -1))
+        table.insert(svs, sv(time - (1 / INCREMENT), speed))
+        table.insert(svs, sv(time + (1 / INCREMENT), 0))
 
         time = time + spacing
     end

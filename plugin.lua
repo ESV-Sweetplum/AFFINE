@@ -8,7 +8,7 @@
  
  DEFAULT_DELAY = 1
 DEFAULT_OFFSET = 0
-DEFAULT_SPACING = 1.001
+DEFAULT_SPACING = 1.01
 DEFAULT_MSX_BOUNDS = { 0, 400 }
 DEFAULT_DISTANCE = { 15, 15 }
 DEFAULT_LINE_COUNT = 10
@@ -16,6 +16,13 @@ DEFAULT_FPS = 90
 
 INCREMENT = 64
 MAX_ITERATIONS = 1000
+ 
+ 
+ DELETION_TYPE_LIST = {
+    'Timing Lines + Scroll Velocities',
+    'Timing Lines Only',
+    'Scroll Velocities Only',
+}
  
  
  FIXED_MENU_LIST = {
@@ -27,7 +34,8 @@ MAX_ITERATIONS = 1000
  MAIN_MENU_LIST = {
     'Standard',
     'Fixed',
-    'Animation'
+    'Animation (LAGGY)',
+    'Deletion'
 } 
  
  STANDARD_MENU_LIST = {
@@ -52,10 +60,10 @@ MAX_ITERATIONS = 1000
 
         local iterations = 0
 
-        while (msx < offsets.endOffset) and (iterations < MAX_ITERATIONS) do
+        while (msx <= offsets.endOffset) and (iterations < MAX_ITERATIONS) do
             local progress = getProgress(offsets.startOffset, msx, offsets.endOffset)
 
-            table.insert(lines, utils.CreateTimingPoint(msx, map.GetCommonBpm()))
+            table.insert(lines, line(msx))
 
             msx = msx + mapProgress(settings.distance[1], progress, settings.distance[2])
 
@@ -78,10 +86,58 @@ end
         if (type(offsets) == "integer") then return end
 
         for _, offset in pairs(offsets) do
-            table.insert(lines, utils.CreateTimingPoint(offset, map.GetCommonBpm()))
+            table.insert(lines, line(offset))
         end
         actions.PlaceTimingPointBatch(lines)
     end
+end
+ 
+ 
+ function teleport(time, dist)
+    return {
+        sv(time, INCREMENT * dist),
+        sv(time + (1 / INCREMENT), 64000)
+    }
+end
+
+function insertTeleport(svs, time, dist)
+    return concatTables(svs, teleport(time, dist))
+end
+ 
+ 
+ function sv(time, multiplier)
+    return utils.CreateScrollVelocity(time, multiplier)
+end
+ 
+ 
+ function getAllSVs(lower, upper)
+    local base = map.ScrollVelocities
+
+    local tbl = {}
+
+    for _, v in pairs(base) do
+        if (v.StartTime >= lower) and (v.StartTime <= upper) then
+            table.insert(tbl, v)
+        end
+    end
+
+    return tbl
+end
+ 
+ 
+ function cleanSVs(svs, lower, upper)
+    local tbl = {}
+
+    for _, currentSV in pairs(svs) do
+        if (currentSV.StartTime >= lower and currentSV.StartTime <= upper) then
+            table.insert(tbl, currentSV)
+        end
+    end
+
+    table.insert(tbl, sv(lower, 0))
+    table.insert(tbl, sv(upper + 1, 1))
+
+    return tbl
 end
  
  
@@ -126,52 +182,6 @@ end
 end
  
  
- function placeFixedLines(svTable, time, msxOffset, spacing)
-    local lines = {}
-    local svs = {}
-
-    for _, msx in pairs(svTable) do
-        local speed = INCREMENT * (msx + msxOffset)
-
-        table.insert(lines, utils.CreateTimingPoint(time, map.GetCommonBpm()))
-        table.insert(svs, utils.CreateScrollVelocity(time, speed * -1))
-        table.insert(svs, utils.CreateScrollVelocity(time - (1 / INCREMENT), speed))
-        table.insert(svs, utils.CreateScrollVelocity(time + (1 / INCREMENT), 0))
-
-        time = time + spacing
-    end
-
-
-    actions.PerformBatch({
-        utils.CreateEditorAction(action_type.AddTimingPointBatch, lines),
-        utils.CreateEditorAction(action_type.AddScrollVelocityBatch, svs)
-    })
-end
-
-function returnFixedLines(svTable, time, msxOffset, spacing)
-    local lines = {}
-    local svs = {}
-
-    for _, msx in pairs(svTable) do
-        local speed = INCREMENT * (msx + msxOffset)
-
-        table.insert(lines, utils.CreateTimingPoint(time, map.GetCommonBpm()))
-        table.insert(svs, utils.CreateScrollVelocity(time, speed * -1))
-        table.insert(svs, utils.CreateScrollVelocity(time - (1 / INCREMENT), speed))
-        table.insert(svs, utils.CreateScrollVelocity(time + (1 / INCREMENT), 0))
-
-        time = time + spacing
-    end
-
-    local tbl = {
-        lines = lines,
-        svs = svs,
-        time = time
-    }
-    return tbl
-end
- 
- 
  function getStartAndEndNoteOffsets()
     local offsets = {}
 
@@ -202,6 +212,72 @@ end
 end
  
  
+ function line(time)
+    return utils.CreateTimingPoint(time, map.GetCommonBpm())
+end
+ 
+ 
+ function getAllLines(lower, upper)
+    local base = map.TimingPoints
+
+    local tbl = {}
+
+    for _, v in pairs(base) do
+        if (v.StartTime >= lower) and (v.StartTime <= upper) then
+            table.insert(tbl, v)
+        end
+    end
+
+    return tbl
+end
+ 
+ 
+ function placeFixedLines(svTable, time, msxOffset, spacing)
+    local lines = {}
+    local svs = {}
+
+    for _, msx in pairs(svTable) do
+        local speed = INCREMENT * (msx + msxOffset)
+
+        table.insert(lines, line(time))
+        table.insert(svs, sv(time, speed * -1))
+        table.insert(svs, sv(time - (1 / INCREMENT), speed))
+        table.insert(svs, sv(time + (1 / INCREMENT), 0))
+
+        time = time + spacing
+    end
+
+
+    actions.PerformBatch({
+        utils.CreateEditorAction(action_type.AddTimingPointBatch, lines),
+        utils.CreateEditorAction(action_type.AddScrollVelocityBatch, svs)
+    })
+end
+
+function returnFixedLines(svTable, time, msxOffset, spacing)
+    local lines = {}
+    local svs = {}
+
+    for _, msx in pairs(svTable) do
+        local speed = INCREMENT * (msx + msxOffset)
+
+        table.insert(lines, line(time))
+        table.insert(svs, sv(time, speed * -1))
+        table.insert(svs, sv(time - (1 / INCREMENT), speed))
+        table.insert(svs, sv(time + (1 / INCREMENT), 0))
+
+        time = time + spacing
+    end
+
+    local tbl = {
+        lines = lines,
+        svs = svs,
+        time = time
+    }
+    return tbl
+end
+ 
+ 
  function concatTables(t1, t2)
     for i=1, #t2 do
        t1[#t1+1] = t2[i]
@@ -209,23 +285,26 @@ end
     return t1
  end 
  
- function activationButton()
-    return imgui.Button("Place Lines")
+ function activationButton(text)
+    text = text or "Place"
+    return imgui.Button(text .. " Lines")
 end
 
-function rangeActivated(offsets)
+function rangeActivated(offsets, text)
+    text = text or "Place"
     if rangeSelected(offsets) then
-        return activationButton() or (utils.IsKeyPressed(keys.A) and not utils.IsKeyDown(keys.LeftControl))
+        return activationButton(text) or (utils.IsKeyPressed(keys.A) and not utils.IsKeyDown(keys.LeftControl))
     else
-        return imgui.Text("Select a Region to Place Lines.")
+        return imgui.Text("Select a Region to " .. text .. " Lines.")
     end
 end
 
-function noteActivated(offsets)
+function noteActivated(offsets, text)
+    text = text or "Place"
     if noteSelected(offsets) then
-        return activationButton() or (utils.IsKeyPressed(keys.A) and not utils.IsKeyDown(keys.LeftControl))
+        return activationButton(text) or (utils.IsKeyPressed(keys.A) and not utils.IsKeyDown(keys.LeftControl))
     else
-        return imgui.Text("Select a Note to Place Lines.")
+        return imgui.Text("Select a Note to " .. text .. " Lines.")
     end
 end
  
@@ -366,7 +445,7 @@ end
         local svs = {}
 
 
-        while ((currentTime + (2 / INCREMENT)) < offsets.endOffset) and (iterations < MAX_ITERATIONS) do
+        while ((currentTime + (2 / INCREMENT)) <= offsets.endOffset) and (iterations < MAX_ITERATIONS) do
             local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset)
 
             local boundary = settings.msxBounds[2] *
@@ -375,18 +454,22 @@ end
             local tbl = placeStaticFrame(currentTime, settings.msxBounds[1], settings.msxBounds[2], settings.distance,
                 settings.spacing, boundary, settings.evalUnder)
 
+            if (tbl.time > offsets.endOffset) then break end
+
             currentTime = tbl.time
 
             lines = concatTables(lines, tbl.lines)
             svs = concatTables(svs, tbl.svs)
 
-            table.insert(svs, utils.CreateScrollVelocity(currentTime + (1 / INCREMENT), 64000))
-            table.insert(svs, utils.CreateScrollVelocity(currentTime + (2 / INCREMENT), 0))
+            insertTeleport(svs, currentTime + 1 / INCREMENT, 1000)
 
             iterations = iterations + 1
 
             currentTime = currentTime + 2
         end
+
+        svs = cleanSVs(svs, offsets.startOffset, offsets.endOffset)
+
         settings.debug = #lines .. ' // ' .. #svs
 
         actions.PerformBatch({
@@ -405,7 +488,7 @@ function placeStaticFrame(startTime, min, max, lineDistance, spacing, boundary, 
     local msx = min
     local iterations = 0
 
-    while (msx < max) and (iterations < MAX_ITERATIONS) do
+    while (msx <= max) and (iterations < MAX_ITERATIONS) do
         local progress = getProgress(min, msx, max)
         if (evalUnder) then
             if (msx <= boundary) then table.insert(msxTable, msx) end
@@ -446,7 +529,7 @@ end
         local lines = {}
         local svs = {}
 
-        while (time < offsets.endOffset) do
+        while (time <= offsets.endOffset) do
             local progress = getProgress(offsets.startOffset, time, offsets.endOffset)
 
             local lowerBound = mapProgress(settings.msxBounds[1], progress, settings.msxBounds2[1])
@@ -458,16 +541,19 @@ end
             end
             local tbl = returnFixedLines(msxTable, time, 0, settings.spacing)
 
+            if (tbl.time > offsets.endOffset) then break end
+
             time = math.max(time + (1000 / settings.fps) - 2, tbl.time)
 
             lines = concatTables(lines, tbl.lines)
             svs = concatTables(svs, tbl.svs)
 
-            table.insert(svs, utils.CreateScrollVelocity(time + (1 / INCREMENT), 64000))
-            table.insert(svs, utils.CreateScrollVelocity(time + (2 / INCREMENT), 0))
+            insertTeleport(svs, time + 1 / INCREMENT, 1000)
 
             time = time + 2
         end
+
+        svs = cleanSVs(svs, offsets.startOffset, offsets.endOffset)
 
         settings.debug = #lines .. " // " .. #svs
         actions.PerformBatch({
@@ -518,12 +604,10 @@ end
 
         local iterations = 0
 
-
         local lines = {}
         local svs = {}
 
-
-        while ((currentTime + (2 / INCREMENT)) < offsets.endOffset) and (iterations < MAX_ITERATIONS) do
+        while ((currentTime + (2 / INCREMENT)) <= offsets.endOffset) and (iterations < MAX_ITERATIONS) do
             local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset)
 
             local polynomialHeight = (settings.polynomialCoefficients[1] * progress ^ 2 + settings.polynomialCoefficients[2] * progress + settings.polynomialCoefficients[3])
@@ -531,18 +615,21 @@ end
             local tbl = placeDynamicFrame(currentTime, settings.msxBounds[1], settings.msxBounds[2], settings.distance,
                 settings.spacing, polynomialHeight, settings.evalOver)
 
+            if (tbl.time > offsets.endOffset) then break end
+
             currentTime = tbl.time
 
             lines = concatTables(lines, tbl.lines)
             svs = concatTables(svs, tbl.svs)
 
-            table.insert(svs, utils.CreateScrollVelocity(currentTime + (1 / INCREMENT), 64000))
-            table.insert(svs, utils.CreateScrollVelocity(currentTime + (2 / INCREMENT), 0))
+            insertTeleport(svs, currentTime + 1 / INCREMENT, 1000)
 
             iterations = iterations + 1
 
             currentTime = currentTime + 2
         end
+        svs = cleanSVs(svs, offsets.startOffset, offsets.endOffset)
+
         settings.debug = #lines .. ' // ' .. #svs
 
         actions.PerformBatch({
@@ -561,7 +648,7 @@ function placeDynamicFrame(startTime, min, max, lineDistance, spacing, polynomia
     local msx = min
     local iterations = 0
 
-    while (msx < max) and (iterations < MAX_ITERATIONS) do
+    while (msx <= max) and (iterations < MAX_ITERATIONS) do
         local progress = getProgress(min, msx, max)
         if (evalOver) then
             table.insert(msxTable, (msx - min) * polynomialHeight + min)
@@ -601,7 +688,7 @@ function draw()
  
  DEFAULT_DELAY = 1
 DEFAULT_OFFSET = 0
-DEFAULT_SPACING = 1.001
+DEFAULT_SPACING = 1.01
 DEFAULT_MSX_BOUNDS = { 0, 400 }
 DEFAULT_DISTANCE = { 15, 15 }
 DEFAULT_LINE_COUNT = 10
@@ -610,6 +697,8 @@ DEFAULT_FPS = 90
 INCREMENT = 64
 MAX_ITERATIONS = 1000
  
+ 
+  
  
  FIXED_MENU_FUNCTIONS = {
     FixedManualMenu,
@@ -621,7 +710,8 @@ MAX_ITERATIONS = 1000
  MAIN_MENU_FUNCTIONS = {
     StandardMenu,
     FixedMenu,
-    AnimationMenu
+    AnimationMenu,
+    DeletionMenu
 }
  
  
@@ -648,43 +738,43 @@ function AnimationMenu()
     local settings = {
         menuID = 1
     }
-    
+
     retrieveStateVariables("animation", settings)
 
     local animationMenuIndex = settings.menuID - 1
-    local _, animationMenuIndex = imgui.Combo("Animation Type", animationMenuIndex, ANIMATION_MENU_LIST, #ANIMATION_MENU_LIST)
+    local _, animationMenuIndex = imgui.Combo("Animation Type", animationMenuIndex, ANIMATION_MENU_LIST,
+        #ANIMATION_MENU_LIST)
     addSeparator()
     settings.menuID = animationMenuIndex + 1
 
     chooseMenu(ANIMATION_MENU_FUNCTIONS, settings.menuID)
 
     saveStateVariables("animation", settings)
-
 end
 
 function StandardMenu()
     local settings = {
         menuID = 1
     }
-    
+
     retrieveStateVariables("standard", settings)
 
     local standardMenuIndex = settings.menuID - 1
-    local _, standardMenuIndex = imgui.Combo("Standard Placement Type", standardMenuIndex, STANDARD_MENU_LIST, #STANDARD_MENU_LIST)
+    local _, standardMenuIndex = imgui.Combo("Standard Placement Type", standardMenuIndex, STANDARD_MENU_LIST,
+        #STANDARD_MENU_LIST)
     addSeparator()
     settings.menuID = standardMenuIndex + 1
 
     chooseMenu(STANDARD_MENU_FUNCTIONS, settings.menuID)
 
     saveStateVariables("standard", settings)
-
 end
 
 function FixedMenu()
     local settings = {
         menuID = 1
     }
-    
+
     retrieveStateVariables("fixed", settings)
 
     local fixedMenuIndex = settings.menuID - 1
@@ -695,11 +785,45 @@ function FixedMenu()
     chooseMenu(FIXED_MENU_FUNCTIONS, settings.menuID)
 
     saveStateVariables("fixed", settings)
+end
 
+function DeletionMenu()
+    local settings = {
+        deletionType = 1
+    }
+
+    retrieveStateVariables("deletion", settings)
+
+    local deletionTypeIndex = settings.deletionType - 1
+    local _, deletionTypeIndex = imgui.Combo("Deletion Type", deletionTypeIndex, DELETION_TYPE_LIST,
+        #DELETION_TYPE_LIST)
+    addSeparator()
+    settings.deletionType = deletionTypeIndex + 1
+
+    local offsets = getStartAndEndNoteOffsets()
+
+    if (rangeActivated(offsets, "Remove")) then
+        svs = getAllSVs(offsets.startOffset, offsets.endOffset)
+        lines = getAllLines(offsets.startOffset, offsets.endOffset)
+
+        local actionTable = {}
+
+        if (math.fmod(settings.deletionType, 2) ~= 0) then
+            table.insert(actionTable,
+                utils.CreateEditorAction(action_type.RemoveScrollVelocityBatch, svs))
+        end
+
+        if (settings.deletionType <= 2) then
+            table.insert(actionTable, utils.CreateEditorAction(action_type.RemoveTimingPointBatch, lines))
+        end
+        actions.PerformBatch(actionTable)
+    end
+
+    saveStateVariables("deletion", settings)
 end
 
 function addPadding()
-    imgui.Dummy({0, 0})
+    imgui.Dummy({ 0, 0 })
 end
 
 function addSeparator()
