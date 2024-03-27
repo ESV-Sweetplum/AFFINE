@@ -1,6 +1,11 @@
  
  
-  
+ ANIMATION_MENU_LIST = {
+    'Boundary (Static)',
+    'Boundary (Dynamic)',
+    'Glitch',
+    'Expansion / Contraction'
+} 
  
  DEFAULT_DELAY = 1
 DEFAULT_OFFSET = 0
@@ -25,19 +30,19 @@ MAX_ITERATIONS = 1000
     'Manual',
     'Automatic',
     'Random'
-} 
+} 
  
  MAIN_MENU_LIST = {
     'Standard',
     'Fixed',
     'Animation (LAGGY)',
     'Deletion'
-} 
+} 
  
  STANDARD_MENU_LIST = {
     'Spread',
     'At Notes'
-} 
+} 
  
  function StandardSpreadMenu()
     local settings = {
@@ -675,19 +680,14 @@ function draw()
     -- IMPORTANT: DO NOT DELETE NEXT LINE BEFORE COMPILING.
      
  
+ ANIMATION_MENU_FUNCTIONS = {
+    StaticBoundaryMenu,
+    DynamicBoundaryMenu,
+    GlitchMenu
+}
+ 
+ 
   
- 
- DEFAULT_DELAY = 1
-DEFAULT_OFFSET = 0
-DEFAULT_SPACING = 1.01
-DEFAULT_MSX_BOUNDS = { 0, 400 }
-DEFAULT_DISTANCE = { 15, 15 }
-DEFAULT_LINE_COUNT = 10
-DEFAULT_FPS = 90
-
-INCREMENT = 64
-MAX_ITERATIONS = 1000
- 
  
   
  
