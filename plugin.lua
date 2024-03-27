@@ -1,10 +1,6 @@
  
  
- ANIMATION_MENU_LIST = {
-    'Boundary (Static)',
-    'Boundary (Dynamic)',
-    'Glitch'
-} 
+  
  
  DEFAULT_DELAY = 1
 DEFAULT_OFFSET = 0
@@ -677,28 +673,7 @@ function draw()
     }
 
     -- IMPORTANT: DO NOT DELETE NEXT LINE BEFORE COMPILING.
-     
- 
- ANIMATION_MENU_FUNCTIONS = {
-    StaticBoundaryMenu,
-    DynamicBoundaryMenu,
-    GlitchMenu
-}
- 
- 
- DEFAULT_DELAY = 1
-DEFAULT_OFFSET = 0
-DEFAULT_SPACING = 1.01
-DEFAULT_MSX_BOUNDS = { 0, 400 }
-DEFAULT_DISTANCE = { 15, 15 }
-DEFAULT_LINE_COUNT = 10
-DEFAULT_FPS = 90
-
-INCREMENT = 64
-MAX_ITERATIONS = 1000
- 
- 
-  
+    undefined 
  
  FIXED_MENU_FUNCTIONS = {
     FixedManualMenu,

@@ -21,7 +21,12 @@ const getFilesRecursively = (directory) => {
 const CONSTANT_FILES = getFilesRecursively("./src/CONSTANTS").map((file) => fs.readFileSync(file, 'utf-8'))
 
 const FUNCTION_TABLES = CONSTANT_FILES.reduce((str, file) => {
-    return `${str} \n \n ${file.split('\r\n').slice(file.split("\n").findIndex((v) => v.includes('FUNCTIONS'))).join("\n")}`
+    const idx = file.split("\n").findIndex((v) => v.includes('FUNCTIONS'))
+    console.log(file.split("\n").slice(idx))
+
+    if (idx === -1) return;
+
+    return `${str} \n \n ${file.split('\r\n').slice(idx).join("\n")}`
 }, '')
 
 const CONSTANTS = CONSTANT_FILES.reduce((str, file) => {
