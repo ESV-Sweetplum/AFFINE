@@ -20,7 +20,7 @@ function FixedAutomaticMenu()
     local offsets = getStartAndEndNoteOffsets()
 
     if noteSelected(offsets) then
-        local activationButton = imgui.Button("Place the shit")
+        local activationButton = imgui.Button("Place Lines")
 
         if (activationButton) then
             msxTable = {}
@@ -37,7 +37,7 @@ function FixedAutomaticMenu()
             settings.debug = iterations
         end
     else
-        imgui.Text("select note to place sv :)")
+        imgui.Text("Select a Note to Place Lines.")
     end
 
     imgui.Text(settings.debug)

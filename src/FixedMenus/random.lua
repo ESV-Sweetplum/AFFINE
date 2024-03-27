@@ -17,7 +17,7 @@ function FixedRandomMenu()
     local offsets = getStartAndEndNoteOffsets()
 
     if noteSelected(offsets) then
-        local activationButton = imgui.Button("Place the shit")
+        local activationButton = imgui.Button("Place Lines")
 
         if (activationButton) then
             msxTable = {}
@@ -27,7 +27,7 @@ function FixedRandomMenu()
             placeFixedLines(msxTable, offsets.startOffset + settings.delay, 0, settings.spacing)
         end
     else
-        imgui.Text("select note to place sv :)")
+        imgui.Text("Select a Note to Place Lines.")
     end
 
     saveStateVariables("fixed_random", settings)

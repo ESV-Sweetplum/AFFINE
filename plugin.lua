@@ -44,7 +44,7 @@ DEFAULT_FPS = 90
     local offsets = getStartAndEndNoteOffsets()
 
     if rangeSelected(offsets) then
-        local activationButton = imgui.Button("Place the shit")
+        local activationButton = imgui.Button("Place Lines")
 
         if (activationButton) then
             local lines = {}
@@ -75,26 +75,26 @@ end
  
  function StandardAtNotesMenu()
     local offsets = getOffsets()
-  
+
     if noteSelected(offsets) then
-      local activationButton = imgui.Button("Place the shit")
-  
-      if (activationButton) then
+        local activationButton = imgui.Button("Place Lines")
 
-        local lines = {}
+        if (activationButton) then
+            local lines = {}
 
-        if (type(offsets) == "integer") then return end
+            if (type(offsets) == "integer") then return end
 
-       for _, offset in pairs(offsets) do
-        table.insert(lines, utils.CreateTimingPoint(offset, map.GetCommonBpm()))
-       end
+            for _, offset in pairs(offsets) do
+                table.insert(lines, utils.CreateTimingPoint(offset, map.GetCommonBpm()))
+            end
 
-       actions.PlaceTimingPointBatch(lines)
-      end
+            actions.PlaceTimingPointBatch(lines)
+        end
     else
-      imgui.Text("select note to place sv :)")
+        imgui.Text("select note to place sv :)")
     end
-end 
+end
+ 
  
  function strToTable(str, predicate) 
     t = {}
@@ -244,7 +244,7 @@ end
     local offsets = getStartAndEndNoteOffsets()
 
     if noteSelected(offsets) then
-        local activationButton = imgui.Button("Place the shit")
+        local activationButton = imgui.Button("Place Lines")
 
         if (activationButton) then
             msxTable = {}
@@ -279,7 +279,7 @@ end
     local offsets = getStartAndEndNoteOffsets()
 
     if noteSelected(offsets) then
-        local activationButton = imgui.Button("Place the shit")
+        local activationButton = imgui.Button("Place Lines")
 
         if (activationButton) then
             msxTable = strToTable(settings.inputStr, "%S+")
@@ -315,7 +315,7 @@ end
     local offsets = getStartAndEndNoteOffsets()
 
     if noteSelected(offsets) then
-        local activationButton = imgui.Button("Place the shit")
+        local activationButton = imgui.Button("Place Lines")
 
         if (activationButton) then
             msxTable = {}
@@ -373,7 +373,7 @@ end
     local offsets = getStartAndEndNoteOffsets()
 
     if rangeSelected(offsets) then
-        local activationButton = imgui.Button("Place the shit")
+        local activationButton = imgui.Button("Place Lines")
 
         if (activationButton) then
             local currentTime = offsets.startOffset + 1
@@ -466,7 +466,7 @@ end
     local offsets = getStartAndEndNoteOffsets()
 
     if rangeSelected(offsets) then
-        local activationButton = imgui.Button("Place the shit")
+        local activationButton = imgui.Button("Place Lines")
 
         if (activationButton) then
             local time = offsets.startOffset
@@ -546,7 +546,7 @@ end
     local offsets = getStartAndEndNoteOffsets()
 
     if rangeSelected(offsets) then
-        local activationButton = imgui.Button("Place the shit")
+        local activationButton = imgui.Button("Place Lines")
 
         if (activationButton) then
             local currentTime = offsets.startOffset + 1

@@ -10,7 +10,7 @@ function StandardSpreadMenu()
     local offsets = getStartAndEndNoteOffsets()
 
     if rangeSelected(offsets) then
-        local activationButton = imgui.Button("Place the shit")
+        local activationButton = imgui.Button("Place Lines")
 
         if (activationButton) then
             local lines = {}
@@ -32,7 +32,7 @@ function StandardSpreadMenu()
             actions.PlaceTimingPointBatch(lines)
         end
     else
-        imgui.Text("select two notes to place sv :)")
+        imgui.Text("Select Region to Place Lines.")
     end
 
     saveStateVariables("standard_spread", settings)
