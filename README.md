@@ -16,6 +16,13 @@
 - ***(Animation > Dynamic (Polynomial))*** Scale backdrop timing lines with a polynomial temporal boundary
 - ***(Animation > Glitch)*** Create an animation with constantly changing random notes 
 
+## Basic Tutorial
+
+- Select the primary line placement type (Standard, `Fixed`, `Animation`).
+- Select the secondary line placement type. This is the second dropdown below the primary line placement dropdown.
+- Adjust settings as desired.
+- Press `Place Lines` or press the `A` key.
+
 ## Installation:
 
 1. Go to the [latest release](https://www.github.com/ESV-Sweetplum/AFFINE/releases/latest) and download `AFFINE.zip`.
