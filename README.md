@@ -5,13 +5,13 @@
 ## Features
 
 - ***(Standard > Spread)*** Place a gradient of timing lines over a selected region
-- ***(Standard > At Notes)*** Place timing lines at selected notes  
-
+- ***(Standard > At Notes)*** Place timing lines at selected notes 
+⠀
 - The following can be done on a still frame (0.0x SV):
     - ***(Fixed > Manual)*** Place timing lines at desired height
     - ***(Fixed > Automatic)*** Place a gradient of timing lines between designated heights
     - ***(Fixed > Random)*** Place a random amount of timing lines within a region  
-        
+⠀
 - ***(Animation > Static (Polynomial))*** Hide and show backdrop timing lines using an imaginary boundary
 - ***(Animation > Dynamic (Polynomial))*** Scale backdrop timing lines with a polynomial temporal boundary
 - ***(Animation > Glitch)*** Create an animation with constantly changing random notes 
