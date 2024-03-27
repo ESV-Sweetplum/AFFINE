@@ -66,7 +66,7 @@ DEFAULT_FPS = 90
             actions.PlaceTimingPointBatch(lines)
         end
     else
-        imgui.Text("select two notes to place sv :)")
+        imgui.Text("Select Region to Place Lines.")
     end
 
     saveStateVariables("standard_spread", settings)
@@ -91,7 +91,7 @@ end
             actions.PlaceTimingPointBatch(lines)
         end
     else
-        imgui.Text("select note to place sv :)")
+        imgui.Text("Select a Note to Place Lines.")
     end
 end
  
@@ -254,7 +254,7 @@ end
             placeFixedLines(msxTable, offsets.startOffset + settings.delay, 0, settings.spacing)
         end
     else
-        imgui.Text("select note to place sv :)")
+        imgui.Text("Select a Note to Place Lines.")
     end
 
     saveStateVariables("fixed_random", settings)
@@ -286,7 +286,7 @@ end
             placeFixedLines(msxTable, offsets.startOffset + settings.delay, settings.offset, settings.spacing)
         end
     else
-        imgui.Text("select note to place sv :)")
+        imgui.Text("Select a Note to Place Lines.")
     end
 
     saveStateVariables("fixed_manual", settings)
@@ -332,7 +332,7 @@ end
             settings.debug = iterations
         end
     else
-        imgui.Text("select note to place sv :)")
+        imgui.Text("Select a Note to Place Lines.")
     end
 
     imgui.Text(settings.debug)
@@ -415,7 +415,7 @@ end
             })
         end
     else
-        imgui.Text("select two notes to place sv :)")
+        imgui.Text("Select Region to Place Lines.")
     end
 
     imgui.Text(settings.debug)
@@ -505,7 +505,7 @@ end
             })
         end
     else
-        imgui.Text("select note to place sv :)")
+        imgui.Text("Select a Note to Place Lines.")
     end
 
     imgui.Text(settings.debug)
@@ -587,7 +587,7 @@ end
             })
         end
     else
-        imgui.Text("select two notes to place sv :)")
+        imgui.Text("Select Region to Place Lines.")
     end
 
     imgui.Text(settings.debug)
