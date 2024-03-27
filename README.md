@@ -22,6 +22,7 @@ AFFINE (pronounced aff-een) is a [Quaver](https://www.quavergame.com) plugin des
 - Select the secondary line placement type. This is the second dropdown below the primary line placement dropdown.
 - Adjust settings as desired.
 - Press `Place Lines` or press the `A` key.
+- If the effect does not look correct, adjust the `MS Spacing` setting until it does. Ideally, this number should be as low as possible.
 
 ## Installation:
 
