@@ -1,4 +1,4 @@
-# AFFINE v1.0
+# AFFINE v1.0.0
 
 ### AFFINE (pronounced aff-een) is a [Quaver](https://www.quavergame.com) plugin designed to simplify map making. In particular, AFFINE assists with the creation of static and dynamic timing lines.
 
@@ -16,7 +16,11 @@
 
 ## Installation:
 
-[temporary placeholder]
+1. Go to the [latest release](https://www.github.com/ESV-Sweetplum/AFFINE/releases/latest) and download `AFFINE.zip`.
+2. Inside the zip folder will be a folder called `AFFINE`. Place this into your Quaver plugin folder. 
+
+    2a. If you're having trouble finding the plugin folder, go to the song selection menu. Then, right-click any map, and select the `Open Folder` option. In your file explorer, backtrack to the `Quaver` folder. Inside the `Quaver` folder will be a folder called `Plugins`. Place AFFINE here.
+3. Done!
 
 ## Building and Modifying:
 
