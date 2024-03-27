@@ -8,5 +8,6 @@ ANIMATION_MENU_LIST = {
 ANIMATION_MENU_FUNCTIONS = {
     StaticBoundaryMenu,
     DynamicBoundaryMenu,
-    GlitchMenu
+    GlitchMenu,
+    ExpansionContractionMenu
 }
