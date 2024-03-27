@@ -16,6 +16,7 @@ AFFINE (pronounced aff-een) is a [Quaver](https://www.quavergame.com) plugin des
 - ***(Animation > Boundary (Dynamic))*** Scale backdrop timing lines with a boundary.
 - ***(Animation > Glitch)*** Create an animation with constantly changing random notes. 
 - ***(Animation > Spectrum)*** Create an animation with a spectrum with variable height.
+- ***(Animation > Expansion / Contraction)*** Create an animation with expanding / contracting timing lines.
 
 ## Basic Tutorial
 
