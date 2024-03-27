@@ -371,7 +371,6 @@ end
  
  function FixedAutomaticMenu()
     local settings = {
-        offset = DEFAULT_OFFSET,
         delay = DEFAULT_DELAY,
         msxBounds = DEFAULT_MSX_BOUNDS,
         spacing = DEFAULT_SPACING,
@@ -384,29 +383,38 @@ end
     _, settings.msxBounds = imgui.InputInt2("Start/End MSX", settings.msxBounds)
     _, settings.distance = imgui.InputInt2("Distance Between Lines", settings.distance)
 
-    _, settings.offset = imgui.InputInt("MSX Offset", settings.offset)
     _, settings.delay = imgui.InputInt("Delay", settings.delay)
     _, settings.spacing = imgui.InputFloat("MS Spacing", settings.spacing)
 
     local offsets = getStartAndEndNoteOffsets()
 
     if noteActivated(offsets) then
-        msxTable = {}
-        local msx = settings.msxBounds[1]
-        local iterations = 0
-        while (msx <= settings.msxBounds[2]) and (iterations < MAX_ITERATIONS) do
-            local progress = getProgress(settings.msxBounds[1], msx, settings.msxBounds[2])
-            table.insert(msxTable, msx)
-            msx = msx + mapProgress(settings.distance[1], progress, settings.distance[2])
-            iterations = iterations + 1
-        end
-        placeFixedLines(msxTable, offsets.startOffset + settings.delay, settings.offset, settings.spacing)
-        settings.debug = iterations
+        local tbl = placeAutomaticFrame(offsets.startOffset + settings.delay, settings.msxBounds[1],
+            settings.msxBounds[2],
+            settings.spacing, settings.distance)
+
+        actions.PerformBatch({
+            utils.CreateEditorAction(action_type.AddTimingPointBatch, tbl.lines),
+            utils.CreateEditorAction(action_type.AddScrollVelocityBatch, tbl.svs)
+        })
     end
 
     imgui.Text(settings.debug)
 
     saveStateVariables("fixed_automatic", settings)
+end
+
+function placeAutomaticFrame(startTime, low, high, spacing, distance)
+    msxTable = {}
+    local msx = low
+    local iterations = 0
+    while (msx <= high) and (iterations < MAX_ITERATIONS) do
+        local progress = getProgress(low, msx, high)
+        table.insert(msxTable, msx)
+        msx = msx + mapProgress(distance[1], progress, distance[2])
+        iterations = iterations + 1
+    end
+    return returnFixedLines(msxTable, startTime, 0, spacing)
 end
  
  
@@ -518,7 +526,7 @@ end
         debug = 'Lines // SVs'
     }
 
-    retrieveStateVariables("animation_polynomial", settings)
+    retrieveStateVariables("animation_spectrum", settings)
 
     _, settings.center = imgui.InputInt("Center MSX", settings.center)
     _, settings.maxSpread = imgui.InputInt("Max MSX Spread", settings.maxSpread)
@@ -574,7 +582,7 @@ end
 
     imgui.Text(settings.debug)
 
-    saveStateVariables("animation_polynomial", settings)
+    saveStateVariables("animation_spectrum", settings)
 end
 
 function placeSpectrumFrame(startTime, center, maxSpread, lineDistance, spacing, boundary, inverse)

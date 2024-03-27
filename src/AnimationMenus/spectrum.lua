@@ -9,7 +9,7 @@ function SpectrumMenu()
         debug = 'Lines // SVs'
     }
 
-    retrieveStateVariables("animation_polynomial", settings)
+    retrieveStateVariables("animation_spectrum", settings)
 
     _, settings.center = imgui.InputInt("Center MSX", settings.center)
     _, settings.maxSpread = imgui.InputInt("Max MSX Spread", settings.maxSpread)
@@ -65,7 +65,7 @@ function SpectrumMenu()
 
     imgui.Text(settings.debug)
 
-    saveStateVariables("animation_polynomial", settings)
+    saveStateVariables("animation_spectrum", settings)
 end
 
 function placeSpectrumFrame(startTime, center, maxSpread, lineDistance, spacing, boundary, inverse)
