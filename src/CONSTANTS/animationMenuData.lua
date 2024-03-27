@@ -1,11 +1,13 @@
 ANIMATION_MENU_LIST = {
     'Boundary (Static)',
     'Boundary (Dynamic)',
-    'Glitch'
+    'Glitch',
+    'Spectrum'
 }
 
 ANIMATION_MENU_FUNCTIONS = {
     StaticBoundaryMenu,
     DynamicBoundaryMenu,
-    GlitchMenu
+    GlitchMenu,
+    SpectrumMenu
 }
