@@ -19,47 +19,39 @@ function GlitchMenu()
 
     local offsets = getStartAndEndNoteOffsets()
 
-    if rangeSelected(offsets) then
-        local activationButton = imgui.Button("Place Lines")
+    if rangeActivated(offsets) then
+        local time = offsets.startOffset
+        local lines = {}
+        local svs = {}
 
-        if (activationButton) then
-            local time = offsets.startOffset
-            local lines = {}
-            local svs = {}
+        while (time < offsets.endOffset) do
+            local progress = getProgress(offsets.startOffset, time, offsets.endOffset)
 
-            local INCREMENT = 64
+            local lowerBound = mapProgress(settings.msxBounds[1], progress, settings.msxBounds2[1])
+            local upperBound = mapProgress(settings.msxBounds[2], progress, settings.msxBounds2[2])
 
-            while (time < offsets.endOffset) do
-                local progress = getProgress(offsets.startOffset, time, offsets.endOffset)
-
-                local lowerBound = mapProgress(settings.msxBounds[1], progress, settings.msxBounds2[1])
-                local upperBound = mapProgress(settings.msxBounds[2], progress, settings.msxBounds2[2])
-
-                msxTable = {}
-                for i = 1, settings.lineCount do
-                    table.insert(msxTable, math.random(upperBound, lowerBound))
-                end
-                local tbl = returnFixedLines(msxTable, time, 0, settings.spacing)
-
-                time = math.max(time + (1000 / settings.fps) - 2, tbl.time)
-
-                lines = concatTables(lines, tbl.lines)
-                svs = concatTables(svs, tbl.svs)
-
-                table.insert(svs, utils.CreateScrollVelocity(time + (1 / INCREMENT), 64000))
-                table.insert(svs, utils.CreateScrollVelocity(time + (2 / INCREMENT), 0))
-
-                time = time + 2
+            msxTable = {}
+            for i = 1, settings.lineCount do
+                table.insert(msxTable, math.random(upperBound, lowerBound))
             end
+            local tbl = returnFixedLines(msxTable, time, 0, settings.spacing)
 
-            settings.debug = #lines .. " // " .. #svs
-            actions.PerformBatch({
-                utils.CreateEditorAction(action_type.AddTimingPointBatch, lines),
-                utils.CreateEditorAction(action_type.AddScrollVelocityBatch, svs)
-            })
+            time = math.max(time + (1000 / settings.fps) - 2, tbl.time)
+
+            lines = concatTables(lines, tbl.lines)
+            svs = concatTables(svs, tbl.svs)
+
+            table.insert(svs, utils.CreateScrollVelocity(time + (1 / INCREMENT), 64000))
+            table.insert(svs, utils.CreateScrollVelocity(time + (2 / INCREMENT), 0))
+
+            time = time + 2
         end
-    else
-        imgui.Text("Select a Note to Place Lines.")
+
+        settings.debug = #lines .. " // " .. #svs
+        actions.PerformBatch({
+            utils.CreateEditorAction(action_type.AddTimingPointBatch, lines),
+            utils.CreateEditorAction(action_type.AddScrollVelocityBatch, svs)
+        })
     end
 
     imgui.Text(settings.debug)

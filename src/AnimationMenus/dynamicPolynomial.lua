@@ -29,49 +29,42 @@ function DynamicPolynomialMenu()
 
     local offsets = getStartAndEndNoteOffsets()
 
-    if rangeSelected(offsets) then
-        local activationButton = imgui.Button("Place Lines")
+    if rangeActivated(offsets) then
+        local currentTime = offsets.startOffset + 1
 
-        if (activationButton) then
-            local currentTime = offsets.startOffset + 1
-
-            local iterations = 0
-            local MAX_ITERATIONS = 500
-            local INCREMENT = 64
-
-            local lines = {}
-            local svs = {}
+        local iterations = 0
 
 
-            while ((currentTime + (2 / INCREMENT)) < offsets.endOffset) and (iterations < MAX_ITERATIONS) do
-                local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset)
+        local lines = {}
+        local svs = {}
 
-                local polynomialHeight = (settings.polynomialCoefficients[1] * progress ^ 2 + settings.polynomialCoefficients[2] * progress + settings.polynomialCoefficients[3])
 
-                local tbl = placeFrame(currentTime, settings.msxBounds[1], settings.msxBounds[2], settings.distance,
-                    settings.spacing, polynomialHeight, settings.evalOver)
+        while ((currentTime + (2 / INCREMENT)) < offsets.endOffset) and (iterations < MAX_ITERATIONS) do
+            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset)
 
-                currentTime = tbl.time
+            local polynomialHeight = (settings.polynomialCoefficients[1] * progress ^ 2 + settings.polynomialCoefficients[2] * progress + settings.polynomialCoefficients[3])
 
-                lines = concatTables(lines, tbl.lines)
-                svs = concatTables(svs, tbl.svs)
+            local tbl = placeFrame(currentTime, settings.msxBounds[1], settings.msxBounds[2], settings.distance,
+                settings.spacing, polynomialHeight, settings.evalOver)
 
-                table.insert(svs, utils.CreateScrollVelocity(currentTime + (1 / INCREMENT), 64000))
-                table.insert(svs, utils.CreateScrollVelocity(currentTime + (2 / INCREMENT), 0))
+            currentTime = tbl.time
 
-                iterations = iterations + 1
+            lines = concatTables(lines, tbl.lines)
+            svs = concatTables(svs, tbl.svs)
 
-                currentTime = currentTime + 2
-            end
-            settings.debug = #lines .. ' // ' .. #svs
+            table.insert(svs, utils.CreateScrollVelocity(currentTime + (1 / INCREMENT), 64000))
+            table.insert(svs, utils.CreateScrollVelocity(currentTime + (2 / INCREMENT), 0))
 
-            actions.PerformBatch({
-                utils.CreateEditorAction(action_type.AddTimingPointBatch, lines),
-                utils.CreateEditorAction(action_type.AddScrollVelocityBatch, svs)
-            })
+            iterations = iterations + 1
+
+            currentTime = currentTime + 2
         end
-    else
-        imgui.Text("Select Region to Place Lines.")
+        settings.debug = #lines .. ' // ' .. #svs
+
+        actions.PerformBatch({
+            utils.CreateEditorAction(action_type.AddTimingPointBatch, lines),
+            utils.CreateEditorAction(action_type.AddScrollVelocityBatch, svs)
+        })
     end
 
     imgui.Text(settings.debug)
@@ -81,7 +74,6 @@ end
 
 function placeFrame(startTime, min, max, lineDistance, spacing, polynomialHeight, evalOver)
     msxTable = {}
-    local MAX_ITERATIONS = 1000
     local msx = min
     local iterations = 0
 

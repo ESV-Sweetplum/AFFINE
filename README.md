@@ -6,7 +6,7 @@
 
 - ***(Standard > Spread)*** Place a gradient of timing lines over a selected region
 - ***(Standard > At Notes)*** Place timing lines at selected notes  
-    
+
 - The following can be done on a still frame (0.0x SV):
     - ***(Fixed > Manual)*** Place timing lines at desired height
     - ***(Fixed > Automatic)*** Place a gradient of timing lines between designated heights

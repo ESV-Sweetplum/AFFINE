@@ -1,21 +1,14 @@
 function StandardAtNotesMenu()
     local offsets = getOffsets()
 
-    if noteSelected(offsets) then
-        local activationButton = imgui.Button("Place Lines")
+    if noteActivated(offsets) then
+        local lines = {}
 
-        if (activationButton) then
-            local lines = {}
+        if (type(offsets) == "integer") then return end
 
-            if (type(offsets) == "integer") then return end
-
-            for _, offset in pairs(offsets) do
-                table.insert(lines, utils.CreateTimingPoint(offset, map.GetCommonBpm()))
-            end
-
-            actions.PlaceTimingPointBatch(lines)
+        for _, offset in pairs(offsets) do
+            table.insert(lines, utils.CreateTimingPoint(offset, map.GetCommonBpm()))
         end
-    else
-        imgui.Text("Select a Note to Place Lines.")
+        actions.PlaceTimingPointBatch(lines)
     end
 end

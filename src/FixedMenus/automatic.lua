@@ -19,25 +19,18 @@ function FixedAutomaticMenu()
 
     local offsets = getStartAndEndNoteOffsets()
 
-    if noteSelected(offsets) then
-        local activationButton = imgui.Button("Place Lines")
-
-        if (activationButton) then
-            msxTable = {}
-            local MAX_ITERATIONS = 1000
-            local msx = settings.msxBounds[1]
-            local iterations = 0
-            while (msx <= settings.msxBounds[2]) and (iterations < MAX_ITERATIONS) do
-                local progress = getProgress(settings.msxBounds[1], msx, settings.msxBounds[2])
-                table.insert(msxTable, msx)
-                msx = msx + mapProgress(settings.distance[1], progress, settings.distance[2])
-                iterations = iterations + 1
-            end
-            placeFixedLines(msxTable, offsets.startOffset + settings.delay, settings.offset, settings.spacing)
-            settings.debug = iterations
+    if noteActivated(offsets) then
+        msxTable = {}
+        local msx = settings.msxBounds[1]
+        local iterations = 0
+        while (msx <= settings.msxBounds[2]) and (iterations < MAX_ITERATIONS) do
+            local progress = getProgress(settings.msxBounds[1], msx, settings.msxBounds[2])
+            table.insert(msxTable, msx)
+            msx = msx + mapProgress(settings.distance[1], progress, settings.distance[2])
+            iterations = iterations + 1
         end
-    else
-        imgui.Text("Select a Note to Place Lines.")
+        placeFixedLines(msxTable, offsets.startOffset + settings.delay, settings.offset, settings.spacing)
+        settings.debug = iterations
     end
 
     imgui.Text(settings.debug)

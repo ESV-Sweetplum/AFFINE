@@ -16,18 +16,12 @@ function FixedRandomMenu()
 
     local offsets = getStartAndEndNoteOffsets()
 
-    if noteSelected(offsets) then
-        local activationButton = imgui.Button("Place Lines")
-
-        if (activationButton) then
-            msxTable = {}
-            for i = 1, settings.lineCount do
-                table.insert(msxTable, math.random(settings.msxBounds[1], settings.msxBounds[2]))
-            end
-            placeFixedLines(msxTable, offsets.startOffset + settings.delay, 0, settings.spacing)
+    if noteActivated(offsets) then
+        msxTable = {}
+        for i = 1, settings.lineCount do
+            table.insert(msxTable, math.random(settings.msxBounds[1], settings.msxBounds[2]))
         end
-    else
-        imgui.Text("Select a Note to Place Lines.")
+        placeFixedLines(msxTable, offsets.startOffset + settings.delay, 0, settings.spacing)
     end
 
     saveStateVariables("fixed_random", settings)

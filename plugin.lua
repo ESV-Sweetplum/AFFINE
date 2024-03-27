@@ -13,6 +13,9 @@ DEFAULT_MSX_BOUNDS = { 0, 400 }
 DEFAULT_DISTANCE = { 15, 15 }
 DEFAULT_LINE_COUNT = 10
 DEFAULT_FPS = 90
+
+INCREMENT = 64
+MAX_ITERATIONS = 1000
  
  
  FIXED_MENU_LIST = {
@@ -43,30 +46,23 @@ DEFAULT_FPS = 90
 
     local offsets = getStartAndEndNoteOffsets()
 
-    if rangeSelected(offsets) then
-        local activationButton = imgui.Button("Place Lines")
+    if rangeActivated(offsets) then
+        local lines = {}
+        local msx = offsets.startOffset
 
-        if (activationButton) then
-            local lines = {}
-            local msx = offsets.startOffset
+        local iterations = 0
 
-            local iterations = 0
-            local MAX_ITERATIONS = 1000
+        while (msx < offsets.endOffset) and (iterations < MAX_ITERATIONS) do
+            local progress = getProgress(offsets.startOffset, msx, offsets.endOffset)
 
-            while (msx < offsets.endOffset) and (iterations < MAX_ITERATIONS) do
-                local progress = getProgress(offsets.startOffset, msx, offsets.endOffset)
+            table.insert(lines, utils.CreateTimingPoint(msx, map.GetCommonBpm()))
 
-                table.insert(lines, utils.CreateTimingPoint(msx, map.GetCommonBpm()))
+            msx = msx + mapProgress(settings.distance[1], progress, settings.distance[2])
 
-                msx = msx + mapProgress(settings.distance[1], progress, settings.distance[2])
-
-                iterations = iterations + 1
-            end
-
-            actions.PlaceTimingPointBatch(lines)
+            iterations = iterations + 1
         end
-    else
-        imgui.Text("Select Region to Place Lines.")
+
+        actions.PlaceTimingPointBatch(lines)
     end
 
     saveStateVariables("standard_spread", settings)
@@ -76,22 +72,15 @@ end
  function StandardAtNotesMenu()
     local offsets = getOffsets()
 
-    if noteSelected(offsets) then
-        local activationButton = imgui.Button("Place Lines")
+    if noteActivated(offsets) then
+        local lines = {}
 
-        if (activationButton) then
-            local lines = {}
+        if (type(offsets) == "integer") then return end
 
-            if (type(offsets) == "integer") then return end
-
-            for _, offset in pairs(offsets) do
-                table.insert(lines, utils.CreateTimingPoint(offset, map.GetCommonBpm()))
-            end
-
-            actions.PlaceTimingPointBatch(lines)
+        for _, offset in pairs(offsets) do
+            table.insert(lines, utils.CreateTimingPoint(offset, map.GetCommonBpm()))
         end
-    else
-        imgui.Text("Select a Note to Place Lines.")
+        actions.PlaceTimingPointBatch(lines)
     end
 end
  
@@ -140,53 +129,48 @@ end
  function placeFixedLines(svTable, time, msxOffset, spacing)
     local lines = {}
     local svs = {}
-  
-    for _, msx in pairs(svTable) do
-  
-      local INCREMENT = 64
-  
-      local speed = INCREMENT * (msx + msxOffset)
 
-      table.insert(lines, utils.CreateTimingPoint(time, map.GetCommonBpm()))
-      table.insert(svs, utils.CreateScrollVelocity(time, speed * -1))
-      table.insert(svs, utils.CreateScrollVelocity(time - (1 / INCREMENT), speed))
-      table.insert(svs, utils.CreateScrollVelocity(time + (1 / INCREMENT), 0))
-  
-      time = time + spacing
+    for _, msx in pairs(svTable) do
+        local speed = INCREMENT * (msx + msxOffset)
+
+        table.insert(lines, utils.CreateTimingPoint(time, map.GetCommonBpm()))
+        table.insert(svs, utils.CreateScrollVelocity(time, speed * -1))
+        table.insert(svs, utils.CreateScrollVelocity(time - (1 / INCREMENT), speed))
+        table.insert(svs, utils.CreateScrollVelocity(time + (1 / INCREMENT), 0))
+
+        time = time + spacing
     end
-  
-  
+
+
     actions.PerformBatch({
-      utils.CreateEditorAction(action_type.AddTimingPointBatch, lines),
-      utils.CreateEditorAction(action_type.AddScrollVelocityBatch, svs)
-  })
+        utils.CreateEditorAction(action_type.AddTimingPointBatch, lines),
+        utils.CreateEditorAction(action_type.AddScrollVelocityBatch, svs)
+    })
 end
 
 function returnFixedLines(svTable, time, msxOffset, spacing)
     local lines = {}
     local svs = {}
-  
-    for _, msx in pairs(svTable) do
-  
-      local INCREMENT = 64
-  
-      local speed = INCREMENT * (msx + msxOffset)
 
-      table.insert(lines, utils.CreateTimingPoint(time, map.GetCommonBpm()))
-      table.insert(svs, utils.CreateScrollVelocity(time, speed * -1))
-      table.insert(svs, utils.CreateScrollVelocity(time - (1 / INCREMENT), speed))
-      table.insert(svs, utils.CreateScrollVelocity(time + (1 / INCREMENT), 0))
-  
-      time = time + spacing
+    for _, msx in pairs(svTable) do
+        local speed = INCREMENT * (msx + msxOffset)
+
+        table.insert(lines, utils.CreateTimingPoint(time, map.GetCommonBpm()))
+        table.insert(svs, utils.CreateScrollVelocity(time, speed * -1))
+        table.insert(svs, utils.CreateScrollVelocity(time - (1 / INCREMENT), speed))
+        table.insert(svs, utils.CreateScrollVelocity(time + (1 / INCREMENT), 0))
+
+        time = time + spacing
     end
 
     local tbl = {
-      lines = lines,
-      svs = svs,
-      time = time
+        lines = lines,
+        svs = svs,
+        time = time
     }
-  return tbl
-end 
+    return tbl
+end
+ 
  
  function getStartAndEndNoteOffsets()
     local offsets = {}
@@ -225,6 +209,27 @@ end
     return t1
  end 
  
+ function activationButton()
+    return imgui.Button("Place Lines")
+end
+
+function rangeActivated(offsets)
+    if rangeSelected(offsets) then
+        return activationButton() or utils.IsKeyPressed(keys.A)
+    else
+        return imgui.Text("Select a Region to Place Lines.")
+    end
+end
+
+function noteActivated(offsets)
+    if noteSelected(offsets) then
+        return activationButton() or utils.IsKeyPressed(keys.A)
+    else
+        return imgui.Text("Select a Note to Place Lines.")
+    end
+end
+ 
+ 
  function FixedRandomMenu()
     local settings = {
         delay = DEFAULT_DELAY,
@@ -243,18 +248,12 @@ end
 
     local offsets = getStartAndEndNoteOffsets()
 
-    if noteSelected(offsets) then
-        local activationButton = imgui.Button("Place Lines")
-
-        if (activationButton) then
-            msxTable = {}
-            for i = 1, settings.lineCount do
-                table.insert(msxTable, math.random(settings.msxBounds[1], settings.msxBounds[2]))
-            end
-            placeFixedLines(msxTable, offsets.startOffset + settings.delay, 0, settings.spacing)
+    if noteActivated(offsets) then
+        msxTable = {}
+        for i = 1, settings.lineCount do
+            table.insert(msxTable, math.random(settings.msxBounds[1], settings.msxBounds[2]))
         end
-    else
-        imgui.Text("Select a Note to Place Lines.")
+        placeFixedLines(msxTable, offsets.startOffset + settings.delay, 0, settings.spacing)
     end
 
     saveStateVariables("fixed_random", settings)
@@ -278,15 +277,9 @@ end
 
     local offsets = getStartAndEndNoteOffsets()
 
-    if noteSelected(offsets) then
-        local activationButton = imgui.Button("Place Lines")
-
-        if (activationButton) then
-            msxTable = strToTable(settings.inputStr, "%S+")
-            placeFixedLines(msxTable, offsets.startOffset + settings.delay, settings.offset, settings.spacing)
-        end
-    else
-        imgui.Text("Select a Note to Place Lines.")
+    if noteActivated(offsets) then
+        msxTable = strToTable(settings.inputStr, "%S+")
+        placeFixedLines(msxTable, offsets.startOffset + settings.delay, settings.offset, settings.spacing)
     end
 
     saveStateVariables("fixed_manual", settings)
@@ -314,25 +307,18 @@ end
 
     local offsets = getStartAndEndNoteOffsets()
 
-    if noteSelected(offsets) then
-        local activationButton = imgui.Button("Place Lines")
-
-        if (activationButton) then
-            msxTable = {}
-            local MAX_ITERATIONS = 1000
-            local msx = settings.msxBounds[1]
-            local iterations = 0
-            while (msx <= settings.msxBounds[2]) and (iterations < MAX_ITERATIONS) do
-                local progress = getProgress(settings.msxBounds[1], msx, settings.msxBounds[2])
-                table.insert(msxTable, msx)
-                msx = msx + mapProgress(settings.distance[1], progress, settings.distance[2])
-                iterations = iterations + 1
-            end
-            placeFixedLines(msxTable, offsets.startOffset + settings.delay, settings.offset, settings.spacing)
-            settings.debug = iterations
+    if noteActivated(offsets) then
+        msxTable = {}
+        local msx = settings.msxBounds[1]
+        local iterations = 0
+        while (msx <= settings.msxBounds[2]) and (iterations < MAX_ITERATIONS) do
+            local progress = getProgress(settings.msxBounds[1], msx, settings.msxBounds[2])
+            table.insert(msxTable, msx)
+            msx = msx + mapProgress(settings.distance[1], progress, settings.distance[2])
+            iterations = iterations + 1
         end
-    else
-        imgui.Text("Select a Note to Place Lines.")
+        placeFixedLines(msxTable, offsets.startOffset + settings.delay, settings.offset, settings.spacing)
+        settings.debug = iterations
     end
 
     imgui.Text(settings.debug)
@@ -372,50 +358,41 @@ end
 
     local offsets = getStartAndEndNoteOffsets()
 
-    if rangeSelected(offsets) then
-        local activationButton = imgui.Button("Place Lines")
+    if rangeActivated(offsets) then
+        local currentTime = offsets.startOffset + 1
 
-        if (activationButton) then
-            local currentTime = offsets.startOffset + 1
-
-            local iterations = 0
-            local MAX_ITERATIONS = 500
-            local INCREMENT = 64
-
-            local lines = {}
-            local svs = {}
+        local iterations = 0
+        local lines = {}
+        local svs = {}
 
 
-            while ((currentTime + (2 / INCREMENT)) < offsets.endOffset) and (iterations < MAX_ITERATIONS) do
-                local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset)
+        while ((currentTime + (2 / INCREMENT)) < offsets.endOffset) and (iterations < MAX_ITERATIONS) do
+            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset)
 
-                local boundary = settings.msxBounds[2] *
-                    (settings.polynomialCoefficients[1] * progress ^ 2 + settings.polynomialCoefficients[2] * progress + settings.polynomialCoefficients[3])
+            local boundary = settings.msxBounds[2] *
+                (settings.polynomialCoefficients[1] * progress ^ 2 + settings.polynomialCoefficients[2] * progress + settings.polynomialCoefficients[3])
 
-                local tbl = placeFrame(currentTime, settings.msxBounds[1], settings.msxBounds[2], settings.distance,
-                    settings.spacing, boundary, settings.evalUnder)
+            local tbl = placeFrame(currentTime, settings.msxBounds[1], settings.msxBounds[2], settings.distance,
+                settings.spacing, boundary, settings.evalUnder)
 
-                currentTime = tbl.time
+            currentTime = tbl.time
 
-                lines = concatTables(lines, tbl.lines)
-                svs = concatTables(svs, tbl.svs)
+            lines = concatTables(lines, tbl.lines)
+            svs = concatTables(svs, tbl.svs)
 
-                table.insert(svs, utils.CreateScrollVelocity(currentTime + (1 / INCREMENT), 64000))
-                table.insert(svs, utils.CreateScrollVelocity(currentTime + (2 / INCREMENT), 0))
+            table.insert(svs, utils.CreateScrollVelocity(currentTime + (1 / INCREMENT), 64000))
+            table.insert(svs, utils.CreateScrollVelocity(currentTime + (2 / INCREMENT), 0))
 
-                iterations = iterations + 1
+            iterations = iterations + 1
 
-                currentTime = currentTime + 2
-            end
-            settings.debug = #lines .. ' // ' .. #svs
-
-            actions.PerformBatch({
-                utils.CreateEditorAction(action_type.AddTimingPointBatch, lines),
-                utils.CreateEditorAction(action_type.AddScrollVelocityBatch, svs)
-            })
+            currentTime = currentTime + 2
         end
-    else
-        imgui.Text("Select Region to Place Lines.")
+        settings.debug = #lines .. ' // ' .. #svs
+
+        actions.PerformBatch({
+            utils.CreateEditorAction(action_type.AddTimingPointBatch, lines),
+            utils.CreateEditorAction(action_type.AddScrollVelocityBatch, svs)
+        })
     end
 
     imgui.Text(settings.debug)
@@ -425,7 +402,6 @@ end
 
 function placeFrame(startTime, min, max, lineDistance, spacing, boundary, evalUnder)
     msxTable = {}
-    local MAX_ITERATIONS = 1000
     local msx = min
     local iterations = 0
 
@@ -465,47 +441,39 @@ end
 
     local offsets = getStartAndEndNoteOffsets()
 
-    if rangeSelected(offsets) then
-        local activationButton = imgui.Button("Place Lines")
+    if rangeActivated(offsets) then
+        local time = offsets.startOffset
+        local lines = {}
+        local svs = {}
 
-        if (activationButton) then
-            local time = offsets.startOffset
-            local lines = {}
-            local svs = {}
+        while (time < offsets.endOffset) do
+            local progress = getProgress(offsets.startOffset, time, offsets.endOffset)
 
-            local INCREMENT = 64
+            local lowerBound = mapProgress(settings.msxBounds[1], progress, settings.msxBounds2[1])
+            local upperBound = mapProgress(settings.msxBounds[2], progress, settings.msxBounds2[2])
 
-            while (time < offsets.endOffset) do
-                local progress = getProgress(offsets.startOffset, time, offsets.endOffset)
-
-                local lowerBound = mapProgress(settings.msxBounds[1], progress, settings.msxBounds2[1])
-                local upperBound = mapProgress(settings.msxBounds[2], progress, settings.msxBounds2[2])
-
-                msxTable = {}
-                for i = 1, settings.lineCount do
-                    table.insert(msxTable, math.random(upperBound, lowerBound))
-                end
-                local tbl = returnFixedLines(msxTable, time, 0, settings.spacing)
-
-                time = math.max(time + (1000 / settings.fps) - 2, tbl.time)
-
-                lines = concatTables(lines, tbl.lines)
-                svs = concatTables(svs, tbl.svs)
-
-                table.insert(svs, utils.CreateScrollVelocity(time + (1 / INCREMENT), 64000))
-                table.insert(svs, utils.CreateScrollVelocity(time + (2 / INCREMENT), 0))
-
-                time = time + 2
+            msxTable = {}
+            for i = 1, settings.lineCount do
+                table.insert(msxTable, math.random(upperBound, lowerBound))
             end
+            local tbl = returnFixedLines(msxTable, time, 0, settings.spacing)
 
-            settings.debug = #lines .. " // " .. #svs
-            actions.PerformBatch({
-                utils.CreateEditorAction(action_type.AddTimingPointBatch, lines),
-                utils.CreateEditorAction(action_type.AddScrollVelocityBatch, svs)
-            })
+            time = math.max(time + (1000 / settings.fps) - 2, tbl.time)
+
+            lines = concatTables(lines, tbl.lines)
+            svs = concatTables(svs, tbl.svs)
+
+            table.insert(svs, utils.CreateScrollVelocity(time + (1 / INCREMENT), 64000))
+            table.insert(svs, utils.CreateScrollVelocity(time + (2 / INCREMENT), 0))
+
+            time = time + 2
         end
-    else
-        imgui.Text("Select a Note to Place Lines.")
+
+        settings.debug = #lines .. " // " .. #svs
+        actions.PerformBatch({
+            utils.CreateEditorAction(action_type.AddTimingPointBatch, lines),
+            utils.CreateEditorAction(action_type.AddScrollVelocityBatch, svs)
+        })
     end
 
     imgui.Text(settings.debug)
@@ -545,49 +513,42 @@ end
 
     local offsets = getStartAndEndNoteOffsets()
 
-    if rangeSelected(offsets) then
-        local activationButton = imgui.Button("Place Lines")
+    if rangeActivated(offsets) then
+        local currentTime = offsets.startOffset + 1
 
-        if (activationButton) then
-            local currentTime = offsets.startOffset + 1
-
-            local iterations = 0
-            local MAX_ITERATIONS = 500
-            local INCREMENT = 64
-
-            local lines = {}
-            local svs = {}
+        local iterations = 0
 
 
-            while ((currentTime + (2 / INCREMENT)) < offsets.endOffset) and (iterations < MAX_ITERATIONS) do
-                local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset)
+        local lines = {}
+        local svs = {}
 
-                local polynomialHeight = (settings.polynomialCoefficients[1] * progress ^ 2 + settings.polynomialCoefficients[2] * progress + settings.polynomialCoefficients[3])
 
-                local tbl = placeFrame(currentTime, settings.msxBounds[1], settings.msxBounds[2], settings.distance,
-                    settings.spacing, polynomialHeight, settings.evalOver)
+        while ((currentTime + (2 / INCREMENT)) < offsets.endOffset) and (iterations < MAX_ITERATIONS) do
+            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset)
 
-                currentTime = tbl.time
+            local polynomialHeight = (settings.polynomialCoefficients[1] * progress ^ 2 + settings.polynomialCoefficients[2] * progress + settings.polynomialCoefficients[3])
 
-                lines = concatTables(lines, tbl.lines)
-                svs = concatTables(svs, tbl.svs)
+            local tbl = placeFrame(currentTime, settings.msxBounds[1], settings.msxBounds[2], settings.distance,
+                settings.spacing, polynomialHeight, settings.evalOver)
 
-                table.insert(svs, utils.CreateScrollVelocity(currentTime + (1 / INCREMENT), 64000))
-                table.insert(svs, utils.CreateScrollVelocity(currentTime + (2 / INCREMENT), 0))
+            currentTime = tbl.time
 
-                iterations = iterations + 1
+            lines = concatTables(lines, tbl.lines)
+            svs = concatTables(svs, tbl.svs)
 
-                currentTime = currentTime + 2
-            end
-            settings.debug = #lines .. ' // ' .. #svs
+            table.insert(svs, utils.CreateScrollVelocity(currentTime + (1 / INCREMENT), 64000))
+            table.insert(svs, utils.CreateScrollVelocity(currentTime + (2 / INCREMENT), 0))
 
-            actions.PerformBatch({
-                utils.CreateEditorAction(action_type.AddTimingPointBatch, lines),
-                utils.CreateEditorAction(action_type.AddScrollVelocityBatch, svs)
-            })
+            iterations = iterations + 1
+
+            currentTime = currentTime + 2
         end
-    else
-        imgui.Text("Select Region to Place Lines.")
+        settings.debug = #lines .. ' // ' .. #svs
+
+        actions.PerformBatch({
+            utils.CreateEditorAction(action_type.AddTimingPointBatch, lines),
+            utils.CreateEditorAction(action_type.AddScrollVelocityBatch, svs)
+        })
     end
 
     imgui.Text(settings.debug)
@@ -597,7 +558,6 @@ end
 
 function placeFrame(startTime, min, max, lineDistance, spacing, polynomialHeight, evalOver)
     msxTable = {}
-    local MAX_ITERATIONS = 1000
     local msx = min
     local iterations = 0
 

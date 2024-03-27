@@ -9,30 +9,23 @@ function StandardSpreadMenu()
 
     local offsets = getStartAndEndNoteOffsets()
 
-    if rangeSelected(offsets) then
-        local activationButton = imgui.Button("Place Lines")
+    if rangeActivated(offsets) then
+        local lines = {}
+        local msx = offsets.startOffset
 
-        if (activationButton) then
-            local lines = {}
-            local msx = offsets.startOffset
+        local iterations = 0
 
-            local iterations = 0
-            local MAX_ITERATIONS = 1000
+        while (msx < offsets.endOffset) and (iterations < MAX_ITERATIONS) do
+            local progress = getProgress(offsets.startOffset, msx, offsets.endOffset)
 
-            while (msx < offsets.endOffset) and (iterations < MAX_ITERATIONS) do
-                local progress = getProgress(offsets.startOffset, msx, offsets.endOffset)
+            table.insert(lines, utils.CreateTimingPoint(msx, map.GetCommonBpm()))
 
-                table.insert(lines, utils.CreateTimingPoint(msx, map.GetCommonBpm()))
+            msx = msx + mapProgress(settings.distance[1], progress, settings.distance[2])
 
-                msx = msx + mapProgress(settings.distance[1], progress, settings.distance[2])
-
-                iterations = iterations + 1
-            end
-
-            actions.PlaceTimingPointBatch(lines)
+            iterations = iterations + 1
         end
-    else
-        imgui.Text("Select Region to Place Lines.")
+
+        actions.PlaceTimingPointBatch(lines)
     end
 
     saveStateVariables("standard_spread", settings)
