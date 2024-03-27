@@ -5,7 +5,7 @@ function chooseMenu(tbl, menuID)
 end
 
 function draw()
-    imgui.Begin("LinePlacer", imgui_window_flags.AlwaysAutoResize)
+    imgui.Begin("AFFINE", imgui_window_flags.AlwaysAutoResize)
 
     local settings = {
         menuID = 1
