@@ -1,11 +1,11 @@
 ANIMATION_MENU_LIST = {
-    'Static (Polynomial)',
-    'Dynamic (Polynomial)',
+    'Boundary (Static)',
+    'Boundary (Dynamic)',
     'Glitch'
 }
 
 ANIMATION_MENU_FUNCTIONS = {
-    StaticPolynomialMenu,
-    DynamicPolynomialMenu,
+    StaticBoundaryMenu,
+    DynamicBoundaryMenu,
     GlitchMenu
 }

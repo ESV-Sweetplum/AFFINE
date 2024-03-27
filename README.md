@@ -12,8 +12,8 @@ AFFINE (pronounced aff-een) is a [Quaver](https://www.quavergame.com) plugin des
     - ***(Fixed > Automatic)*** Place a gradient of timing lines between designated heights
     - ***(Fixed > Random)*** Place a random amount of timing lines within a region  
 ⠀
-- ***(Animation > Static (Polynomial))*** Hide and show backdrop timing lines using an imaginary boundary
-- ***(Animation > Dynamic (Polynomial))*** Scale backdrop timing lines with a polynomial temporal boundary
+- ***(Animation > Boundary (Static))*** Hide and show backdrop timing lines using a boundary
+- ***(Animation > Boundary (Dynamic))*** Scale backdrop timing lines with a boundary
 - ***(Animation > Glitch)*** Create an animation with constantly changing random notes 
 
 ## Basic Tutorial

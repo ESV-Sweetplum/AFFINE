@@ -1,4 +1,4 @@
-function StaticPolynomialMenu()
+function StaticBoundaryMenu()
     local settings = {
         msxBounds = DEFAULT_MSX_BOUNDS,
         spacing = DEFAULT_SPACING,

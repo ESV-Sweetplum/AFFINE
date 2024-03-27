@@ -1,4 +1,4 @@
-function DynamicPolynomialMenu()
+function DynamicBoundaryMenu()
     local settings = {
         msxBounds = DEFAULT_MSX_BOUNDS,
         spacing = DEFAULT_SPACING,
