@@ -43,7 +43,7 @@ function StaticPolynomialMenu()
             local boundary = settings.msxBounds[2] *
                 (settings.polynomialCoefficients[1] * progress ^ 2 + settings.polynomialCoefficients[2] * progress + settings.polynomialCoefficients[3])
 
-            local tbl = placeFrame(currentTime, settings.msxBounds[1], settings.msxBounds[2], settings.distance,
+            local tbl = placeStaticFrame(currentTime, settings.msxBounds[1], settings.msxBounds[2], settings.distance,
                 settings.spacing, boundary, settings.evalUnder)
 
             currentTime = tbl.time
@@ -71,7 +71,7 @@ function StaticPolynomialMenu()
     saveStateVariables("animation_polynomial", settings)
 end
 
-function placeFrame(startTime, min, max, lineDistance, spacing, boundary, evalUnder)
+function placeStaticFrame(startTime, min, max, lineDistance, spacing, boundary, evalUnder)
     msxTable = {}
     local msx = min
     local iterations = 0
