@@ -101,7 +101,7 @@ function DeletionMenu()
 
         local actionTable = {}
 
-        if (math.fmod(settings.deletionType, 2) ~= 0) then
+        if (settings.deletionType % 2 ~= 0) then
             table.insert(actionTable,
                 utils.CreateEditorAction(action_type.RemoveScrollVelocityBatch, svs))
         end

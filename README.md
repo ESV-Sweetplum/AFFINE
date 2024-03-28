@@ -43,3 +43,4 @@ All files necessary are contained within the `src` directory. When you're finish
 ## Special thanks to:
 
 - [amoguSV](https://github.com/kloi34/AmoguSV): The internal logic for displacements, increments, and teleportation was taken from this plugin. Highly recommended to use this plugin alongside AFFINE.
+- [IceDynamix' Plugin Guide](https://github.com/IceDynamix/QuaverPluginGuide/blob/master/quaver_plugin_guide.md): All `imgui` documentation was from this document. This is almost necessary for new plugin developers. 
