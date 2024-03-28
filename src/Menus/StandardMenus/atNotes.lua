@@ -1,5 +1,11 @@
 function StandardAtNotesMenu()
-    local offsets = getOffsets()
+    local settings = {
+        debug = ''
+    }
+
+    retrieveStateVariables("atNotes", settings)
+
+    local offsets = getSelectedOffsets()
 
     if noteActivated(offsets) then
         local lines = {}
@@ -9,6 +15,13 @@ function StandardAtNotesMenu()
         for _, offset in pairs(offsets) do
             table.insert(lines, line(offset))
         end
+
+        settings.debug = #offsets
+
         actions.PlaceTimingPointBatch(lines)
     end
+
+    imgui.Text(settings.debug)
+
+    saveStateVariables('atNotes', settings)
 end

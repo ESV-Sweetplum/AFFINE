@@ -85,7 +85,13 @@ end
  
  
  function StandardAtNotesMenu()
-    local offsets = getOffsets()
+    local settings = {
+        debug = ''
+    }
+
+    retrieveStateVariables("atNotes", settings)
+
+    local offsets = getSelectedOffsets()
 
     if noteActivated(offsets) then
         local lines = {}
@@ -95,8 +101,15 @@ end
         for _, offset in pairs(offsets) do
             table.insert(lines, line(offset))
         end
+
+        settings.debug = #offsets
+
         actions.PlaceTimingPointBatch(lines)
     end
+
+    imgui.Text(settings.debug)
+
+    saveStateVariables('atNotes', settings)
 end
  
  
@@ -676,6 +689,16 @@ function placeDynamicFrame(startTime, min, max, lineDistance, spacing, polynomia
 end
  
  
+ function table.contains(table, element)
+    for _, value in pairs(table) do
+        if value == element then
+            return true
+        end
+    end
+    return false
+end
+ 
+ 
  function teleport(time, dist)
     return {
         sv(time, INCREMENT * dist),
@@ -782,7 +805,7 @@ end
 end
  
  
- function getOffsets()
+ function getSelectedOffsets()
     local offsets = {}
 
     if (#state.SelectedHitObjects == 0) then
@@ -790,7 +813,9 @@ end
     end
 
     for i, hitObject in pairs(state.SelectedHitObjects) do
+        if (table.contains(offsets, hitObject.StartTime)) then goto continue end
         table.insert(offsets, hitObject.StartTime)
+        ::continue::
     end
 
     return offsets
