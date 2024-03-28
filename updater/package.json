@@ -1,0 +1,27 @@
+{
+    "name": "affine",
+    "version": "1.0.0",
+    "description": "A plugin for Quaver, designed to automate and simplify timing lines.",
+    "main": "updater.js",
+    "bin": "updater.js",
+    "targets": [
+        "node16-win-x64"
+    ],
+    "pkg": {
+        "assets": [
+            "views/**/*"
+        ],
+        "output": "./"
+    },
+    "keywords": [
+        "SV",
+        "Quaver",
+        "Quaver Timing Lines",
+        "Quaver Timing Points"
+    ],
+    "author": "ESV Sweetplum",
+    "license": "ISC",
+    "dependencies": {
+        "@terascope/fetch-github-release": "^0.8.7"
+    }
+}
