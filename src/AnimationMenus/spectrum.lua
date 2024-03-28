@@ -62,6 +62,8 @@ function SpectrumMenu()
             utils.CreateEditorAction(action_type.AddScrollVelocityBatch, svs)
         })
     end
+    plot(settings.polynomialCoefficients)
+
 
     imgui.Text(settings.debug)
 

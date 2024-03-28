@@ -20,12 +20,12 @@ function GlitchMenu()
     local offsets = getStartAndEndNoteOffsets()
 
     if rangeActivated(offsets) then
-        local time = offsets.startOffset
+        local currentTime = offsets.startOffset
         local lines = {}
         local svs = {}
 
-        while (time <= offsets.endOffset) do
-            local progress = getProgress(offsets.startOffset, time, offsets.endOffset)
+        while (currentTime <= offsets.endOffset) do
+            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset)
 
             local lowerBound = mapProgress(settings.msxBounds[1], progress, settings.msxBounds2[1])
             local upperBound = mapProgress(settings.msxBounds[2], progress, settings.msxBounds2[2])
@@ -34,18 +34,18 @@ function GlitchMenu()
             for i = 1, settings.lineCount do
                 table.insert(msxTable, math.random(upperBound, lowerBound))
             end
-            local tbl = returnFixedLines(msxTable, time, 0, settings.spacing)
+            local tbl = returnFixedLines(msxTable, currentTime, 0, settings.spacing)
 
             if (tbl.time > offsets.endOffset) then break end
 
-            time = math.max(time + (1000 / settings.fps) - 2, tbl.time)
+            currentTime = math.max(currentTime + (1000 / settings.fps) - 2, tbl.time)
 
             lines = concatTables(lines, tbl.lines)
             svs = concatTables(svs, tbl.svs)
 
-            insertTeleport(svs, time + 1 / INCREMENT, 1000)
+            insertTeleport(svs, currentTime + 1 / INCREMENT, 1000)
 
-            time = time + 2
+            currentTime = currentTime + 2
         end
 
         svs = cleanSVs(svs, offsets.startOffset, offsets.endOffset)

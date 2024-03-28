@@ -17,13 +17,13 @@ function StaticBoundaryMenu()
 
     _, settings.polynomialCoefficients = imgui.InputFloat3("Coefficients", settings.polynomialCoefficients, "%.2f")
 
-    if imgui.RadioButton("Over", not settings.evalUnder) then
+    if imgui.RadioButton("Render Over Boundary", not settings.evalUnder) then
         settings.evalUnder = false
     end
 
     imgui.SameLine(0, 7.5)
 
-    if imgui.RadioButton("Under", settings.evalUnder) then
+    if imgui.RadioButton("Render Under Boundary", settings.evalUnder) then
         settings.evalUnder = true
     end
 
@@ -69,6 +69,8 @@ function StaticBoundaryMenu()
             utils.CreateEditorAction(action_type.AddScrollVelocityBatch, svs)
         })
     end
+
+    plot(settings.polynomialCoefficients)
 
     imgui.Text(settings.debug)
 

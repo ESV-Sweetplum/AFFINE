@@ -1,6 +1,7 @@
  
  
  ANIMATION_MENU_LIST = {
+    'Manual (Basic)',
     'Boundary (Static)',
     'Boundary (Dynamic)',
     'Glitch',
@@ -311,6 +312,27 @@ function noteActivated(offsets, text)
         return imgui.Text("Select a Note to " .. text .. " Lines.")
     end
 end
+
+function plot(polynomialCoefficients)
+    imgui.Begin("Boundary Height vs. Time", imgui_window_flags.AlwaysAutoResize)
+
+    local RESOLUTION = 20
+    local tbl = {}
+    for i = 0, RESOLUTION do
+        local progress = i / RESOLUTION
+
+        table.insert(tbl,
+            (polynomialCoefficients[1] * progress ^ 2 + polynomialCoefficients[2] * progress + polynomialCoefficients[3]))
+    end
+
+    imgui.PlotLines("", tbl, #tbl, 0,
+        'Equation: y = ' ..
+        polynomialCoefficients[1] .. 'x^2 + ' .. polynomialCoefficients[2] .. 'x + ' .. polynomialCoefficients[3], 0,
+        1,
+        { 250, 150 })
+
+    imgui.End()
+end
  
  
  function FixedRandomMenu()
@@ -437,13 +459,13 @@ end
 
     _, settings.polynomialCoefficients = imgui.InputFloat3("Coefficients", settings.polynomialCoefficients, "%.2f")
 
-    if imgui.RadioButton("Over", not settings.evalUnder) then
+    if imgui.RadioButton("Render Over Boundary", not settings.evalUnder) then
         settings.evalUnder = false
     end
 
     imgui.SameLine(0, 7.5)
 
-    if imgui.RadioButton("Under", settings.evalUnder) then
+    if imgui.RadioButton("Render Under Boundary", settings.evalUnder) then
         settings.evalUnder = true
     end
 
@@ -489,6 +511,8 @@ end
             utils.CreateEditorAction(action_type.AddScrollVelocityBatch, svs)
         })
     end
+
+    plot(settings.polynomialCoefficients)
 
     imgui.Text(settings.debug)
 
@@ -579,6 +603,8 @@ end
             utils.CreateEditorAction(action_type.AddScrollVelocityBatch, svs)
         })
     end
+    plot(settings.polynomialCoefficients)
+
 
     imgui.Text(settings.debug)
 
@@ -618,6 +644,73 @@ function placeSpectrumFrame(startTime, center, maxSpread, lineDistance, spacing,
 end
  
  
+ function BasicManualAnimationMenu()
+    local settings = {
+        startStr            = "69 420 727 1337",
+        endStr              = "69 420 727 1337",
+        progressionExponent = 1,
+        spacing             = DEFAULT_SPACING,
+        fps                 = DEFAULT_FPS,
+        debug               = 'Lines // SVs'
+    }
+
+    retrieveStateVariables("animation_manual", settings)
+
+    _, settings.startStr = imgui.InputText("Start Keyframes", settings.startStr, 6942)
+    _, settings.endStr = imgui.InputText("End Keyframes", settings.endStr, 6942)
+    _, settings.progressionExponent = imgui.InputFloat("Progression Exponent", settings.progressionExponent)
+
+    _, settings.fps = imgui.InputFloat("Animation FPS", settings.fps)
+    _, settings.spacing = imgui.InputFloat("MS Spacing", settings.spacing)
+
+    local offsets = getStartAndEndNoteOffsets()
+
+    if rangeActivated(offsets) then
+        startMsxTable = strToTable(settings.startStr, "%S+")
+        endMsxTable = strToTable(settings.endStr, "%S+")
+
+        local currentTime = offsets.startOffset + 1
+        local iterations = 0
+        local lines = {}
+        local svs = {}
+
+        while (currentTime < offsets.endOffset) and (iterations < MAX_ITERATIONS) do
+            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset) ^
+                (1 / settings.progressionExponent)
+
+            local msxTable = {}
+
+            for i = 1, #endMsxTable do
+                table.insert(msxTable, mapProgress(startMsxTable[i], progress, endMsxTable[i]))
+            end
+
+            local tbl = returnFixedLines(msxTable, currentTime, 0, settings.spacing)
+
+            if (tbl.time > offsets.endOffset) then break end
+
+            currentTime = math.max(currentTime + (1000 / settings.fps) - 2, tbl.time)
+
+            lines = concatTables(lines, tbl.lines)
+            svs = concatTables(svs, tbl.svs)
+
+            insertTeleport(svs, currentTime + 1 / INCREMENT, 1000)
+
+            currentTime = currentTime + 2
+        end
+
+        svs = cleanSVs(svs, offsets.startOffset, offsets.endOffset)
+
+        settings.debug = #lines .. " // " .. #svs
+        actions.PerformBatch({
+            utils.CreateEditorAction(action_type.AddTimingPointBatch, lines),
+            utils.CreateEditorAction(action_type.AddScrollVelocityBatch, svs)
+        })
+    end
+
+    saveStateVariables("animation_manual", settings)
+end
+ 
+ 
  function GlitchMenu()
     local settings = {
         msxBounds = DEFAULT_MSX_BOUNDS,
@@ -640,12 +733,12 @@ end
     local offsets = getStartAndEndNoteOffsets()
 
     if rangeActivated(offsets) then
-        local time = offsets.startOffset
+        local currentTime = offsets.startOffset
         local lines = {}
         local svs = {}
 
-        while (time <= offsets.endOffset) do
-            local progress = getProgress(offsets.startOffset, time, offsets.endOffset)
+        while (currentTime <= offsets.endOffset) do
+            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset)
 
             local lowerBound = mapProgress(settings.msxBounds[1], progress, settings.msxBounds2[1])
             local upperBound = mapProgress(settings.msxBounds[2], progress, settings.msxBounds2[2])
@@ -654,18 +747,18 @@ end
             for i = 1, settings.lineCount do
                 table.insert(msxTable, math.random(upperBound, lowerBound))
             end
-            local tbl = returnFixedLines(msxTable, time, 0, settings.spacing)
+            local tbl = returnFixedLines(msxTable, currentTime, 0, settings.spacing)
 
             if (tbl.time > offsets.endOffset) then break end
 
-            time = math.max(time + (1000 / settings.fps) - 2, tbl.time)
+            currentTime = math.max(currentTime + (1000 / settings.fps) - 2, tbl.time)
 
             lines = concatTables(lines, tbl.lines)
             svs = concatTables(svs, tbl.svs)
 
-            insertTeleport(svs, time + 1 / INCREMENT, 1000)
+            insertTeleport(svs, currentTime + 1 / INCREMENT, 1000)
 
-            time = time + 2
+            currentTime = currentTime + 2
         end
 
         svs = cleanSVs(svs, offsets.startOffset, offsets.endOffset)
@@ -815,6 +908,8 @@ end
             utils.CreateEditorAction(action_type.AddScrollVelocityBatch, svs)
         })
     end
+    plot(settings.polynomialCoefficients)
+
 
     imgui.Text(settings.debug)
 
@@ -858,6 +953,7 @@ function draw()
      
  
  ANIMATION_MENU_FUNCTIONS = {
+    BasicManualAnimationMenu,
     StaticBoundaryMenu,
     DynamicBoundaryMenu,
     GlitchMenu,
