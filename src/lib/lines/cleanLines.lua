@@ -9,6 +9,7 @@ function cleanLines(lines, lower, upper)
         end
     end
 
+    table.insert(tbl, line(map.GetNearestSnapTimeFromTime(true, 1, lastLineTime) - 2))
     table.insert(tbl, line(map.GetNearestSnapTimeFromTime(true, 1, lastLineTime)))
 
     return tbl
