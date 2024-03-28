@@ -75,6 +75,8 @@ MAX_ITERATIONS = 1000
             iterations = iterations + 1
         end
 
+        lines = cleanLines(lines, offsets.startOffset, offsets.endOffset)
+
         actions.PlaceTimingPointBatch(lines)
     end
 
@@ -115,7 +117,7 @@ end
 end
  
  
- function getAllSVs(lower, upper)
+ function getSVsInRange(lower, upper)
     local base = map.ScrollVelocities
 
     local tbl = {}
@@ -129,6 +131,8 @@ end
     return tbl
 end
  
+ 
+  
  
  function cleanSVs(svs, lower, upper)
     local tbl = {}
@@ -217,49 +221,7 @@ end
 end
  
  
- function line(time)
-    return utils.CreateTimingPoint(time, map.GetCommonBpm())
-end
- 
- 
- function getAllLines(lower, upper)
-    local base = map.TimingPoints
-
-    local tbl = {}
-
-    for _, v in pairs(base) do
-        if (v.StartTime >= lower) and (v.StartTime <= upper) then
-            table.insert(tbl, v)
-        end
-    end
-
-    return tbl
-end
- 
- 
- function placeFixedLines(svTable, time, msxOffset, spacing)
-    local lines = {}
-    local svs = {}
-
-    for _, msx in pairs(svTable) do
-        local speed = INCREMENT * (msx + msxOffset)
-
-        table.insert(lines, line(time))
-        table.insert(svs, sv(time, speed * -1))
-        table.insert(svs, sv(time - (1 / INCREMENT), speed))
-        table.insert(svs, sv(time + (1 / INCREMENT), 0))
-
-        time = time + spacing
-    end
-
-
-    actions.PerformBatch({
-        utils.CreateEditorAction(action_type.AddTimingPointBatch, lines),
-        utils.CreateEditorAction(action_type.AddScrollVelocityBatch, svs)
-    })
-end
-
-function returnFixedLines(svTable, time, msxOffset, spacing)
+ function tableToLines(svTable, time, msxOffset, spacing)
     local lines = {}
     local svs = {}
 
@@ -280,6 +242,64 @@ function returnFixedLines(svTable, time, msxOffset, spacing)
         time = time
     }
     return tbl
+end
+ 
+ 
+ function line(time)
+    local data = map.GetTimingPointAt(time)
+
+    if (not data) then
+        data = {
+            Bpm = map.GetCommonBpm(),
+            Signature = time_signature.Quadruple,
+            Hidden = false
+        }
+    end
+
+    return utils.CreateTimingPoint(time, data.Bpm, data.Signature)
+end
+ 
+ 
+ function getLinesInRange(lower, upper)
+    local base = map.TimingPoints
+
+    local tbl = {}
+
+    for _, v in pairs(base) do
+        if (v.StartTime >= lower) and (v.StartTime <= upper) then
+            table.insert(tbl, v)
+        end
+    end
+
+    return tbl
+end
+ 
+ 
+ function cleanLines(lines, lower, upper)
+    local lastLineTime = lines[#lines].StartTime
+
+    local tbl = {}
+
+    for _, currentLine in pairs(lines) do
+        if (currentLine.StartTime >= lower and currentLine.StartTime <= upper) then
+            table.insert(tbl, currentLine)
+        end
+    end
+
+    table.insert(tbl, line(map.GetNearestSnapTimeFromTime(true, 1, lastLineTime)))
+
+    return tbl
+end
+ 
+ 
+ function generateAffines(lines, svs, lower, upper)
+    lines = cleanLines(lines, lower, upper)
+    svs = cleanSVs(svs, lower, upper)
+
+    actions.PerformBatch({
+        utils.CreateEditorAction(action_type.AddTimingPointBatch, lines),
+        utils.CreateEditorAction(action_type.AddScrollVelocityBatch, svs)
+    })
 end
  
  
@@ -355,10 +375,12 @@ end
 
     if noteActivated(offsets) then
         msxTable = {}
-        for i = 1, settings.lineCount do
+        for _ = 1, settings.lineCount do
             table.insert(msxTable, math.random(settings.msxBounds[1], settings.msxBounds[2]))
         end
-        placeFixedLines(msxTable, offsets.startOffset + settings.delay, 0, settings.spacing)
+        local tbl = tableToLines(msxTable, offsets.startOffset + settings.delay, 0, settings.spacing)
+
+        generateAffines(tbl.lines, tbl.svs, offsets.startOffset, offsets.endOffset)
     end
 
     saveStateVariables("fixed_random", settings)
@@ -384,7 +406,10 @@ end
 
     if noteActivated(offsets) then
         msxTable = strToTable(settings.inputStr, "%S+")
-        placeFixedLines(msxTable, offsets.startOffset + settings.delay, settings.offset, settings.spacing)
+
+        local tbl = tableToLines(msxTable, offsets.startOffset + settings.delay, settings.offset, settings.spacing)
+
+        generateAffines(tbl.lines, tbl.svs, offsets.startOffset, offsets.endOffset)
     end
 
     saveStateVariables("fixed_manual", settings)
@@ -415,10 +440,7 @@ end
             settings.msxBounds[2],
             settings.spacing, settings.distance)
 
-        actions.PerformBatch({
-            utils.CreateEditorAction(action_type.AddTimingPointBatch, tbl.lines),
-            utils.CreateEditorAction(action_type.AddScrollVelocityBatch, tbl.svs)
-        })
+        generateAffines(tbl.lines, tbl.svs, offsets.startOffset, offsets.endOffset)
     end
 
     imgui.Text(settings.debug)
@@ -436,7 +458,7 @@ function placeAutomaticFrame(startTime, low, high, spacing, distance)
         msx = msx + mapProgress(distance[1], progress, distance[2])
         iterations = iterations + 1
     end
-    return returnFixedLines(msxTable, startTime, 0, spacing)
+    return tableToLines(msxTable, startTime, 0, spacing)
 end
  
  
@@ -502,14 +524,9 @@ end
             currentTime = currentTime + 2
         end
 
-        svs = cleanSVs(svs, offsets.startOffset, offsets.endOffset)
+        generateAffines(lines, svs, offsets.startOffset, offsets.endOffset)
 
         settings.debug = #lines .. ' // ' .. #svs
-
-        actions.PerformBatch({
-            utils.CreateEditorAction(action_type.AddTimingPointBatch, lines),
-            utils.CreateEditorAction(action_type.AddScrollVelocityBatch, svs)
-        })
     end
 
     plot(settings.polynomialCoefficients)
@@ -535,7 +552,7 @@ function placeStaticFrame(startTime, min, max, lineDistance, spacing, boundary, 
         iterations = iterations + 1
     end
 
-    return returnFixedLines(msxTable, startTime, 0, spacing)
+    return tableToLines(msxTable, startTime, 0, spacing)
 end
  
  
@@ -594,14 +611,9 @@ end
             currentTime = currentTime + 2
         end
 
-        svs = cleanSVs(svs, offsets.startOffset, offsets.endOffset)
+        generateAffines(lines, svs, offsets.startOffset, offsets.endOffset)
 
         settings.debug = #lines .. ' // ' .. #svs
-
-        actions.PerformBatch({
-            utils.CreateEditorAction(action_type.AddTimingPointBatch, lines),
-            utils.CreateEditorAction(action_type.AddScrollVelocityBatch, svs)
-        })
     end
     plot(settings.polynomialCoefficients)
 
@@ -627,7 +639,7 @@ function placeSpectrumFrame(startTime, center, maxSpread, lineDistance, spacing,
             iterations = iterations + 1
         end
 
-        return returnFixedLines(msxTable, startTime, 0, spacing)
+        return tableToLines(msxTable, startTime, 0, spacing)
     else
         local msx = center
 
@@ -639,7 +651,7 @@ function placeSpectrumFrame(startTime, center, maxSpread, lineDistance, spacing,
             iterations = iterations + 1
         end
 
-        return returnFixedLines(msxTable, startTime, 0, spacing)
+        return tableToLines(msxTable, startTime, 0, spacing)
     end
 end
  
@@ -684,7 +696,7 @@ end
                 table.insert(msxTable, mapProgress(startMsxTable[i], progress, endMsxTable[i]))
             end
 
-            local tbl = returnFixedLines(msxTable, currentTime, 0, settings.spacing)
+            local tbl = tableToLines(msxTable, currentTime, 0, settings.spacing)
 
             if (tbl.time > offsets.endOffset) then break end
 
@@ -698,13 +710,9 @@ end
             currentTime = currentTime + 2
         end
 
-        svs = cleanSVs(svs, offsets.startOffset, offsets.endOffset)
+        generateAffines(lines, svs, offsets.startOffset, offsets.endOffset)
 
         settings.debug = #lines .. " // " .. #svs
-        actions.PerformBatch({
-            utils.CreateEditorAction(action_type.AddTimingPointBatch, lines),
-            utils.CreateEditorAction(action_type.AddScrollVelocityBatch, svs)
-        })
     end
 
     saveStateVariables("animation_manual", settings)
@@ -747,7 +755,7 @@ end
             for i = 1, settings.lineCount do
                 table.insert(msxTable, math.random(upperBound, lowerBound))
             end
-            local tbl = returnFixedLines(msxTable, currentTime, 0, settings.spacing)
+            local tbl = tableToLines(msxTable, currentTime, 0, settings.spacing)
 
             if (tbl.time > offsets.endOffset) then break end
 
@@ -761,13 +769,9 @@ end
             currentTime = currentTime + 2
         end
 
-        svs = cleanSVs(svs, offsets.startOffset, offsets.endOffset)
+        generateAffines(lines, svs, offsets.startOffset, offsets.endOffset)
 
         settings.debug = #lines .. " // " .. #svs
-        actions.PerformBatch({
-            utils.CreateEditorAction(action_type.AddTimingPointBatch, lines),
-            utils.CreateEditorAction(action_type.AddScrollVelocityBatch, svs)
-        })
     end
 
     imgui.Text(settings.debug)
@@ -823,14 +827,9 @@ end
             currentTime = currentTime + 2
         end
 
-        svs = cleanSVs(svs, offsets.startOffset, offsets.endOffset)
+        generateAffines(lines, svs, offsets.startOffset, offsets.endOffset)
 
         settings.debug = #lines .. ' // ' .. #svs
-
-        actions.PerformBatch({
-            utils.CreateEditorAction(action_type.AddTimingPointBatch, lines),
-            utils.CreateEditorAction(action_type.AddScrollVelocityBatch, svs)
-        })
     end
 
     imgui.Text(settings.debug)
@@ -899,14 +898,10 @@ end
 
             currentTime = currentTime + 2
         end
-        svs = cleanSVs(svs, offsets.startOffset, offsets.endOffset)
+
+        generateAffines(lines, svs, offsets.startOffset, offsets.endOffset)
 
         settings.debug = #lines .. ' // ' .. #svs
-
-        actions.PerformBatch({
-            utils.CreateEditorAction(action_type.AddTimingPointBatch, lines),
-            utils.CreateEditorAction(action_type.AddScrollVelocityBatch, svs)
-        })
     end
     plot(settings.polynomialCoefficients)
 
@@ -932,7 +927,7 @@ function placeDynamicFrame(startTime, min, max, lineDistance, spacing, polynomia
         iterations = iterations + 1
     end
 
-    return returnFixedLines(msxTable, startTime, 0, spacing)
+    return tableToLines(msxTable, startTime, 0, spacing)
 end
  
  
@@ -1069,8 +1064,8 @@ function DeletionMenu()
     local offsets = getStartAndEndNoteOffsets()
 
     if (rangeActivated(offsets, "Remove")) then
-        svs = getAllSVs(offsets.startOffset, offsets.endOffset)
-        lines = getAllLines(offsets.startOffset, offsets.endOffset)
+        svs = getSVsInRange(offsets.startOffset, offsets.endOffset)
+        lines = getLinesInRange(offsets.startOffset, offsets.endOffset)
 
         local actionTable = {}
 
@@ -1082,6 +1077,7 @@ function DeletionMenu()
         if (settings.deletionType <= 2) then
             table.insert(actionTable, utils.CreateEditorAction(action_type.RemoveTimingPointBatch, lines))
         end
+
         actions.PerformBatch(actionTable)
     end
 

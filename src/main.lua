@@ -96,8 +96,8 @@ function DeletionMenu()
     local offsets = getStartAndEndNoteOffsets()
 
     if (rangeActivated(offsets, "Remove")) then
-        svs = getAllSVs(offsets.startOffset, offsets.endOffset)
-        lines = getAllLines(offsets.startOffset, offsets.endOffset)
+        svs = getSVsInRange(offsets.startOffset, offsets.endOffset)
+        lines = getLinesInRange(offsets.startOffset, offsets.endOffset)
 
         local actionTable = {}
 
@@ -109,6 +109,7 @@ function DeletionMenu()
         if (settings.deletionType <= 2) then
             table.insert(actionTable, utils.CreateEditorAction(action_type.RemoveTimingPointBatch, lines))
         end
+
         actions.PerformBatch(actionTable)
     end
 

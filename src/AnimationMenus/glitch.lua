@@ -34,7 +34,7 @@ function GlitchMenu()
             for i = 1, settings.lineCount do
                 table.insert(msxTable, math.random(upperBound, lowerBound))
             end
-            local tbl = returnFixedLines(msxTable, currentTime, 0, settings.spacing)
+            local tbl = tableToLines(msxTable, currentTime, 0, settings.spacing)
 
             if (tbl.time > offsets.endOffset) then break end
 
@@ -48,13 +48,9 @@ function GlitchMenu()
             currentTime = currentTime + 2
         end
 
-        svs = cleanSVs(svs, offsets.startOffset, offsets.endOffset)
+        generateAffines(lines, svs, offsets.startOffset, offsets.endOffset)
 
         settings.debug = #lines .. " // " .. #svs
-        actions.PerformBatch({
-            utils.CreateEditorAction(action_type.AddTimingPointBatch, lines),
-            utils.CreateEditorAction(action_type.AddScrollVelocityBatch, svs)
-        })
     end
 
     imgui.Text(settings.debug)

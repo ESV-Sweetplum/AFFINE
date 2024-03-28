@@ -45,14 +45,9 @@ function ExpansionContractionMenu()
             currentTime = currentTime + 2
         end
 
-        svs = cleanSVs(svs, offsets.startOffset, offsets.endOffset)
+        generateAffines(lines, svs, offsets.startOffset, offsets.endOffset)
 
         settings.debug = #lines .. ' // ' .. #svs
-
-        actions.PerformBatch({
-            utils.CreateEditorAction(action_type.AddTimingPointBatch, lines),
-            utils.CreateEditorAction(action_type.AddScrollVelocityBatch, svs)
-        })
     end
 
     imgui.Text(settings.debug)

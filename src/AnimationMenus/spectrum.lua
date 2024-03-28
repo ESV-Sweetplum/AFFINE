@@ -53,14 +53,9 @@ function SpectrumMenu()
             currentTime = currentTime + 2
         end
 
-        svs = cleanSVs(svs, offsets.startOffset, offsets.endOffset)
+        generateAffines(lines, svs, offsets.startOffset, offsets.endOffset)
 
         settings.debug = #lines .. ' // ' .. #svs
-
-        actions.PerformBatch({
-            utils.CreateEditorAction(action_type.AddTimingPointBatch, lines),
-            utils.CreateEditorAction(action_type.AddScrollVelocityBatch, svs)
-        })
     end
     plot(settings.polynomialCoefficients)
 
@@ -86,7 +81,7 @@ function placeSpectrumFrame(startTime, center, maxSpread, lineDistance, spacing,
             iterations = iterations + 1
         end
 
-        return returnFixedLines(msxTable, startTime, 0, spacing)
+        return tableToLines(msxTable, startTime, 0, spacing)
     else
         local msx = center
 
@@ -98,6 +93,6 @@ function placeSpectrumFrame(startTime, center, maxSpread, lineDistance, spacing,
             iterations = iterations + 1
         end
 
-        return returnFixedLines(msxTable, startTime, 0, spacing)
+        return tableToLines(msxTable, startTime, 0, spacing)
     end
 end

@@ -38,7 +38,7 @@ function BasicManualAnimationMenu()
                 table.insert(msxTable, mapProgress(startMsxTable[i], progress, endMsxTable[i]))
             end
 
-            local tbl = returnFixedLines(msxTable, currentTime, 0, settings.spacing)
+            local tbl = tableToLines(msxTable, currentTime, 0, settings.spacing)
 
             if (tbl.time > offsets.endOffset) then break end
 
@@ -52,13 +52,9 @@ function BasicManualAnimationMenu()
             currentTime = currentTime + 2
         end
 
-        svs = cleanSVs(svs, offsets.startOffset, offsets.endOffset)
+        generateAffines(lines, svs, offsets.startOffset, offsets.endOffset)
 
         settings.debug = #lines .. " // " .. #svs
-        actions.PerformBatch({
-            utils.CreateEditorAction(action_type.AddTimingPointBatch, lines),
-            utils.CreateEditorAction(action_type.AddScrollVelocityBatch, svs)
-        })
     end
 
     saveStateVariables("animation_manual", settings)

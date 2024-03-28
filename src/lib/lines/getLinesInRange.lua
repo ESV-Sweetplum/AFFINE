@@ -1,4 +1,4 @@
-function getAllLines(lower, upper)
+function getLinesInRange(lower, upper)
     local base = map.TimingPoints
 
     local tbl = {}

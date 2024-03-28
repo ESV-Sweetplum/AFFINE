@@ -17,7 +17,10 @@ function FixedManualMenu()
 
     if noteActivated(offsets) then
         msxTable = strToTable(settings.inputStr, "%S+")
-        placeFixedLines(msxTable, offsets.startOffset + settings.delay, settings.offset, settings.spacing)
+
+        local tbl = tableToLines(msxTable, offsets.startOffset + settings.delay, settings.offset, settings.spacing)
+
+        generateAffines(tbl.lines, tbl.svs, offsets.startOffset, offsets.endOffset)
     end
 
     saveStateVariables("fixed_manual", settings)

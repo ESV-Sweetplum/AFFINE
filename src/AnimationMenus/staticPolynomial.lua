@@ -60,14 +60,9 @@ function StaticBoundaryMenu()
             currentTime = currentTime + 2
         end
 
-        svs = cleanSVs(svs, offsets.startOffset, offsets.endOffset)
+        generateAffines(lines, svs, offsets.startOffset, offsets.endOffset)
 
         settings.debug = #lines .. ' // ' .. #svs
-
-        actions.PerformBatch({
-            utils.CreateEditorAction(action_type.AddTimingPointBatch, lines),
-            utils.CreateEditorAction(action_type.AddScrollVelocityBatch, svs)
-        })
     end
 
     plot(settings.polynomialCoefficients)
@@ -93,5 +88,5 @@ function placeStaticFrame(startTime, min, max, lineDistance, spacing, boundary, 
         iterations = iterations + 1
     end
 
-    return returnFixedLines(msxTable, startTime, 0, spacing)
+    return tableToLines(msxTable, startTime, 0, spacing)
 end

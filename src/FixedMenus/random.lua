@@ -18,10 +18,12 @@ function FixedRandomMenu()
 
     if noteActivated(offsets) then
         msxTable = {}
-        for i = 1, settings.lineCount do
+        for _ = 1, settings.lineCount do
             table.insert(msxTable, math.random(settings.msxBounds[1], settings.msxBounds[2]))
         end
-        placeFixedLines(msxTable, offsets.startOffset + settings.delay, 0, settings.spacing)
+        local tbl = tableToLines(msxTable, offsets.startOffset + settings.delay, 0, settings.spacing)
+
+        generateAffines(tbl.lines, tbl.svs, offsets.startOffset, offsets.endOffset)
     end
 
     saveStateVariables("fixed_random", settings)

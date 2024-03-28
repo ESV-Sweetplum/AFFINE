@@ -1,4 +1,4 @@
-function getAllSVs(lower, upper)
+function getSVsInRange(lower, upper)
     local base = map.ScrollVelocities
 
     local tbl = {}

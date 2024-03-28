@@ -22,10 +22,7 @@ function FixedAutomaticMenu()
             settings.msxBounds[2],
             settings.spacing, settings.distance)
 
-        actions.PerformBatch({
-            utils.CreateEditorAction(action_type.AddTimingPointBatch, tbl.lines),
-            utils.CreateEditorAction(action_type.AddScrollVelocityBatch, tbl.svs)
-        })
+        generateAffines(tbl.lines, tbl.svs, offsets.startOffset, offsets.endOffset)
     end
 
     imgui.Text(settings.debug)
@@ -43,5 +40,5 @@ function placeAutomaticFrame(startTime, low, high, spacing, distance)
         msx = msx + mapProgress(distance[1], progress, distance[2])
         iterations = iterations + 1
     end
-    return returnFixedLines(msxTable, startTime, 0, spacing)
+    return tableToLines(msxTable, startTime, 0, spacing)
 end

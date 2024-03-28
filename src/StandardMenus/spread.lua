@@ -25,6 +25,8 @@ function StandardSpreadMenu()
             iterations = iterations + 1
         end
 
+        lines = cleanLines(lines, offsets.startOffset, offsets.endOffset)
+
         actions.PlaceTimingPointBatch(lines)
     end
 
