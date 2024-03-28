@@ -100,261 +100,6 @@ end
 end
  
  
- function teleport(time, dist)
-    return {
-        sv(time, INCREMENT * dist),
-        sv(time + (1 / INCREMENT), 64000)
-    }
-end
-
-function insertTeleport(svs, time, dist)
-    return concatTables(svs, teleport(time, dist))
-end
- 
- 
- function sv(time, multiplier)
-    return utils.CreateScrollVelocity(time, multiplier)
-end
- 
- 
- function getSVsInRange(lower, upper)
-    local base = map.ScrollVelocities
-
-    local tbl = {}
-
-    for _, v in pairs(base) do
-        if (v.StartTime >= lower) and (v.StartTime <= upper) then
-            table.insert(tbl, v)
-        end
-    end
-
-    return tbl
-end
- 
- 
-  
- 
- function cleanSVs(svs, lower, upper)
-    local tbl = {}
-
-    for _, currentSV in pairs(svs) do
-        if (currentSV.StartTime >= lower and currentSV.StartTime <= upper) then
-            table.insert(tbl, currentSV)
-        end
-    end
-
-    table.insert(tbl, sv(lower, 0))
-    table.insert(tbl, sv(upper + 1, 1))
-
-    return tbl
-end
- 
- 
- function strToTable(str, predicate) 
-    t = {}
-
-    for i in string.gmatch(str, predicate) do
-        t[#t + 1] = i
-    end
-    
-    return t
-end 
- 
- function retrieveStateVariables(menu, variables)
-    for key in pairs(variables) do
-        if (state.GetValue(menu..key) ~= nil) then
-            variables[key] = state.GetValue(menu..key)
-        end
-    end
-end
-
-function saveStateVariables(menu, variables)
-    for key in pairs(variables) do
-        state.SetValue(menu..key, variables[key])
-    end
-end 
- 
- function noteSelected(offsets)
-    return offsets ~= -1
-end
-
-function rangeSelected(offsets)
-    return (offsets ~= -1) and (offsets.startOffset ~= offsets.endOffset) 
-end 
- 
- function mapProgress(starting, progress, ending)
-    return progress * (ending - starting) + starting
-end 
- 
- function getProgress(starting, value, ending)
-    return (value - starting) / (ending - starting)
-end
- 
- 
- function getStartAndEndNoteOffsets()
-    local offsets = {}
-
-    if (#state.SelectedHitObjects == 0) then
-        return -1
-    end
-
-    for i, hitObject in pairs(state.SelectedHitObjects) do
-        offsets[i] = hitObject.StartTime
-    end
-
-    return { startOffset = math.min(table.unpack(offsets)), endOffset = math.max(table.unpack(offsets)) }
-end
- 
- 
- function getOffsets()
-    local offsets = {}
-
-    if (#state.SelectedHitObjects == 0) then
-        return -1
-    end
-
-    for i, hitObject in pairs(state.SelectedHitObjects) do
-        table.insert(offsets, hitObject.StartTime)
-    end
-
-    return offsets
-end
- 
- 
- function tableToLines(svTable, time, msxOffset, spacing)
-    local lines = {}
-    local svs = {}
-
-    for _, msx in pairs(svTable) do
-        local speed = INCREMENT * (msx + msxOffset)
-
-        table.insert(lines, line(time))
-        table.insert(svs, sv(time, speed * -1))
-        table.insert(svs, sv(time - (1 / INCREMENT), speed))
-        table.insert(svs, sv(time + (1 / INCREMENT), 0))
-
-        time = time + spacing
-    end
-
-    local tbl = {
-        lines = lines,
-        svs = svs,
-        time = time
-    }
-    return tbl
-end
- 
- 
- function line(time)
-    local data = map.GetTimingPointAt(time)
-
-    if (not data) then
-        data = {
-            Bpm = map.GetCommonBpm(),
-            Signature = time_signature.Quadruple,
-            Hidden = false
-        }
-    end
-
-    return utils.CreateTimingPoint(time, data.Bpm, data.Signature)
-end
- 
- 
- function getLinesInRange(lower, upper)
-    local base = map.TimingPoints
-
-    local tbl = {}
-
-    for _, v in pairs(base) do
-        if (v.StartTime >= lower) and (v.StartTime <= upper) then
-            table.insert(tbl, v)
-        end
-    end
-
-    return tbl
-end
- 
- 
- function cleanLines(lines, lower, upper)
-    local lastLineTime = lines[#lines].StartTime
-
-    local tbl = {}
-
-    for _, currentLine in pairs(lines) do
-        if (currentLine.StartTime >= lower and currentLine.StartTime <= upper) then
-            table.insert(tbl, currentLine)
-        end
-    end
-
-    table.insert(tbl, line(map.GetNearestSnapTimeFromTime(true, 1, lastLineTime)))
-
-    return tbl
-end
- 
- 
- function generateAffines(lines, svs, lower, upper)
-    lines = cleanLines(lines, lower, upper)
-    svs = cleanSVs(svs, lower, upper)
-
-    actions.PerformBatch({
-        utils.CreateEditorAction(action_type.AddTimingPointBatch, lines),
-        utils.CreateEditorAction(action_type.AddScrollVelocityBatch, svs)
-    })
-end
- 
- 
- function concatTables(t1, t2)
-    for i=1, #t2 do
-       t1[#t1+1] = t2[i]
-    end
-    return t1
- end 
- 
- function activationButton(text)
-    text = text or "Place"
-    return imgui.Button(text .. " Lines")
-end
-
-function rangeActivated(offsets, text)
-    text = text or "Place"
-    if rangeSelected(offsets) then
-        return activationButton(text) or (utils.IsKeyPressed(keys.A) and not utils.IsKeyDown(keys.LeftControl))
-    else
-        return imgui.Text("Select a Region to " .. text .. " Lines.")
-    end
-end
-
-function noteActivated(offsets, text)
-    text = text or "Place"
-    if noteSelected(offsets) then
-        return activationButton(text) or (utils.IsKeyPressed(keys.A) and not utils.IsKeyDown(keys.LeftControl))
-    else
-        return imgui.Text("Select a Note to " .. text .. " Lines.")
-    end
-end
-
-function plot(polynomialCoefficients)
-    imgui.Begin("Boundary Height vs. Time", imgui_window_flags.AlwaysAutoResize)
-
-    local RESOLUTION = 20
-    local tbl = {}
-    for i = 0, RESOLUTION do
-        local progress = i / RESOLUTION
-
-        table.insert(tbl,
-            (polynomialCoefficients[1] * progress ^ 2 + polynomialCoefficients[2] * progress + polynomialCoefficients[3]))
-    end
-
-    imgui.PlotLines("", tbl, #tbl, 0,
-        'Equation: y = ' ..
-        polynomialCoefficients[1] .. 'x^2 + ' .. polynomialCoefficients[2] .. 'x + ' .. polynomialCoefficients[3], 0,
-        1,
-        { 250, 150 })
-
-    imgui.End()
-end
- 
- 
  function FixedRandomMenu()
     local settings = {
         delay = DEFAULT_DELAY,
@@ -928,6 +673,262 @@ function placeDynamicFrame(startTime, min, max, lineDistance, spacing, polynomia
     end
 
     return tableToLines(msxTable, startTime, 0, spacing)
+end
+ 
+ 
+ function teleport(time, dist)
+    return {
+        sv(time, INCREMENT * dist),
+        sv(time + (1 / INCREMENT), 64000)
+    }
+end
+
+function insertTeleport(svs, time, dist)
+    return concatTables(svs, teleport(time, dist))
+end
+ 
+ 
+ function sv(time, multiplier)
+    return utils.CreateScrollVelocity(time, multiplier)
+end
+ 
+ 
+ function getSVsInRange(lower, upper)
+    local base = map.ScrollVelocities
+
+    local tbl = {}
+
+    for _, v in pairs(base) do
+        if (v.StartTime >= lower) and (v.StartTime <= upper) then
+            table.insert(tbl, v)
+        end
+    end
+
+    return tbl
+end
+ 
+ 
+  
+ 
+ function cleanSVs(svs, lower, upper)
+    local tbl = {}
+
+    for _, currentSV in pairs(svs) do
+        if (currentSV.StartTime >= lower and currentSV.StartTime <= upper) then
+            table.insert(tbl, currentSV)
+        end
+    end
+
+    table.insert(tbl, sv(lower, 0))
+    table.insert(tbl, sv(upper + 1, 1))
+
+    return tbl
+end
+ 
+ 
+ function strToTable(str, predicate) 
+    t = {}
+
+    for i in string.gmatch(str, predicate) do
+        t[#t + 1] = i
+    end
+    
+    return t
+end 
+ 
+ function retrieveStateVariables(menu, variables)
+    for key in pairs(variables) do
+        if (state.GetValue(menu..key) ~= nil) then
+            variables[key] = state.GetValue(menu..key)
+        end
+    end
+end
+
+function saveStateVariables(menu, variables)
+    for key in pairs(variables) do
+        state.SetValue(menu..key, variables[key])
+    end
+end 
+ 
+ function noteSelected(offsets)
+    return offsets ~= -1
+end
+
+function rangeSelected(offsets)
+    return (offsets ~= -1) and (offsets.startOffset ~= offsets.endOffset) 
+end 
+ 
+ function mapProgress(starting, progress, ending)
+    return progress * (ending - starting) + starting
+end 
+ 
+ function getProgress(starting, value, ending)
+    return (value - starting) / (ending - starting)
+end
+ 
+ 
+ function getStartAndEndNoteOffsets()
+    local offsets = {}
+
+    if (#state.SelectedHitObjects == 0) then
+        return -1
+    end
+
+    for i, hitObject in pairs(state.SelectedHitObjects) do
+        offsets[i] = hitObject.StartTime
+    end
+
+    return { startOffset = math.min(table.unpack(offsets)), endOffset = math.max(table.unpack(offsets)) }
+end
+ 
+ 
+ function getOffsets()
+    local offsets = {}
+
+    if (#state.SelectedHitObjects == 0) then
+        return -1
+    end
+
+    for i, hitObject in pairs(state.SelectedHitObjects) do
+        table.insert(offsets, hitObject.StartTime)
+    end
+
+    return offsets
+end
+ 
+ 
+ function tableToLines(svTable, time, msxOffset, spacing)
+    local lines = {}
+    local svs = {}
+
+    for _, msx in pairs(svTable) do
+        local speed = INCREMENT * (msx + msxOffset)
+
+        table.insert(lines, line(time))
+        table.insert(svs, sv(time, speed * -1))
+        table.insert(svs, sv(time - (1 / INCREMENT), speed))
+        table.insert(svs, sv(time + (1 / INCREMENT), 0))
+
+        time = time + spacing
+    end
+
+    local tbl = {
+        lines = lines,
+        svs = svs,
+        time = time
+    }
+    return tbl
+end
+ 
+ 
+ function line(time)
+    local data = map.GetTimingPointAt(time)
+
+    if (not data) then
+        data = {
+            Bpm = map.GetCommonBpm(),
+            Signature = time_signature.Quadruple,
+            Hidden = false
+        }
+    end
+
+    return utils.CreateTimingPoint(time, data.Bpm, data.Signature)
+end
+ 
+ 
+ function getLinesInRange(lower, upper)
+    local base = map.TimingPoints
+
+    local tbl = {}
+
+    for _, v in pairs(base) do
+        if (v.StartTime >= lower) and (v.StartTime <= upper) then
+            table.insert(tbl, v)
+        end
+    end
+
+    return tbl
+end
+ 
+ 
+ function cleanLines(lines, lower, upper)
+    local lastLineTime = lines[#lines].StartTime
+
+    local tbl = {}
+
+    for _, currentLine in pairs(lines) do
+        if (currentLine.StartTime >= lower and currentLine.StartTime <= upper) then
+            table.insert(tbl, currentLine)
+        end
+    end
+
+    table.insert(tbl, line(map.GetNearestSnapTimeFromTime(true, 1, lastLineTime) - 2))
+    table.insert(tbl, line(map.GetNearestSnapTimeFromTime(true, 1, lastLineTime)))
+
+    return tbl
+end
+ 
+ 
+ function generateAffines(lines, svs, lower, upper)
+    lines = cleanLines(lines, lower, upper)
+    svs = cleanSVs(svs, lower, upper)
+
+    actions.PerformBatch({
+        utils.CreateEditorAction(action_type.AddTimingPointBatch, lines),
+        utils.CreateEditorAction(action_type.AddScrollVelocityBatch, svs)
+    })
+end
+ 
+ 
+ function concatTables(t1, t2)
+    for i=1, #t2 do
+       t1[#t1+1] = t2[i]
+    end
+    return t1
+ end 
+ 
+ function activationButton(text)
+    text = text or "Place"
+    return imgui.Button(text .. " Lines")
+end
+
+function rangeActivated(offsets, text)
+    text = text or "Place"
+    if rangeSelected(offsets) then
+        return activationButton(text) or (utils.IsKeyPressed(keys.A) and not utils.IsKeyDown(keys.LeftControl))
+    else
+        return imgui.Text("Select a Region to " .. text .. " Lines.")
+    end
+end
+
+function noteActivated(offsets, text)
+    text = text or "Place"
+    if noteSelected(offsets) then
+        return activationButton(text) or (utils.IsKeyPressed(keys.A) and not utils.IsKeyDown(keys.LeftControl))
+    else
+        return imgui.Text("Select a Note to " .. text .. " Lines.")
+    end
+end
+
+function plot(polynomialCoefficients)
+    imgui.Begin("Boundary Height vs. Time", imgui_window_flags.AlwaysAutoResize)
+
+    local RESOLUTION = 20
+    local tbl = {}
+    for i = 0, RESOLUTION do
+        local progress = i / RESOLUTION
+
+        table.insert(tbl,
+            (polynomialCoefficients[1] * progress ^ 2 + polynomialCoefficients[2] * progress + polynomialCoefficients[3]))
+    end
+
+    imgui.PlotLines("", tbl, #tbl, 0,
+        'Equation: y = ' ..
+        polynomialCoefficients[1] .. 'x^2 + ' .. polynomialCoefficients[2] .. 'x + ' .. polynomialCoefficients[3], 0,
+        1,
+        { 250, 150 })
+
+    imgui.End()
 end
  
  
