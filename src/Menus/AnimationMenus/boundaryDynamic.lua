@@ -1,24 +1,15 @@
 function DynamicBoundaryMenu()
-    local settings = {
-        msxBounds = DEFAULT_MSX_BOUNDS,
-        spacing = DEFAULT_SPACING,
-        distance = DEFAULT_DISTANCE,
-        polynomialCoefficients = { -4, 4, 0 },
-        evalOver = true,
-        debug = 'Lines // SVs'
-    }
+    local parameterTable = constructParameters("msxBounds", 'distance', "spacing", "polynomialCoefficients", {
+        inputType = "RadioBoolean",
+        key = "evalOver",
+        label = { "Change Bottom Bound", "Change Top Bound" },
+        value = true
+    })
 
-    retrieveStateVariables("animation_polynomial", settings)
+    retrieveParameters("animation_polynomial", parameterTable)
 
-    _, settings.msxBounds = imgui.InputInt2("Start/End MSX", settings.msxBounds)
-    _, settings.distance = imgui.InputInt2("Distance Between Lines", settings.distance)
-
-    _, settings.spacing = imgui.InputFloat("MS Spacing", settings.spacing)
-
-    _, settings.polynomialCoefficients = imgui.InputFloat3("Coefficients", settings.polynomialCoefficients, "%.2f")
-
-    settings.evalOver = RadioBoolean("Change Bottom Bound", "Change Top Bound", settings.evalOver)
-
+    parameterInputs(parameterTable)
+    local settings = parametersToSettings(parameterTable)
     local offsets = getStartAndEndNoteOffsets()
 
     if rangeActivated(offsets) then
@@ -55,10 +46,7 @@ function DynamicBoundaryMenu()
     end
     Plot(settings.polynomialCoefficients)
 
-
-
-
-    saveStateVariables("animation_polynomial", settings)
+    saveParameters("animation_polynomial", parameterTable)
 end
 
 function placeDynamicFrame(startTime, min, max, lineDistance, spacing, polynomialHeight, evalOver)

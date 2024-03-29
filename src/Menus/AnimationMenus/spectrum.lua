@@ -1,26 +1,16 @@
 function SpectrumMenu()
-    local settings = {
-        center = DEFAULT_CENTER,
-        maxSpread = DEFAULT_MAX_SPREAD,
-        spacing = DEFAULT_SPACING,
-        distance = DEFAULT_DISTANCE,
-        polynomialCoefficients = { -4, 4, 0 },
-        inverse = false,
-        debug = 'Lines // SVs'
-    }
+    local parameterTable = constructParameters("center", "maxSpread", "distance", "spacing", "polynomialCoefficients", {
+        inputType = "Checkbox",
+        key = "inverse",
+        label = "Inverse?",
+        value = false
+    })
 
-    retrieveStateVariables("animation_spectrum", settings)
+    retrieveParameters("animation_spectrum", parameterTable)
 
-    _, settings.center = imgui.InputInt("Center MSX", settings.center)
-    _, settings.maxSpread = imgui.InputInt("Max MSX Spread", settings.maxSpread)
-    _, settings.distance = imgui.InputInt2("Distance Between Lines", settings.distance)
+    parameterInputs(parameterTable)
 
-    _, settings.spacing = imgui.InputFloat("MS Spacing", settings.spacing)
-
-    _, settings.polynomialCoefficients = imgui.InputFloat3("Coefficients", settings.polynomialCoefficients, "%.2f")
-
-    _, settings.inverse = imgui.Checkbox("Inverse?", settings.inverse)
-
+    local settings = parametersToSettings(parameterTable)
     local offsets = getStartAndEndNoteOffsets()
 
     if rangeActivated(offsets) then
@@ -57,10 +47,7 @@ function SpectrumMenu()
     end
     Plot(settings.polynomialCoefficients)
 
-
-
-
-    saveStateVariables("animation_spectrum", settings)
+    saveParameters("animation_spectrum", parameterTable)
 end
 
 function placeSpectrumFrame(startTime, center, maxSpread, lineDistance, spacing, boundary, inverse)

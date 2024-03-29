@@ -8,7 +8,8 @@ function IncrementalAnimationMenu()
         inputType = "Checkbox",
         key = "allLinesVisible",
         label = "All Lines Visible?",
-        value = true
+        value = true,
+        sameLine = true
     })
 
     retrieveParameters("animation_incremental", parameterTable)

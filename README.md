@@ -44,8 +44,8 @@ All files necessary are contained within the `src` directory. When you're finish
 
 - Add tooltips to each item
 - ~~Add setting to Increment that shows only one line at a time~~
-- Migrate Boundary (Static), Boundary (Dynamic), Incremental and Spectrum to use parameter tables
-- Compiler automatically add parameter get/set module
+- ~~Migrate Boundary (Static), Boundary (Dynamic), Incremental and Spectrum to use parameter tables~~
+- ~~Compiler automatically add parameter get/set module~~ (Not worth my time)
 - ~~Move radio button code into a variable argument component~~
 - Add documentation to all helper functions
 

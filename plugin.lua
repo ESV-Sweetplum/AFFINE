@@ -23,6 +23,7 @@ DEFAULT_FPS = 90
 DEFAULT_CENTER = 200
 DEFAULT_MAX_SPREAD = 200
 DEFAULT_PROGRESSION_EXPONENT = 1
+DEFAULT_POLYNOMIAL_COEFFICIENTS = { -4, 4, 0 }
 
 INCREMENT = 64
 MAX_ITERATIONS = 1000
@@ -182,28 +183,18 @@ end
  
  
  function SpectrumMenu()
-    local settings = {
-        center = DEFAULT_CENTER,
-        maxSpread = DEFAULT_MAX_SPREAD,
-        spacing = DEFAULT_SPACING,
-        distance = DEFAULT_DISTANCE,
-        polynomialCoefficients = { -4, 4, 0 },
-        inverse = false,
-        debug = 'Lines // SVs'
-    }
+    local parameterTable = constructParameters("center", "maxSpread", "distance", "spacing", "polynomialCoefficients", {
+        inputType = "Checkbox",
+        key = "inverse",
+        label = "Inverse?",
+        value = false
+    })
 
-    retrieveStateVariables("animation_spectrum", settings)
+    retrieveParameters("animation_spectrum", parameterTable)
 
-    _, settings.center = imgui.InputInt("Center MSX", settings.center)
-    _, settings.maxSpread = imgui.InputInt("Max MSX Spread", settings.maxSpread)
-    _, settings.distance = imgui.InputInt2("Distance Between Lines", settings.distance)
+    parameterInputs(parameterTable)
 
-    _, settings.spacing = imgui.InputFloat("MS Spacing", settings.spacing)
-
-    _, settings.polynomialCoefficients = imgui.InputFloat3("Coefficients", settings.polynomialCoefficients, "%.2f")
-
-    _, settings.inverse = imgui.Checkbox("Inverse?", settings.inverse)
-
+    local settings = parametersToSettings(parameterTable)
     local offsets = getStartAndEndNoteOffsets()
 
     if rangeActivated(offsets) then
@@ -240,10 +231,7 @@ end
     end
     Plot(settings.polynomialCoefficients)
 
-
-
-
-    saveStateVariables("animation_spectrum", settings)
+    saveParameters("animation_spectrum", parameterTable)
 end
 
 function placeSpectrumFrame(startTime, center, maxSpread, lineDistance, spacing, boundary, inverse)
@@ -329,13 +317,6 @@ end
  
  
  function IncrementalAnimationMenu()
-    local settings = {
-        msxList = "50 100 150 200",
-        spacing = DEFAULT_SPACING,
-        bounce = false,
-        allLinesVisible = true
-    }
-
     local parameterTable = constructParameters('msxList', 'spacing', {
         inputType = "RadioBoolean",
         key = "bounce",
@@ -345,7 +326,8 @@ end
         inputType = "Checkbox",
         key = "allLinesVisible",
         label = "All Lines Visible?",
-        value = true
+        value = true,
+        sameLine = true
     })
 
     retrieveParameters("animation_incremental", parameterTable)
@@ -508,27 +490,17 @@ end
  
  
  function StaticBoundaryMenu()
-    local settings = {
-        msxBounds = DEFAULT_MSX_BOUNDS,
-        spacing = DEFAULT_SPACING,
-        distance = DEFAULT_DISTANCE,
-        polynomialCoefficients = { -4, 4, 0 },
-        evalUnder = true,
-        debug = 'Lines // SVs'
-    }
+    local parameterTable = constructParameters("msxBounds", "distance", "spacing", "polynomialCoefficients", {
+        inputType = "RadioBoolean",
+        key = "evalUnder",
+        label = { "Render Over Boundary", "Render Under Boundary" },
+        value = true
+    })
 
-    retrieveStateVariables("animation_polynomial", settings)
+    retrieveParameters("animation_polynomial", parameterTable)
 
-    _, settings.msxBounds = imgui.InputInt2("Start/End MSX", settings.msxBounds)
-    _, settings.distance = imgui.InputInt2("Distance Between Lines", settings.distance)
-
-    _, settings.spacing = imgui.InputFloat("MS Spacing", settings.spacing)
-
-    _, settings.polynomialCoefficients = imgui.InputFloat3("Coefficients", settings.polynomialCoefficients, "%.2f")
-
-
-    settings.evalUnder = RadioBoolean("Render Over Boundary", "Render Under Boundary", settings.evalUnder)
-
+    parameterInputs(parameterTable)
+    local settings = parametersToSettings(parameterTable)
     local offsets = getStartAndEndNoteOffsets()
 
     if rangeActivated(offsets) then
@@ -567,9 +539,7 @@ end
 
     Plot(settings.polynomialCoefficients)
 
-
-
-    saveStateVariables("animation_polynomial", settings)
+    saveParameters("animation_polynomial", parameterTable)
 end
 
 function placeStaticFrame(startTime, min, max, lineDistance, spacing, boundary, evalUnder)
@@ -593,26 +563,17 @@ end
  
  
  function DynamicBoundaryMenu()
-    local settings = {
-        msxBounds = DEFAULT_MSX_BOUNDS,
-        spacing = DEFAULT_SPACING,
-        distance = DEFAULT_DISTANCE,
-        polynomialCoefficients = { -4, 4, 0 },
-        evalOver = true,
-        debug = 'Lines // SVs'
-    }
+    local parameterTable = constructParameters("msxBounds", 'distance', "spacing", "polynomialCoefficients", {
+        inputType = "RadioBoolean",
+        key = "evalOver",
+        label = { "Change Bottom Bound", "Change Top Bound" },
+        value = true
+    })
 
-    retrieveStateVariables("animation_polynomial", settings)
+    retrieveParameters("animation_polynomial", parameterTable)
 
-    _, settings.msxBounds = imgui.InputInt2("Start/End MSX", settings.msxBounds)
-    _, settings.distance = imgui.InputInt2("Distance Between Lines", settings.distance)
-
-    _, settings.spacing = imgui.InputFloat("MS Spacing", settings.spacing)
-
-    _, settings.polynomialCoefficients = imgui.InputFloat3("Coefficients", settings.polynomialCoefficients, "%.2f")
-
-    settings.evalOver = RadioBoolean("Change Bottom Bound", "Change Top Bound", settings.evalOver)
-
+    parameterInputs(parameterTable)
+    local settings = parametersToSettings(parameterTable)
     local offsets = getStartAndEndNoteOffsets()
 
     if rangeActivated(offsets) then
@@ -649,10 +610,7 @@ end
     end
     Plot(settings.polynomialCoefficients)
 
-
-
-
-    saveStateVariables("animation_polynomial", settings)
+    saveParameters("animation_polynomial", parameterTable)
 end
 
 function placeDynamicFrame(startTime, min, max, lineDistance, spacing, polynomialHeight, evalOver)
@@ -811,26 +769,29 @@ end
     msxBounds2 = function (v) return InputInt2Wrapper("End Lower/Upper MSX", v) end,
     offset = function (v) return InputIntWrapper("MSX Offset", v) end,
     delay = function (v) return InputIntWrapper("MS Delay", v) end,
+    center = function (v) return InputIntWrapper("Center MSX", v) end,
+    maxSpread = function (v) return InputIntWrapper("Max MSX Spread", v) end,
     spacing = function (v) return InputFloatWrapper("MS Spacing", v) end,
     debug = function (v) if v ~= '' then return imgui.Text(v) end end,
     distance = function (v) return InputInt2Wrapper('Distance Between Lines', v) end,
     lineCount = function (v) return InputIntWrapper("Line Count", v) end,
     progressionExponent = function (v) return InputFloatWrapper("Progression Exponent", v) end,
-    fps = function (v) return InputFloatWrapper("Animation FPS", v) end
+    fps = function (v) return InputFloatWrapper("Animation FPS", v) end,
+    polynomialCoefficients = function (v) return InputFloat3Wrapper("Coefficients", v) end
 }
 
 CUSTOM_INPUT_DICTIONARY = {
-    Int = function (label, v, tooltip) return InputIntWrapper(label, v, tooltip) end,
-    RadioBoolean = function (labels, v, tooltip) return RadioBoolean(labels[1], labels[2], v, tooltip) end,
-    Checkbox = function (label, v, tooltip) return CheckboxWrapper(label, v, tooltip) end,
-    Int2 = function (label, v, tooltip) return InputInt2Wrapper(label, v, tooltip) end,
-    Float = function (label, v, tooltip) return InputFloatWrapper(label, v, tooltip) end
+    Int = function (label, v, tooltip, sameLine) return InputIntWrapper(label, v, tooltip) end,
+    RadioBoolean = function (labels, v, tooltip, sameLine) return RadioBoolean(labels[1], labels[2], v, tooltip) end,
+    Checkbox = function (label, v, tooltip, sameLine) return CheckboxWrapper(label, v, tooltip, sameLine) end,
+    Int2 = function (label, v, tooltip, sameLine) return InputInt2Wrapper(label, v, tooltip) end,
+    Float = function (label, v, tooltip, sameLine) return InputFloatWrapper(label, v, tooltip) end
 }
 
 function parameterInputs(parameterTable)
     for _, tbl in ipairs(parameterTable) do
         if (tbl.inputType ~= nil) then
-            tbl.value = CUSTOM_INPUT_DICTIONARY[tbl.inputType](tbl.label, tbl.value, tbl.tooltip)
+            tbl.value = CUSTOM_INPUT_DICTIONARY[tbl.inputType](tbl.label, tbl.value, tbl.tooltip, tbl.sameLine or false)
         else
             tbl.value = INPUT_DICTIONARY[tbl.key](tbl.value)
         end
@@ -851,7 +812,10 @@ end
     distance = DEFAULT_DISTANCE,
     lineCount = DEFAULT_LINE_COUNT,
     progressionExponent = DEFAULT_PROGRESSION_EXPONENT,
-    fps = DEFAULT_FPS
+    polynomialCoefficients = DEFAULT_POLYNOMIAL_COEFFICIENTS,
+    fps = DEFAULT_FPS,
+    center = DEFAULT_CENTER,
+    maxSpread = DEFAULT_MAX_SPREAD
 }
 
 function constructParameters(...)
@@ -863,7 +827,8 @@ function constructParameters(...)
                 inputType = v.inputType,
                 key = v.key,
                 value = v.value,
-                label = v.label
+                label = v.label,
+                sameLine = v.sameLine or false
             })
             goto continue
         end
@@ -1073,8 +1038,13 @@ function InputInt2Wrapper(label, v, tooltip)
     return v
 end
 
-function CheckboxWrapper(label, v, tooltip)
-    imgui.SameLine(0, 7.5)
+function InputFloat3Wrapper(label, v, tooltip)
+    _, v = imgui.InputFloat3(label, v, "%.2f")
+    return v
+end
+
+function CheckboxWrapper(label, v, tooltip, sameLine)
+    if (sameLine) then imgui.SameLine(0, 7.5) end
     _, v = imgui.Checkbox(label, v)
     return v
 end

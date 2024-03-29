@@ -18,8 +18,13 @@ function InputInt2Wrapper(label, v, tooltip)
     return v
 end
 
-function CheckboxWrapper(label, v, tooltip)
-    imgui.SameLine(0, 7.5)
+function InputFloat3Wrapper(label, v, tooltip)
+    _, v = imgui.InputFloat3(label, v, "%.2f")
+    return v
+end
+
+function CheckboxWrapper(label, v, tooltip, sameLine)
+    if (sameLine) then imgui.SameLine(0, 7.5) end
     _, v = imgui.Checkbox(label, v)
     return v
 end

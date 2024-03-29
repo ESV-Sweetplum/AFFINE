@@ -11,7 +11,10 @@ DEFAULT_DICTIONARY = {
     distance = DEFAULT_DISTANCE,
     lineCount = DEFAULT_LINE_COUNT,
     progressionExponent = DEFAULT_PROGRESSION_EXPONENT,
-    fps = DEFAULT_FPS
+    polynomialCoefficients = DEFAULT_POLYNOMIAL_COEFFICIENTS,
+    fps = DEFAULT_FPS,
+    center = DEFAULT_CENTER,
+    maxSpread = DEFAULT_MAX_SPREAD
 }
 
 function constructParameters(...)
@@ -23,7 +26,8 @@ function constructParameters(...)
                 inputType = v.inputType,
                 key = v.key,
                 value = v.value,
-                label = v.label
+                label = v.label,
+                sameLine = v.sameLine or false
             })
             goto continue
         end
