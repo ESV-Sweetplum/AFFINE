@@ -1,8 +1,15 @@
-# AFFINE v1.0.0
+# AFFINE v1.1.0
 
 AFFINE (pronounced aff-een) is a [Quaver](https://www.quavergame.com) plugin designed to simplify map making. In particular, AFFINE assists with the creation of static and dynamic timing lines.
 
-## Features
+## Features:
+
+- Automatically place no-SV timing line batches.
+- Place frames of timing lines.
+- Create versatile timing line animations.
+- Automatically update with `affine-updater.exe`.
+
+## Menus:
 
 - ***(Standard > Spread)*** Place a gradient of timing lines over a selected region.
 - ***(Standard > At Notes)*** Place timing lines at selected notes.  
@@ -12,13 +19,17 @@ AFFINE (pronounced aff-een) is a [Quaver](https://www.quavergame.com) plugin des
     - ***(Fixed > Automatic)*** Place a gradient of timing lines between designated heights.
     - ***(Fixed > Random)*** Place a random amount of timing lines within a region.  
 ⠀
+- ***(Animation > Manual (Basic))*** Set up keyframes for individual timing lines to move from one MSX to another.
+- ***(Animation > Increment)*** Setup a base manual frame. For each note present within the animation boundary, a new frame is generated, progressively forming the base manual frame.
 - ***(Animation > Boundary (Static))*** Hide and show backdrop timing lines using a boundary.
 - ***(Animation > Boundary (Dynamic))*** Scale backdrop timing lines with a boundary.
 - ***(Animation > Glitch)*** Create an animation with constantly changing random notes. 
 - ***(Animation > Spectrum)*** Create an animation with a spectrum with variable height.
 - ***(Animation > Expansion / Contraction)*** Create an animation with expanding / contracting timing lines.
 
-## Basic Tutorial
+- ***(Deletion)*** Easily delete all timing lines and scroll velocities within a certain range.
+
+## Basic Tutorial:
 
 - Select the primary line placement type (`Standard`, `Fixed`, `Animation`).
 - Select the secondary line placement type. This is the second dropdown below the primary line placement dropdown.
