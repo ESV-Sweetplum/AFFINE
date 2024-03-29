@@ -129,7 +129,11 @@ end
  
  
  function FixedManualMenu()
-    local parameterTable = constructParameters('msxList', 'offset', 'delay', 'spacing')
+    local parameterTable = constructParameters('msxList', 'offset', 'delay', 'spacing', {
+        type = "Radio",
+        key = "Your mother",
+        defaultValue = false
+    })
 
     retrieveParameters("fixed_manual", parameterTable)
 
@@ -606,15 +610,7 @@ end
 
     _, settings.polynomialCoefficients = imgui.InputFloat3("Coefficients", settings.polynomialCoefficients, "%.2f")
 
-    if imgui.RadioButton("Change Bottom Bound", not settings.evalOver) then
-        settings.evalOver = false
-    end
-
-    imgui.SameLine(0, 7.5)
-
-    if imgui.RadioButton("Change Top Bound", settings.evalOver) then
-        settings.evalOver = true
-    end
+    settings.evalOver = RadioBoolean("Change Bottom Bound", "Change Top Bound", settings.evalOver)
 
     local offsets = getStartAndEndNoteOffsets()
 
@@ -850,10 +846,15 @@ function constructParameters(...)
     local parameterTable = {}
 
     for _, v in ipairs({ ... }) do
+        if (type(v) == "table") then
+            imgui.Text("table hehe")
+            goto continue
+        end
         table.insert(parameterTable, {
             key = v,
             value = DEFAULT_DICTIONARY[v]
         })
+        ::continue::
     end
 
     table.insert(parameterTable, { key = "debug", value = "" })

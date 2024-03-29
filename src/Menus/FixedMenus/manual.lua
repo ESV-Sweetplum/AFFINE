@@ -1,5 +1,9 @@
 function FixedManualMenu()
-    local parameterTable = constructParameters('msxList', 'offset', 'delay', 'spacing')
+    local parameterTable = constructParameters('msxList', 'offset', 'delay', 'spacing', {
+        type = "Radio",
+        key = "Your mother",
+        defaultValue = false
+    })
 
     retrieveParameters("fixed_manual", parameterTable)
 

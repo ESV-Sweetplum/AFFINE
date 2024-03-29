@@ -14,15 +14,19 @@ DEFAULT_DICTIONARY = {
     fps = DEFAULT_FPS
 }
 
-
 function constructParameters(...)
     local parameterTable = {}
 
     for _, v in ipairs({ ... }) do
+        if (type(v) == "table") then
+            imgui.Text("table hehe")
+            goto continue
+        end
         table.insert(parameterTable, {
             key = v,
             value = DEFAULT_DICTIONARY[v]
         })
+        ::continue::
     end
 
     table.insert(parameterTable, { key = "debug", value = "" })
