@@ -7,7 +7,7 @@ function StandardSpreadMenu()
     local settings = parametersToSettings(parameterTable)
     local offsets = getStartAndEndNoteOffsets()
 
-    if rangeActivated(offsets) then
+    if RangeActivated(offsets) then
         local lines = {}
         local msx = offsets.startOffset
 

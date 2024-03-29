@@ -13,7 +13,7 @@ function SpectrumMenu()
     local settings = parametersToSettings(parameterTable)
     local offsets = getStartAndEndNoteOffsets()
 
-    if rangeActivated(offsets) then
+    if RangeActivated(offsets) then
         local currentTime = offsets.startOffset + 1
 
         local iterations = 0

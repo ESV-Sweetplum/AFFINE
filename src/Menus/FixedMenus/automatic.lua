@@ -7,7 +7,7 @@ function FixedAutomaticMenu()
     local settings = parametersToSettings(parameterTable)
     local offsets = getStartAndEndNoteOffsets()
 
-    if noteActivated(offsets) then
+    if NoteActivated(offsets) then
         local tbl = placeAutomaticFrame(offsets.startOffset + settings.delay, settings.msxBounds[1],
             settings.msxBounds[2],
             settings.spacing, settings.distance)

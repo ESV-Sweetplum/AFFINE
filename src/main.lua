@@ -95,7 +95,7 @@ function DeletionMenu()
 
     local offsets = getStartAndEndNoteOffsets()
 
-    if (rangeActivated(offsets, "Remove")) then
+    if (RangeActivated(offsets, "Remove")) then
         svs = getSVsInRange(offsets.startOffset, offsets.endOffset)
         lines = getLinesInRange(offsets.startOffset, offsets.endOffset)
 

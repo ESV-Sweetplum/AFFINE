@@ -19,7 +19,7 @@ function IncrementalAnimationMenu()
 
     local offsets = getStartAndEndNoteOffsets()
 
-    if rangeActivated(offsets) then
+    if RangeActivated(offsets) then
         local times = getSelectedOffsets()
 
         local currentIndex = 1

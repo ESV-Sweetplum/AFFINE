@@ -1,5 +1,5 @@
 function cleanLines(lines, lower, upper)
-    local lastLineTime = lines[#lines].StartTime
+    local lastLineTime = math.max(lines[#lines].StartTime, upper)
 
     local tbl = {}
 

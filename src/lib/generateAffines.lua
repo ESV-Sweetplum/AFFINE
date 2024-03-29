@@ -1,5 +1,7 @@
 function generateAffines(lines, svs, lower, upper)
-    upper = upper or map.GetNearestSnapTimeFromTime(true, 1, lower);
+    if (not upper or upper == lower) then
+        upper = map.GetNearestSnapTimeFromTime(true, 1, lower);
+    end
 
     lines = cleanLines(lines, lower, upper)
     svs = cleanSVs(svs, lower, upper)

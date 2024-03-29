@@ -1,7 +1,7 @@
 function StandardAtNotesMenu()
     local offsets = getSelectedOffsets()
 
-    if noteActivated(offsets) then
+    if NoteActivated(offsets) then
         local lines = {}
 
         if (type(offsets) == "integer") then return end

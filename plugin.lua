@@ -145,7 +145,7 @@ end
     if noteActivated(offsets) then
         msxTable = strToTable(settings.msxList, "%S+")
         local tbl = tableToLines(msxTable, offsets.startOffset + settings.delay, settings.offset, settings.spacing)
-        generateAffines(tbl.lines, tbl.svs, offsets.startOffset)
+        generateAffines(tbl.lines, tbl.svs, offsets.startOffset, offsets.endOffset)
 
         parameterTable[#parameterTable].value = "Line Count: " .. #tbl.lines .. " // SV Count: " .. #tbl.svs
     end
@@ -820,10 +820,12 @@ end
         return InputFloatWrapper("MS Spacing", v,
             "The MS distance between two timing lines. Recommended to keep this below 2.")
     end,
-    debug = function (v) if v ~= '' then
+    debug = function (v)
+        if v ~= '' then
             imgui.Text(v)
             return v
-        end end,
+        end
+    end,
     distance = function (v)
         return InputInt2Wrapper('Distance Between Lines', v,
             "Represents the distance between two adjacent timing lines, measured in MSX. If in Expansion/Contraction, the two numbers represent the start and end distance of the animation. If not in Expansion/Contraction, the two numbers represent the start and end distance of the frame.")
@@ -831,7 +833,7 @@ end
     lineCount = function (v) return InputIntWrapper("Line Count", v, "The number of timing lines to place on one frame.") end,
     progressionExponent = function (v)
         return InputFloatWrapper("Progression Exponent", v,
-            "Adjust this to change how the animation progresses over time.")
+            "Adjust this to change how the animation progresses over time. The higher the number, the faster the animation progresses at the beginning.")
     end,
     fps = function (v) return InputFloatWrapper("Animation FPS", v, "FPS of the animation.") end,
     polynomialCoefficients = function (v)
@@ -992,7 +994,7 @@ end
  
  
  function cleanLines(lines, lower, upper)
-    local lastLineTime = lines[#lines].StartTime
+    local lastLineTime = math.max(lines[#lines].StartTime, upper)
 
     local tbl = {}
 
@@ -1010,7 +1012,9 @@ end
  
  
  function generateAffines(lines, svs, lower, upper)
-    upper = upper or map.GetNearestSnapTimeFromTime(true, 1, lower);
+    if (not upper or upper == lower) then
+        upper = map.GetNearestSnapTimeFromTime(true, 1, lower);
+    end
 
     lines = cleanLines(lines, lower, upper)
     svs = cleanSVs(svs, lower, upper)

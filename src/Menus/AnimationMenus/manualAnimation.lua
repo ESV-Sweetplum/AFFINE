@@ -7,7 +7,7 @@ function BasicManualAnimationMenu()
     local settings = parametersToSettings(parameterTable)
     local offsets = getStartAndEndNoteOffsets()
 
-    if rangeActivated(offsets) then
+    if RangeActivated(offsets) then
         startMsxTable = strToTable(settings.msxList1, "%S+")
         endMsxTable = strToTable(settings.msxList2, "%S+")
 

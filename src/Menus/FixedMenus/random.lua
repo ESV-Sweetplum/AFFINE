@@ -8,7 +8,7 @@ function FixedRandomMenu()
 
     local offsets = getStartAndEndNoteOffsets()
 
-    if noteActivated(offsets) then
+    if NoteActivated(offsets) then
         msxTable = {}
         for _ = 1, settings.lineCount do
             table.insert(msxTable, math.random(settings.msxBounds[1], settings.msxBounds[2]))
