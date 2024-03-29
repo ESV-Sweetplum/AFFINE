@@ -761,23 +761,65 @@ end
  
  
  INPUT_DICTIONARY = {
-    msxList = function (v) return InputTextWrapper("MSX List", v) end,
-    msxList1 = function (v) return InputTextWrapper("Start MSX List", v) end,
-    msxList2 = function (v) return InputTextWrapper("End MSX List", v) end,
-    msxBounds = function (v) return InputInt2Wrapper("Lower/Upper MSX", v) end,
-    msxBounds1 = function (v) return InputInt2Wrapper("Start Lower/Upper MSX", v) end,
-    msxBounds2 = function (v) return InputInt2Wrapper("End Lower/Upper MSX", v) end,
-    offset = function (v) return InputIntWrapper("MSX Offset", v) end,
-    delay = function (v) return InputIntWrapper("MS Delay", v) end,
-    center = function (v) return InputIntWrapper("Center MSX", v) end,
-    maxSpread = function (v) return InputIntWrapper("Max MSX Spread", v) end,
-    spacing = function (v) return InputFloatWrapper("MS Spacing", v) end,
+    msxList = function (v)
+        return InputTextWrapper("MSX List", v,
+            "List of MSX values to place. For each number given, a timing line will be placed at that number MSX above the receptor.")
+    end,
+    msxList1 = function (v)
+        return InputTextWrapper("Start MSX List", v,
+            "List of MSX values to place. For each number given, a timing line will be placed at that number MSX above the receptor. These timing lines represent the start of the animation.")
+    end,
+    msxList2 = function (v)
+        return InputTextWrapper("End MSX List", v,
+            "List of MSX values to place. For each number given, a timing line will be placed at that number MSX above the receptor. These timing lines represent the end of the animation.")
+    end,
+    msxBounds = function (v)
+        return InputInt2Wrapper("Lower/Upper MSX", v,
+            "The lowest MSX and highest MSX values timing lines can reach. Anything outside of these bounds will be ignored.")
+    end,
+    msxBounds1 = function (v)
+        return InputInt2Wrapper("Start Lower/Upper MSX", v,
+            "The lowest MSX and highest MSX values timing lines can reach, at the start of the animation.")
+    end,
+    msxBounds2 = function (v)
+        return InputInt2Wrapper("End Lower/Upper MSX", v,
+            "The lowest MSX and highest MSX values timing lines can reach, at the end of the animation.")
+    end,
+    offset = function (v)
+        return InputIntWrapper("MSX Offset", v,
+            "Adds this MSX value to all MSX values in the MSX List above.")
+    end,
+    delay = function (v)
+        return InputIntWrapper("MS Delay", v,
+            "MS Delay waits for this value of milliseconds to place the timing lines. Could be useful if you have conflicting SVs.")
+    end,
+    center = function (v)
+        return InputIntWrapper("Center MSX", v,
+            "The center of the spectrum, an MSX distance above the receptor.")
+    end,
+    maxSpread = function (v)
+        return InputIntWrapper("Max MSX Spread", v,
+            "The maximum distance away from the center that a timing line can reach.")
+    end,
+    spacing = function (v)
+        return InputFloatWrapper("MS Spacing", v,
+            "The MS distance between two timing lines. Recommended to keep this below 2.")
+    end,
     debug = function (v) if v ~= '' then return imgui.Text(v) end end,
-    distance = function (v) return InputInt2Wrapper('Distance Between Lines', v) end,
-    lineCount = function (v) return InputIntWrapper("Line Count", v) end,
-    progressionExponent = function (v) return InputFloatWrapper("Progression Exponent", v) end,
-    fps = function (v) return InputFloatWrapper("Animation FPS", v) end,
-    polynomialCoefficients = function (v) return InputFloat3Wrapper("Coefficients", v) end
+    distance = function (v)
+        return InputInt2Wrapper('Distance Between Lines', v,
+            "Represents the distance between two adjacent timing lines, measured in MSX. If in Expansion/Contraction, the two numbers represent the start and end distance of the animation. If not in Expansion/Contraction, the two numbers represent the start and end distance of the frame.")
+    end,
+    lineCount = function (v) return InputIntWrapper("Line Count", v, "The number of timing lines to place on one frame.") end,
+    progressionExponent = function (v)
+        return InputFloatWrapper("Progression Exponent", v,
+            "Adjust this to change how the animation progresses over time.")
+    end,
+    fps = function (v) return InputFloatWrapper("Animation FPS", v, "FPS of the animation.") end,
+    polynomialCoefficients = function (v)
+        return InputFloat3Wrapper("Coefficients", v,
+            "The boundary follows a curve, described by these coefficients. You can see what the boundary height vs. time graph looks like on the plot.")
+    end
 }
 
 CUSTOM_INPUT_DICTIONARY = {
@@ -969,7 +1011,9 @@ end
     return t1
  end 
  
- function tooltip(text)
+ function Tooltip(text)
+    imgui.SameLine(0, 4)
+    imgui.TextDisabled("(?)")
     if not imgui.IsItemHovered() then return end
     imgui.BeginTooltip()
     imgui.PushTextWrapPos(imgui.GetFontSize() * 20)
@@ -1020,32 +1064,38 @@ end
  
  function InputIntWrapper(label, v, tooltip)
     _, v = imgui.InputInt(label, v, 0, 0)
+    Tooltip(tooltip)
     return v
 end
 
 function InputFloatWrapper(label, v, tooltip)
     _, v = imgui.InputFloat(label, v, 0, 0, "%.2f")
+    Tooltip(tooltip)
     return v
 end
 
 function InputTextWrapper(label, v, tooltip)
     _, v = imgui.InputText(label, v, 6942)
+    Tooltip(tooltip)
     return v
 end
 
 function InputInt2Wrapper(label, v, tooltip)
     _, v = imgui.InputInt2(label, v)
+    Tooltip(tooltip)
     return v
 end
 
 function InputFloat3Wrapper(label, v, tooltip)
     _, v = imgui.InputFloat3(label, v, "%.2f")
+    Tooltip(tooltip)
     return v
 end
 
 function CheckboxWrapper(label, v, tooltip, sameLine)
     if (sameLine) then imgui.SameLine(0, 7.5) end
     _, v = imgui.Checkbox(label, v)
+    Tooltip(tooltip)
     return v
 end
  
