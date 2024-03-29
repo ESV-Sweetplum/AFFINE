@@ -43,10 +43,12 @@ INPUT_DICTIONARY = {
         return InputFloatWrapper("MS Spacing", v,
             "The MS distance between two timing lines. Recommended to keep this below 2.")
     end,
-    debug = function (v) if v ~= '' then
+    debug = function (v)
+        if v ~= '' then
             imgui.Text(v)
             return v
-        end end,
+        end
+    end,
     distance = function (v)
         return InputInt2Wrapper('Distance Between Lines', v,
             "Represents the distance between two adjacent timing lines, measured in MSX. If in Expansion/Contraction, the two numbers represent the start and end distance of the animation. If not in Expansion/Contraction, the two numbers represent the start and end distance of the frame.")
@@ -54,7 +56,7 @@ INPUT_DICTIONARY = {
     lineCount = function (v) return InputIntWrapper("Line Count", v, "The number of timing lines to place on one frame.") end,
     progressionExponent = function (v)
         return InputFloatWrapper("Progression Exponent", v,
-            "Adjust this to change how the animation progresses over time.")
+            "Adjust this to change how the animation progresses over time. The higher the number, the faster the animation progresses at the beginning.")
     end,
     fps = function (v) return InputFloatWrapper("Animation FPS", v, "FPS of the animation.") end,
     polynomialCoefficients = function (v)
