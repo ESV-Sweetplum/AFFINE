@@ -43,7 +43,10 @@ INPUT_DICTIONARY = {
         return InputFloatWrapper("MS Spacing", v,
             "The MS distance between two timing lines. Recommended to keep this below 2.")
     end,
-    debug = function (v) if v ~= '' then return imgui.Text(v) end end,
+    debug = function (v) if v ~= '' then
+            imgui.Text(v)
+            return v
+        end end,
     distance = function (v)
         return InputInt2Wrapper('Distance Between Lines', v,
             "Represents the distance between two adjacent timing lines, measured in MSX. If in Expansion/Contraction, the two numbers represent the start and end distance of the animation. If not in Expansion/Contraction, the two numbers represent the start and end distance of the frame.")

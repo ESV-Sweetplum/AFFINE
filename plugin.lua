@@ -81,6 +81,8 @@ MAX_ITERATIONS = 1000
 
         lines = cleanLines(lines, offsets.startOffset, offsets.endOffset)
 
+        parameterTable[#parameterTable].value = "Line Count: " .. #lines -- DEBUG TEXT
+
         actions.PlaceTimingPointBatch(lines)
     end
 
@@ -123,7 +125,9 @@ end
         local tbl = tableToLines(msxTable, offsets.startOffset + settings.delay, 0, settings.spacing)
 
         generateAffines(tbl.lines, tbl.svs, offsets.startOffset, offsets.endOffset)
+        parameterTable[#parameterTable].value = "Line Count: " .. #tbl.lines .. " // SV Count: " .. #tbl.svs
     end
+
 
     saveParameters("fixed_random", parameterTable)
 end
@@ -138,11 +142,14 @@ end
     local settings = parametersToSettings(parameterTable)
     local offsets = getStartAndEndNoteOffsets()
 
-    -- if noteActivated(offsets) then
-    --     msxTable = strToTable(settings.msxList, "%S+")
-    --     local tbl = tableToLines(msxTable, offsets.startOffset + settings.delay, settings.offset, settings.spacing)
-    --     generateAffines(tbl.lines, tbl.svs, offsets.startOffset)
-    -- end
+    if noteActivated(offsets) then
+        msxTable = strToTable(settings.msxList, "%S+")
+        local tbl = tableToLines(msxTable, offsets.startOffset + settings.delay, settings.offset, settings.spacing)
+        generateAffines(tbl.lines, tbl.svs, offsets.startOffset)
+
+        parameterTable[#parameterTable].value = "Line Count: " .. #tbl.lines .. " // SV Count: " .. #tbl.svs
+    end
+
 
     saveParameters("fixed_manual", parameterTable)
 end
@@ -163,6 +170,7 @@ end
             settings.spacing, settings.distance)
 
         generateAffines(tbl.lines, tbl.svs, offsets.startOffset, offsets.endOffset)
+        parameterTable[#parameterTable].value = "Line Count: " .. #tbl.lines .. " // SV Count: " .. #tbl.svs
     end
 
     saveParameters("fixed_automatic", parameterTable)
@@ -228,6 +236,7 @@ end
         end
 
         generateAffines(lines, svs, offsets.startOffset, offsets.endOffset)
+        parameterTable[#parameterTable].value = "Line Count: " .. #lines .. " // SV Count: " .. #svs
     end
     Plot(settings.polynomialCoefficients)
 
@@ -310,6 +319,7 @@ end
         end
 
         generateAffines(lines, svs, offsets.startOffset, offsets.endOffset)
+        parameterTable[#parameterTable].value = "Line Count: " .. #lines .. " // SV Count: " .. #svs
     end
 
     saveParameters("animation_manual", parameterTable)
@@ -389,6 +399,7 @@ end
         end
 
         generateAffines(lines, svs, offsets.startOffset, offsets.endOffset)
+        parameterTable[#parameterTable].value = "Line Count: " .. #lines .. " // SV Count: " .. #svs
     end
 
     saveParameters("animation_incremental", parameterTable)
@@ -435,6 +446,7 @@ end
         end
 
         generateAffines(lines, svs, offsets.startOffset, offsets.endOffset)
+        parameterTable[#parameterTable].value = "Line Count: " .. #lines .. " // SV Count: " .. #svs
     end
 
 
@@ -483,6 +495,7 @@ end
         end
 
         generateAffines(lines, svs, offsets.startOffset, offsets.endOffset)
+        parameterTable[#parameterTable].value = "Line Count: " .. #lines .. " // SV Count: " .. #svs
     end
 
     saveParameters("animation_expansion_contraction", parameterTable)
@@ -535,6 +548,7 @@ end
         end
 
         generateAffines(lines, svs, offsets.startOffset, offsets.endOffset)
+        parameterTable[#parameterTable].value = "Line Count: " .. #lines .. " // SV Count: " .. #svs
     end
 
     Plot(settings.polynomialCoefficients)
@@ -607,6 +621,7 @@ end
         end
 
         generateAffines(lines, svs, offsets.startOffset, offsets.endOffset)
+        parameterTable[#parameterTable].value = "Line Count: " .. #lines .. " // SV Count: " .. #svs
     end
     Plot(settings.polynomialCoefficients)
 
@@ -805,7 +820,10 @@ end
         return InputFloatWrapper("MS Spacing", v,
             "The MS distance between two timing lines. Recommended to keep this below 2.")
     end,
-    debug = function (v) if v ~= '' then return imgui.Text(v) end end,
+    debug = function (v) if v ~= '' then
+            imgui.Text(v)
+            return v
+        end end,
     distance = function (v)
         return InputInt2Wrapper('Distance Between Lines', v,
             "Represents the distance between two adjacent timing lines, measured in MSX. If in Expansion/Contraction, the two numbers represent the start and end distance of the animation. If not in Expansion/Contraction, the two numbers represent the start and end distance of the frame.")

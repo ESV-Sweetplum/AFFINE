@@ -44,6 +44,7 @@ function SpectrumMenu()
         end
 
         generateAffines(lines, svs, offsets.startOffset, offsets.endOffset)
+        parameterTable[#parameterTable].value = "Line Count: " .. #lines .. " // SV Count: " .. #svs
     end
     Plot(settings.polynomialCoefficients)
 

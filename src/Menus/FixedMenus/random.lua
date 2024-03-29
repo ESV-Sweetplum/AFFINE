@@ -16,7 +16,9 @@ function FixedRandomMenu()
         local tbl = tableToLines(msxTable, offsets.startOffset + settings.delay, 0, settings.spacing)
 
         generateAffines(tbl.lines, tbl.svs, offsets.startOffset, offsets.endOffset)
+        parameterTable[#parameterTable].value = "Line Count: " .. #tbl.lines .. " // SV Count: " .. #tbl.svs
     end
+
 
     saveParameters("fixed_random", parameterTable)
 end

@@ -7,11 +7,14 @@ function FixedManualMenu()
     local settings = parametersToSettings(parameterTable)
     local offsets = getStartAndEndNoteOffsets()
 
-    -- if noteActivated(offsets) then
-    --     msxTable = strToTable(settings.msxList, "%S+")
-    --     local tbl = tableToLines(msxTable, offsets.startOffset + settings.delay, settings.offset, settings.spacing)
-    --     generateAffines(tbl.lines, tbl.svs, offsets.startOffset)
-    -- end
+    if noteActivated(offsets) then
+        msxTable = strToTable(settings.msxList, "%S+")
+        local tbl = tableToLines(msxTable, offsets.startOffset + settings.delay, settings.offset, settings.spacing)
+        generateAffines(tbl.lines, tbl.svs, offsets.startOffset)
+
+        parameterTable[#parameterTable].value = "Line Count: " .. #tbl.lines .. " // SV Count: " .. #tbl.svs
+    end
+
 
     saveParameters("fixed_manual", parameterTable)
 end

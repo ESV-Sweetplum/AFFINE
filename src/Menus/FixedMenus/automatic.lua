@@ -13,6 +13,7 @@ function FixedAutomaticMenu()
             settings.spacing, settings.distance)
 
         generateAffines(tbl.lines, tbl.svs, offsets.startOffset, offsets.endOffset)
+        parameterTable[#parameterTable].value = "Line Count: " .. #tbl.lines .. " // SV Count: " .. #tbl.svs
     end
 
     saveParameters("fixed_automatic", parameterTable)
