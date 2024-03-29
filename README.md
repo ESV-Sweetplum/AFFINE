@@ -40,6 +40,13 @@ AFFINE (pronounced aff-een) is a [Quaver](https://www.quavergame.com) plugin des
 
 All files necessary are contained within the `src` directory. When you're finished editing, run `src/compiler.js` to compile all files into `plugin.lua`. Note: compilation is only possible with [Node.js](https://nodejs.org/en/download) installed.
 
+## TO DO (before v1.1):
+
+- Add tooltips to each item
+- Add setting to Increment that shows only one line at a time
+- Migrate Boundary (Static), Boundary (Dynamic), Incremental and Spectrum to use parameter tables
+
+
 ## Special thanks to:
 
 - [amoguSV](https://github.com/kloi34/AmoguSV): The internal logic for displacements, increments, and teleportation was taken from this plugin. Highly recommended to use this plugin alongside AFFINE.
