@@ -1,11 +1,4 @@
 function IncrementalAnimationMenu()
-    local settings = {
-        msxList = "50 100 150 200",
-        spacing = DEFAULT_SPACING,
-        bounce = false,
-        allLinesVisible = true
-    }
-
     local parameterTable = constructParameters('msxList', 'spacing', {
         inputType = "RadioBoolean",
         key = "bounce",
