@@ -215,7 +215,7 @@ end
 
         while ((currentTime + (2 / INCREMENT)) <= offsets.endOffset) and (iterations < MAX_ITERATIONS) do
             local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset) ^
-            (1 / settings.progressionExponent)
+                settings.progressionExponent
 
 
             local heightDifferential = settings.maxSpread *
@@ -299,7 +299,7 @@ end
 
         while (currentTime < offsets.endOffset) and (iterations < MAX_ITERATIONS) do
             local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset) ^
-                (1 / settings.progressionExponent)
+                settings.progressionExponent
 
             local msxTable = {}
 
@@ -427,7 +427,7 @@ end
 
         while (currentTime <= offsets.endOffset) do
             local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset) ^
-            (1 / settings.progressionExponent)
+                settings.progressionExponent
 
 
             local lowerBound = mapProgress(settings.msxBounds1[1], progress, settings.msxBounds2[1])
@@ -480,7 +480,7 @@ end
 
         while (currentTime <= offsets.endOffset) and (iterations < MAX_ITERATIONS) do
             local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset) ^
-            (1 / settings.progressionExponent)
+                settings.progressionExponent
 
             local distance = mapProgress(settings.distance[1], progress, settings.distance[2])
 
@@ -534,7 +534,7 @@ end
 
         while ((currentTime + (2 / INCREMENT)) <= offsets.endOffset) and (iterations < MAX_ITERATIONS) do
             local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset) ^
-                (1 / settings.progressionExponent)
+                settings.progressionExponent
 
 
             local boundary = settings.msxBounds[2] *
@@ -611,7 +611,7 @@ end
 
         while ((currentTime + (2 / INCREMENT)) <= offsets.endOffset) and (iterations < MAX_ITERATIONS) do
             local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset) ^
-                (1 / settings.progressionExponent)
+                settings.progressionExponent
 
             local polynomialHeight = (settings.polynomialCoefficients[1] * progress ^ 2 + settings.polynomialCoefficients[2] * progress + settings.polynomialCoefficients[3])
 
@@ -845,7 +845,7 @@ end
     lineCount = function (v) return InputIntWrapper("Line Count", v, "The number of timing lines to place on one frame.") end,
     progressionExponent = function (v)
         return InputFloatWrapper("Progression Exponent", v,
-            "Adjust this to change how the animation progresses over time. The higher the number, the faster the animation progresses at the beginning.")
+            "Adjust this to change how the animation progresses over time. The higher the number, the slower the animation takes to start, but it ramps up much faster. If you aren't familiar with exponential graphs, keep this at 1.")
     end,
     fps = function (v)
         return InputFloatWrapper("Animation FPS", v,
@@ -1081,7 +1081,7 @@ end
     local RESOLUTION = 50
     local tbl = {}
     for i = 0, RESOLUTION do
-        local progress = (i / RESOLUTION) ^ (1 / progressionExponent)
+        local progress = (i / RESOLUTION) ^ (progressionExponent)
 
         table.insert(tbl,
             (polynomialCoefficients[1] * progress ^ 2 + polynomialCoefficients[2] * progress + polynomialCoefficients[3]))
@@ -1102,10 +1102,10 @@ end
         'Equation: y = ' ..
         polynomialCoefficients[1] ..
         't^' ..
-        string.sub(2 / (progressionExponent), 1, 4) ..
+        string.sub(2 * progressionExponent, 1, 4) ..
         ' ' .. sign1 .. ' ' ..
         polynomialCoefficients[2] ..
-        't^' .. string.sub(1 / progressionExponent, 1, 4) .. ' ' .. sign2 .. ' ' .. polynomialCoefficients[3], 0,
+        't^' .. string.sub(progressionExponent, 1, 4) .. ' ' .. sign2 .. ' ' .. polynomialCoefficients[3], 0,
         1,
         { 250, 150 })
 
