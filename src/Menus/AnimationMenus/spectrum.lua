@@ -55,7 +55,7 @@ function SpectrumMenu()
 
         generateAffines(lines, svs, offsets.startOffset, offsets.endOffset)
     end
-    plot(settings.polynomialCoefficients)
+    Plot(settings.polynomialCoefficients)
 
 
 

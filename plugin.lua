@@ -238,7 +238,7 @@ end
 
         generateAffines(lines, svs, offsets.startOffset, offsets.endOffset)
     end
-    plot(settings.polynomialCoefficients)
+    Plot(settings.polynomialCoefficients)
 
 
 
@@ -341,15 +341,8 @@ end
     _, settings.msxList = imgui.InputText("List", settings.msxList, 6942)
     _, settings.spacing = imgui.InputFloat("MS Spacing", settings.spacing)
 
-    if imgui.RadioButton("12341234", not settings.bounce) then
-        settings.bounce = false
-    end
 
-    imgui.SameLine(0, 7.5)
-
-    if imgui.RadioButton("1234321", settings.bounce) then
-        settings.bounce = true
-    end
+    settings.bounce = RadioBoolean("12341234", "1234321", settings.bounce)
 
     imgui.SameLine(0, 7.5)
 
@@ -528,15 +521,8 @@ end
 
     _, settings.polynomialCoefficients = imgui.InputFloat3("Coefficients", settings.polynomialCoefficients, "%.2f")
 
-    if imgui.RadioButton("Render Over Boundary", not settings.evalUnder) then
-        settings.evalUnder = false
-    end
 
-    imgui.SameLine(0, 7.5)
-
-    if imgui.RadioButton("Render Under Boundary", settings.evalUnder) then
-        settings.evalUnder = true
-    end
+    settings.evalUnder = RadioBoolean("Render Over Boundary", "Render Under Boundary", settings.evalUnder)
 
     local offsets = getStartAndEndNoteOffsets()
 
@@ -574,7 +560,7 @@ end
         generateAffines(lines, svs, offsets.startOffset, offsets.endOffset)
     end
 
-    plot(settings.polynomialCoefficients)
+    Plot(settings.polynomialCoefficients)
 
 
 
@@ -664,7 +650,7 @@ end
 
         generateAffines(lines, svs, offsets.startOffset, offsets.endOffset)
     end
-    plot(settings.polynomialCoefficients)
+    Plot(settings.polynomialCoefficients)
 
 
 
@@ -1010,7 +996,22 @@ end
 end
  
  
- function plot(polynomialCoefficients)
+ function RadioBoolean(labelFalse, labelTrue, v)
+    if imgui.RadioButton(labelFalse, not v) then
+        v = false
+    end
+
+    imgui.SameLine(0, 7.5)
+
+    if imgui.RadioButton(labelTrue, v) then
+        v = true
+    end
+
+    return v
+end
+ 
+ 
+ function Plot(polynomialCoefficients)
     imgui.Begin("Boundary Height vs. Time", imgui_window_flags.AlwaysAutoResize)
 
     local RESOLUTION = 20

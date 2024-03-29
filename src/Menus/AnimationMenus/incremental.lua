@@ -11,15 +11,8 @@ function IncrementalAnimationMenu()
     _, settings.msxList = imgui.InputText("List", settings.msxList, 6942)
     _, settings.spacing = imgui.InputFloat("MS Spacing", settings.spacing)
 
-    if imgui.RadioButton("12341234", not settings.bounce) then
-        settings.bounce = false
-    end
 
-    imgui.SameLine(0, 7.5)
-
-    if imgui.RadioButton("1234321", settings.bounce) then
-        settings.bounce = true
-    end
+    settings.bounce = RadioBoolean("12341234", "1234321", settings.bounce)
 
     imgui.SameLine(0, 7.5)
 

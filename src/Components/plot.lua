@@ -1,4 +1,4 @@
-function plot(polynomialCoefficients)
+function Plot(polynomialCoefficients)
     imgui.Begin("Boundary Height vs. Time", imgui_window_flags.AlwaysAutoResize)
 
     local RESOLUTION = 20
