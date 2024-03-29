@@ -47,6 +47,7 @@ All files necessary are contained within the `src` directory. When you're finish
 - Migrate Boundary (Static), Boundary (Dynamic), Incremental and Spectrum to use parameter tables
 - Compiler automatically add parameter get/set module
 - Move radio button code into a variable argument component
+- Add documentation to all helper functions
 
 ## Special thanks to:
 
