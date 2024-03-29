@@ -1,5 +1,6 @@
 ANIMATION_MENU_LIST = {
     'Manual (Basic)',
+    'Incremental',
     'Boundary (Static)',
     'Boundary (Dynamic)',
     'Glitch',
@@ -9,6 +10,7 @@ ANIMATION_MENU_LIST = {
 
 ANIMATION_MENU_FUNCTIONS = {
     BasicManualAnimationMenu,
+    IncrementalAnimationMenu,
     StaticBoundaryMenu,
     DynamicBoundaryMenu,
     GlitchMenu,

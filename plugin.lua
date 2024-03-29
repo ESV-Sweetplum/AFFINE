@@ -2,6 +2,7 @@
  
  ANIMATION_MENU_LIST = {
     'Manual (Basic)',
+    'Incremental',
     'Boundary (Static)',
     'Boundary (Dynamic)',
     'Glitch',
@@ -220,100 +221,6 @@ function placeAutomaticFrame(startTime, low, high, spacing, distance)
 end
  
  
- function StaticBoundaryMenu()
-    local settings = {
-        msxBounds = DEFAULT_MSX_BOUNDS,
-        spacing = DEFAULT_SPACING,
-        distance = DEFAULT_DISTANCE,
-        polynomialCoefficients = { -4, 4, 0 },
-        evalUnder = true,
-        debug = 'Lines // SVs'
-    }
-
-    retrieveStateVariables("animation_polynomial", settings)
-
-    _, settings.msxBounds = imgui.InputInt2("Start/End MSX", settings.msxBounds)
-    _, settings.distance = imgui.InputInt2("Distance Between Lines", settings.distance)
-
-    _, settings.spacing = imgui.InputFloat("MS Spacing", settings.spacing)
-
-    _, settings.polynomialCoefficients = imgui.InputFloat3("Coefficients", settings.polynomialCoefficients, "%.2f")
-
-    if imgui.RadioButton("Render Over Boundary", not settings.evalUnder) then
-        settings.evalUnder = false
-    end
-
-    imgui.SameLine(0, 7.5)
-
-    if imgui.RadioButton("Render Under Boundary", settings.evalUnder) then
-        settings.evalUnder = true
-    end
-
-    local offsets = getStartAndEndNoteOffsets()
-
-    if rangeActivated(offsets) then
-        local currentTime = offsets.startOffset + 1
-
-        local iterations = 0
-        local lines = {}
-        local svs = {}
-
-
-        while ((currentTime + (2 / INCREMENT)) <= offsets.endOffset) and (iterations < MAX_ITERATIONS) do
-            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset)
-
-            local boundary = settings.msxBounds[2] *
-                (settings.polynomialCoefficients[1] * progress ^ 2 + settings.polynomialCoefficients[2] * progress + settings.polynomialCoefficients[3])
-
-            local tbl = placeStaticFrame(currentTime, settings.msxBounds[1], settings.msxBounds[2], settings.distance,
-                settings.spacing, boundary, settings.evalUnder)
-
-            if (tbl.time > offsets.endOffset) then break end
-
-            currentTime = tbl.time
-
-            lines = concatTables(lines, tbl.lines)
-            svs = concatTables(svs, tbl.svs)
-
-            insertTeleport(svs, currentTime + 1 / INCREMENT, 1000)
-
-            iterations = iterations + 1
-
-            currentTime = currentTime + 2
-        end
-
-        generateAffines(lines, svs, offsets.startOffset, offsets.endOffset)
-
-        settings.debug = #lines .. ' // ' .. #svs
-    end
-
-    plot(settings.polynomialCoefficients)
-
-    imgui.Text(settings.debug)
-
-    saveStateVariables("animation_polynomial", settings)
-end
-
-function placeStaticFrame(startTime, min, max, lineDistance, spacing, boundary, evalUnder)
-    msxTable = {}
-    local msx = min
-    local iterations = 0
-
-    while (msx <= max) and (iterations < MAX_ITERATIONS) do
-        local progress = getProgress(min, msx, max)
-        if (evalUnder) then
-            if (msx <= boundary) then table.insert(msxTable, msx) end
-        else
-            if (msx >= boundary) then table.insert(msxTable, msx) end
-        end
-        msx = msx + mapProgress(lineDistance[1], progress, lineDistance[2])
-        iterations = iterations + 1
-    end
-
-    return tableToLines(msxTable, startTime, 0, spacing)
-end
- 
- 
  function SpectrumMenu()
     local settings = {
         center = DEFAULT_CENTER,
@@ -477,6 +384,85 @@ end
 end
  
  
+ function IncrementalAnimationMenu()
+    local settings = {
+        inputStr = "50 100 150 200",
+        spacing = DEFAULT_SPACING,
+        bounce = false
+    }
+
+    retrieveStateVariables("animation_incremental", settings)
+
+    _, settings.inputStr = imgui.InputText("List", settings.inputStr, 6942)
+    _, settings.spacing = imgui.InputFloat("MS Spacing", settings.spacing)
+
+    if imgui.RadioButton("12341234", not settings.bounce) then
+        settings.bounce = false
+    end
+
+    imgui.SameLine(0, 7.5)
+
+    if imgui.RadioButton("1234321", settings.bounce) then
+        settings.bounce = true
+    end
+
+    local offsets = getStartAndEndNoteOffsets()
+
+    if rangeActivated(offsets) then
+        local times = getSelectedOffsets()
+
+        local currentIndex = 1
+        local currentHeight = 1
+
+        local currentAddition = 1
+
+        local totalMsxTable = strToTable(settings.inputStr, "%S+")
+        local MAX_HEIGHT = #totalMsxTable
+
+        local lines = {}
+        local svs = {}
+
+        while (currentIndex <= #times) do
+            local currentTime = times[currentIndex] + 1
+
+            local msxTable = {}
+
+            for i = 1, currentHeight do
+                table.insert(msxTable, totalMsxTable[i])
+            end
+
+            local tbl = tableToLines(msxTable, currentTime + 5, 0, settings.spacing)
+
+            lines = concatTables(lines, tbl.lines)
+            svs = concatTables(svs, tbl.svs)
+
+            insertTeleport(svs, currentTime + 1 / INCREMENT, 1000)
+
+            currentIndex = currentIndex + 1
+
+            if (settings.bounce) then
+                if (currentHeight == MAX_HEIGHT) then
+                    currentAddition = -1
+                elseif (currentHeight == 1) then
+                    currentAddition = 1
+                end
+                currentHeight = currentHeight + currentAddition
+            else
+                if (currentHeight == MAX_HEIGHT) then
+                    currentHeight = 1
+                else
+                    currentHeight = currentHeight + 1
+                end
+            end
+        end
+
+        generateAffines(lines, svs, offsets.startOffset, offsets.endOffset)
+    end
+
+    saveStateVariables("animation_incremental", settings)
+end
+ 
+ 
  function GlitchMenu()
     local settings = {
         msxBounds = DEFAULT_MSX_BOUNDS,
@@ -593,6 +579,100 @@ end
     imgui.Text(settings.debug)
 
     saveStateVariables("animation_expansion_contraction", settings)
+end
+ 
+ 
+ function StaticBoundaryMenu()
+    local settings = {
+        msxBounds = DEFAULT_MSX_BOUNDS,
+        spacing = DEFAULT_SPACING,
+        distance = DEFAULT_DISTANCE,
+        polynomialCoefficients = { -4, 4, 0 },
+        evalUnder = true,
+        debug = 'Lines // SVs'
+    }
+
+    retrieveStateVariables("animation_polynomial", settings)
+
+    _, settings.msxBounds = imgui.InputInt2("Start/End MSX", settings.msxBounds)
+    _, settings.distance = imgui.InputInt2("Distance Between Lines", settings.distance)
+
+    _, settings.spacing = imgui.InputFloat("MS Spacing", settings.spacing)
+
+    _, settings.polynomialCoefficients = imgui.InputFloat3("Coefficients", settings.polynomialCoefficients, "%.2f")
+
+    if imgui.RadioButton("Render Over Boundary", not settings.evalUnder) then
+        settings.evalUnder = false
+    end
+
+    imgui.SameLine(0, 7.5)
+
+    if imgui.RadioButton("Render Under Boundary", settings.evalUnder) then
+        settings.evalUnder = true
+    end
+
+    local offsets = getStartAndEndNoteOffsets()
+
+    if rangeActivated(offsets) then
+        local currentTime = offsets.startOffset + 1
+
+        local iterations = 0
+        local lines = {}
+        local svs = {}
+
+
+        while ((currentTime + (2 / INCREMENT)) <= offsets.endOffset) and (iterations < MAX_ITERATIONS) do
+            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset)
+
+            local boundary = settings.msxBounds[2] *
+                (settings.polynomialCoefficients[1] * progress ^ 2 + settings.polynomialCoefficients[2] * progress + settings.polynomialCoefficients[3])
+
+            local tbl = placeStaticFrame(currentTime, settings.msxBounds[1], settings.msxBounds[2], settings.distance,
+                settings.spacing, boundary, settings.evalUnder)
+
+            if (tbl.time > offsets.endOffset) then break end
+
+            currentTime = tbl.time
+
+            lines = concatTables(lines, tbl.lines)
+            svs = concatTables(svs, tbl.svs)
+
+            insertTeleport(svs, currentTime + 1 / INCREMENT, 1000)
+
+            iterations = iterations + 1
+
+            currentTime = currentTime + 2
+        end
+
+        generateAffines(lines, svs, offsets.startOffset, offsets.endOffset)
+
+        settings.debug = #lines .. ' // ' .. #svs
+    end
+
+    plot(settings.polynomialCoefficients)
+
+    imgui.Text(settings.debug)
+
+    saveStateVariables("animation_polynomial", settings)
+end
+
+function placeStaticFrame(startTime, min, max, lineDistance, spacing, boundary, evalUnder)
+    msxTable = {}
+    local msx = min
+    local iterations = 0
+
+    while (msx <= max) and (iterations < MAX_ITERATIONS) do
+        local progress = getProgress(min, msx, max)
+        if (evalUnder) then
+            if (msx <= boundary) then table.insert(msxTable, msx) end
+        else
+            if (msx >= boundary) then table.insert(msxTable, msx) end
+        end
+        msx = msx + mapProgress(lineDistance[1], progress, lineDistance[2])
+        iterations = iterations + 1
+    end
+
+    return tableToLines(msxTable, startTime, 0, spacing)
 end
  
  
@@ -975,6 +1055,7 @@ function draw()
  
  ANIMATION_MENU_FUNCTIONS = {
     BasicManualAnimationMenu,
+    IncrementalAnimationMenu,
     StaticBoundaryMenu,
     DynamicBoundaryMenu,
     GlitchMenu,
@@ -1095,7 +1176,7 @@ function DeletionMenu()
 
         local actionTable = {}
 
-        if (math.fmod(settings.deletionType, 2) ~= 0) then
+        if (settings.deletionType % 2 ~= 0) then
             table.insert(actionTable,
                 utils.CreateEditorAction(action_type.RemoveScrollVelocityBatch, svs))
         end
