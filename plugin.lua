@@ -129,11 +129,7 @@ end
  
  
  function FixedManualMenu()
-    local parameterTable = constructParameters('msxList', 'offset', 'delay', 'spacing', {
-        type = "Radio",
-        key = "Your mother",
-        defaultValue = false
-    })
+    local parameterTable = constructParameters('msxList', 'offset', 'delay', 'spacing')
 
     retrieveParameters("fixed_manual", parameterTable)
 
@@ -141,11 +137,11 @@ end
     local settings = parametersToSettings(parameterTable)
     local offsets = getStartAndEndNoteOffsets()
 
-    if noteActivated(offsets) then
-        msxTable = strToTable(settings.msxList, "%S+")
-        local tbl = tableToLines(msxTable, offsets.startOffset + settings.delay, settings.offset, settings.spacing)
-        generateAffines(tbl.lines, tbl.svs, offsets.startOffset)
-    end
+    -- if noteActivated(offsets) then
+    --     msxTable = strToTable(settings.msxList, "%S+")
+    --     local tbl = tableToLines(msxTable, offsets.startOffset + settings.delay, settings.offset, settings.spacing)
+    --     generateAffines(tbl.lines, tbl.svs, offsets.startOffset)
+    -- end
 
     saveParameters("fixed_manual", parameterTable)
 end
@@ -340,17 +336,22 @@ end
         allLinesVisible = true
     }
 
-    retrieveStateVariables("animation_incremental", settings)
+    local parameterTable = constructParameters('msxList', 'spacing', {
+        inputType = "RadioBoolean",
+        key = "bounce",
+        label = { "12341234", "1234321" },
+        value = false
+    }, {
+        inputType = "Checkbox",
+        key = "allLinesVisible",
+        label = "All Lines Visible?",
+        value = true
+    })
 
-    _, settings.msxList = imgui.InputText("List", settings.msxList, 6942)
-    _, settings.spacing = imgui.InputFloat("MS Spacing", settings.spacing)
+    retrieveParameters("animation_incremental", parameterTable)
 
-
-    settings.bounce = RadioBoolean("12341234", "1234321", settings.bounce)
-
-    imgui.SameLine(0, 7.5)
-
-    _, settings.allLinesVisible = imgui.Checkbox("All Lines Visible?", settings.allLinesVisible)
+    parameterInputs(parameterTable)
+    local settings = parametersToSettings(parameterTable)
 
     local offsets = getStartAndEndNoteOffsets()
 
@@ -408,7 +409,7 @@ end
         generateAffines(lines, svs, offsets.startOffset, offsets.endOffset)
     end
 
-    saveStateVariables("animation_incremental", settings)
+    saveParameters("animation_incremental", parameterTable)
 end
  
  
@@ -818,9 +819,21 @@ end
     fps = function (v) return InputFloatWrapper("Animation FPS", v) end
 }
 
+CUSTOM_INPUT_DICTIONARY = {
+    Int = function (label, v, tooltip) return InputIntWrapper(label, v, tooltip) end,
+    RadioBoolean = function (labels, v, tooltip) return RadioBoolean(labels[1], labels[2], v, tooltip) end,
+    Checkbox = function (label, v, tooltip) return CheckboxWrapper(label, v, tooltip) end,
+    Int2 = function (label, v, tooltip) return InputInt2Wrapper(label, v, tooltip) end,
+    Float = function (label, v, tooltip) return InputFloatWrapper(label, v, tooltip) end
+}
+
 function parameterInputs(parameterTable)
     for _, tbl in ipairs(parameterTable) do
-        tbl.value = INPUT_DICTIONARY[tbl.key](tbl.value)
+        if (tbl.inputType ~= nil) then
+            tbl.value = CUSTOM_INPUT_DICTIONARY[tbl.inputType](tbl.label, tbl.value, tbl.tooltip)
+        else
+            tbl.value = INPUT_DICTIONARY[tbl.key](tbl.value)
+        end
     end
 end
  
@@ -841,13 +854,17 @@ end
     fps = DEFAULT_FPS
 }
 
-
 function constructParameters(...)
     local parameterTable = {}
 
     for _, v in ipairs({ ... }) do
         if (type(v) == "table") then
-            imgui.Text("table hehe")
+            table.insert(parameterTable, {
+                inputType = v.inputType,
+                key = v.key,
+                value = v.value,
+                label = v.label
+            })
             goto continue
         end
         table.insert(parameterTable, {
@@ -997,7 +1014,7 @@ end
 end
  
  
- function RadioBoolean(labelFalse, labelTrue, v)
+ function RadioBoolean(labelFalse, labelTrue, v, tooltip)
     if imgui.RadioButton(labelFalse, not v) then
         v = false
     end
@@ -1036,23 +1053,29 @@ end
 end
  
  
- function InputIntWrapper(label, v)
+ function InputIntWrapper(label, v, tooltip)
     _, v = imgui.InputInt(label, v, 0, 0)
     return v
 end
 
-function InputFloatWrapper(label, v)
+function InputFloatWrapper(label, v, tooltip)
     _, v = imgui.InputFloat(label, v, 0, 0, "%.2f")
     return v
 end
 
-function InputTextWrapper(label, v)
+function InputTextWrapper(label, v, tooltip)
     _, v = imgui.InputText(label, v, 6942)
     return v
 end
 
-function InputInt2Wrapper(label, v)
+function InputInt2Wrapper(label, v, tooltip)
     _, v = imgui.InputInt2(label, v)
+    return v
+end
+
+function CheckboxWrapper(label, v, tooltip)
+    imgui.SameLine(0, 7.5)
+    _, v = imgui.Checkbox(label, v)
     return v
 end
  

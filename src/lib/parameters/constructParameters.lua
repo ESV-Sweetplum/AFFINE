@@ -19,7 +19,12 @@ function constructParameters(...)
 
     for _, v in ipairs({ ... }) do
         if (type(v) == "table") then
-            imgui.Text("table hehe")
+            table.insert(parameterTable, {
+                inputType = v.inputType,
+                key = v.key,
+                value = v.value,
+                label = v.label
+            })
             goto continue
         end
         table.insert(parameterTable, {

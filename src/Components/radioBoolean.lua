@@ -1,4 +1,4 @@
-function RadioBoolean(labelFalse, labelTrue, v)
+function RadioBoolean(labelFalse, labelTrue, v, tooltip)
     if imgui.RadioButton(labelFalse, not v) then
         v = false
     end

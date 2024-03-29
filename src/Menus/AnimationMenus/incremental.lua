@@ -6,17 +6,22 @@ function IncrementalAnimationMenu()
         allLinesVisible = true
     }
 
-    retrieveStateVariables("animation_incremental", settings)
+    local parameterTable = constructParameters('msxList', 'spacing', {
+        inputType = "RadioBoolean",
+        key = "bounce",
+        label = { "12341234", "1234321" },
+        value = false
+    }, {
+        inputType = "Checkbox",
+        key = "allLinesVisible",
+        label = "All Lines Visible?",
+        value = true
+    })
 
-    _, settings.msxList = imgui.InputText("List", settings.msxList, 6942)
-    _, settings.spacing = imgui.InputFloat("MS Spacing", settings.spacing)
+    retrieveParameters("animation_incremental", parameterTable)
 
-
-    settings.bounce = RadioBoolean("12341234", "1234321", settings.bounce)
-
-    imgui.SameLine(0, 7.5)
-
-    _, settings.allLinesVisible = imgui.Checkbox("All Lines Visible?", settings.allLinesVisible)
+    parameterInputs(parameterTable)
+    local settings = parametersToSettings(parameterTable)
 
     local offsets = getStartAndEndNoteOffsets()
 
@@ -74,5 +79,5 @@ function IncrementalAnimationMenu()
         generateAffines(lines, svs, offsets.startOffset, offsets.endOffset)
     end
 
-    saveStateVariables("animation_incremental", settings)
+    saveParameters("animation_incremental", parameterTable)
 end

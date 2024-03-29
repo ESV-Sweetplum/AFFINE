@@ -15,8 +15,20 @@ INPUT_DICTIONARY = {
     fps = function (v) return InputFloatWrapper("Animation FPS", v) end
 }
 
+CUSTOM_INPUT_DICTIONARY = {
+    Int = function (label, v, tooltip) return InputIntWrapper(label, v, tooltip) end,
+    RadioBoolean = function (labels, v, tooltip) return RadioBoolean(labels[1], labels[2], v, tooltip) end,
+    Checkbox = function (label, v, tooltip) return CheckboxWrapper(label, v, tooltip) end,
+    Int2 = function (label, v, tooltip) return InputInt2Wrapper(label, v, tooltip) end,
+    Float = function (label, v, tooltip) return InputFloatWrapper(label, v, tooltip) end
+}
+
 function parameterInputs(parameterTable)
     for _, tbl in ipairs(parameterTable) do
-        tbl.value = INPUT_DICTIONARY[tbl.key](tbl.value)
+        if (tbl.inputType ~= nil) then
+            tbl.value = CUSTOM_INPUT_DICTIONARY[tbl.inputType](tbl.label, tbl.value, tbl.tooltip)
+        else
+            tbl.value = INPUT_DICTIONARY[tbl.key](tbl.value)
+        end
     end
 end
