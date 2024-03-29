@@ -1,5 +1,5 @@
 function ExpansionContractionMenu()
-    local parameterTable = constructParameters('msxBounds', 'distance', 'spacing')
+    local parameterTable = constructParameters('msxBounds', 'distance', 'progressionExponent', 'spacing')
 
     retrieveParameters("animation_expansion_contraction", parameterTable)
 
@@ -16,7 +16,8 @@ function ExpansionContractionMenu()
         local svs = {}
 
         while (currentTime <= offsets.endOffset) and (iterations < MAX_ITERATIONS) do
-            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset)
+            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset) ^
+                settings.progressionExponent
 
             local distance = mapProgress(settings.distance[1], progress, settings.distance[2])
 

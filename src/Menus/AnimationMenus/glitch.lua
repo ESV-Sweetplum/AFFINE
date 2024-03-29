@@ -1,5 +1,6 @@
 function GlitchMenu()
-    local parameterTable = constructParameters('msxBounds1', 'msxBounds2', 'lineCount', 'fps', 'spacing')
+    local parameterTable = constructParameters('msxBounds1', 'msxBounds2', 'lineCount', 'progressionExponent', 'fps',
+        'spacing')
 
     retrieveParameters("glitch", parameterTable)
 
@@ -14,7 +15,9 @@ function GlitchMenu()
         local svs = {}
 
         while (currentTime <= offsets.endOffset) do
-            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset)
+            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset) ^
+                settings.progressionExponent
+
 
             local lowerBound = mapProgress(settings.msxBounds1[1], progress, settings.msxBounds2[1])
             local upperBound = mapProgress(settings.msxBounds1[2], progress, settings.msxBounds2[2])

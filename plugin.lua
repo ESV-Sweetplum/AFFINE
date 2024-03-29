@@ -63,7 +63,7 @@ MAX_ITERATIONS = 1000
     local settings = parametersToSettings(parameterTable)
     local offsets = getStartAndEndNoteOffsets()
 
-    if rangeActivated(offsets) then
+    if RangeActivated(offsets) then
         local lines = {}
         local msx = offsets.startOffset
 
@@ -93,7 +93,7 @@ end
  function StandardAtNotesMenu()
     local offsets = getSelectedOffsets()
 
-    if noteActivated(offsets) then
+    if NoteActivated(offsets) then
         local lines = {}
 
         if (type(offsets) == "integer") then return end
@@ -117,7 +117,7 @@ end
 
     local offsets = getStartAndEndNoteOffsets()
 
-    if noteActivated(offsets) then
+    if NoteActivated(offsets) then
         msxTable = {}
         for _ = 1, settings.lineCount do
             table.insert(msxTable, math.random(settings.msxBounds[1], settings.msxBounds[2]))
@@ -142,7 +142,7 @@ end
     local settings = parametersToSettings(parameterTable)
     local offsets = getStartAndEndNoteOffsets()
 
-    if noteActivated(offsets) then
+    if NoteActivated(offsets) then
         msxTable = strToTable(settings.msxList, "%S+")
         local tbl = tableToLines(msxTable, offsets.startOffset + settings.delay, settings.offset, settings.spacing)
         generateAffines(tbl.lines, tbl.svs, offsets.startOffset, offsets.endOffset)
@@ -164,7 +164,7 @@ end
     local settings = parametersToSettings(parameterTable)
     local offsets = getStartAndEndNoteOffsets()
 
-    if noteActivated(offsets) then
+    if NoteActivated(offsets) then
         local tbl = placeAutomaticFrame(offsets.startOffset + settings.delay, settings.msxBounds[1],
             settings.msxBounds[2],
             settings.spacing, settings.distance)
@@ -191,12 +191,13 @@ end
  
  
  function SpectrumMenu()
-    local parameterTable = constructParameters("center", "maxSpread", "distance", "spacing", "polynomialCoefficients", {
-        inputType = "Checkbox",
-        key = "inverse",
-        label = "Inverse?",
-        value = false
-    })
+    local parameterTable = constructParameters("center", "maxSpread", "distance", "progressionExponent", "spacing",
+        "polynomialCoefficients", {
+            inputType = "Checkbox",
+            key = "inverse",
+            label = "Inverse?",
+            value = false
+        })
 
     retrieveParameters("animation_spectrum", parameterTable)
 
@@ -205,7 +206,7 @@ end
     local settings = parametersToSettings(parameterTable)
     local offsets = getStartAndEndNoteOffsets()
 
-    if rangeActivated(offsets) then
+    if RangeActivated(offsets) then
         local currentTime = offsets.startOffset + 1
 
         local iterations = 0
@@ -213,7 +214,9 @@ end
         local svs = {}
 
         while ((currentTime + (2 / INCREMENT)) <= offsets.endOffset) and (iterations < MAX_ITERATIONS) do
-            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset)
+            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset) ^
+            (1 / settings.progressionExponent)
+
 
             local heightDifferential = settings.maxSpread *
                 (settings.polynomialCoefficients[1] * progress ^ 2 + settings.polynomialCoefficients[2] * progress + settings.polynomialCoefficients[3])
@@ -238,7 +241,7 @@ end
         generateAffines(lines, svs, offsets.startOffset, offsets.endOffset)
         parameterTable[#parameterTable].value = "Line Count: " .. #lines .. " // SV Count: " .. #svs
     end
-    Plot(settings.polynomialCoefficients)
+    Plot(settings.polynomialCoefficients, settings.progressionExponent)
 
     saveParameters("animation_spectrum", parameterTable)
 end
@@ -285,7 +288,7 @@ end
     local settings = parametersToSettings(parameterTable)
     local offsets = getStartAndEndNoteOffsets()
 
-    if rangeActivated(offsets) then
+    if RangeActivated(offsets) then
         startMsxTable = strToTable(settings.msxList1, "%S+")
         endMsxTable = strToTable(settings.msxList2, "%S+")
 
@@ -347,7 +350,7 @@ end
 
     local offsets = getStartAndEndNoteOffsets()
 
-    if rangeActivated(offsets) then
+    if RangeActivated(offsets) then
         local times = getSelectedOffsets()
 
         local currentIndex = 1
@@ -407,7 +410,8 @@ end
  
  
  function GlitchMenu()
-    local parameterTable = constructParameters('msxBounds1', 'msxBounds2', 'lineCount', 'fps', 'spacing')
+    local parameterTable = constructParameters('msxBounds1', 'msxBounds2', 'lineCount', 'progressionExponent', 'fps',
+        'spacing')
 
     retrieveParameters("glitch", parameterTable)
 
@@ -416,13 +420,15 @@ end
     local settings = parametersToSettings(parameterTable)
     local offsets = getStartAndEndNoteOffsets()
 
-    if rangeActivated(offsets) then
+    if RangeActivated(offsets) then
         local currentTime = offsets.startOffset
         local lines = {}
         local svs = {}
 
         while (currentTime <= offsets.endOffset) do
-            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset)
+            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset) ^
+            (1 / settings.progressionExponent)
+
 
             local lowerBound = mapProgress(settings.msxBounds1[1], progress, settings.msxBounds2[1])
             local upperBound = mapProgress(settings.msxBounds1[2], progress, settings.msxBounds2[2])
@@ -456,7 +462,7 @@ end
  
  
  function ExpansionContractionMenu()
-    local parameterTable = constructParameters('msxBounds', 'distance', 'spacing')
+    local parameterTable = constructParameters('msxBounds', 'distance', 'progressionExponent', 'spacing')
 
     retrieveParameters("animation_expansion_contraction", parameterTable)
 
@@ -464,7 +470,7 @@ end
     local settings = parametersToSettings(parameterTable)
     local offsets = getStartAndEndNoteOffsets()
 
-    if rangeActivated(offsets) then
+    if RangeActivated(offsets) then
         local currentTime = offsets.startOffset + 1
 
         local iterations = 0
@@ -473,7 +479,8 @@ end
         local svs = {}
 
         while (currentTime <= offsets.endOffset) and (iterations < MAX_ITERATIONS) do
-            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset)
+            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset) ^
+            (1 / settings.progressionExponent)
 
             local distance = mapProgress(settings.distance[1], progress, settings.distance[2])
 
@@ -503,12 +510,13 @@ end
  
  
  function StaticBoundaryMenu()
-    local parameterTable = constructParameters("msxBounds", "distance", "spacing", "polynomialCoefficients", {
-        inputType = "RadioBoolean",
-        key = "evalUnder",
-        label = { "Render Over Boundary", "Render Under Boundary" },
-        value = true
-    })
+    local parameterTable = constructParameters("msxBounds", "distance", "progressionExponent", "spacing",
+        "polynomialCoefficients", {
+            inputType = "RadioBoolean",
+            key = "evalUnder",
+            label = { "Render Over Boundary", "Render Under Boundary" },
+            value = true
+        })
 
     retrieveParameters("animation_polynomial", parameterTable)
 
@@ -516,7 +524,7 @@ end
     local settings = parametersToSettings(parameterTable)
     local offsets = getStartAndEndNoteOffsets()
 
-    if rangeActivated(offsets) then
+    if RangeActivated(offsets) then
         local currentTime = offsets.startOffset + 1
 
         local iterations = 0
@@ -525,7 +533,9 @@ end
 
 
         while ((currentTime + (2 / INCREMENT)) <= offsets.endOffset) and (iterations < MAX_ITERATIONS) do
-            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset)
+            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset) ^
+                (1 / settings.progressionExponent)
+
 
             local boundary = settings.msxBounds[2] *
                 (settings.polynomialCoefficients[1] * progress ^ 2 + settings.polynomialCoefficients[2] * progress + settings.polynomialCoefficients[3])
@@ -551,7 +561,7 @@ end
         parameterTable[#parameterTable].value = "Line Count: " .. #lines .. " // SV Count: " .. #svs
     end
 
-    Plot(settings.polynomialCoefficients)
+    Plot(settings.polynomialCoefficients, settings.progressionExponent)
 
     saveParameters("animation_polynomial", parameterTable)
 end
@@ -577,12 +587,13 @@ end
  
  
  function DynamicBoundaryMenu()
-    local parameterTable = constructParameters("msxBounds", 'distance', "spacing", "polynomialCoefficients", {
-        inputType = "RadioBoolean",
-        key = "evalOver",
-        label = { "Change Bottom Bound", "Change Top Bound" },
-        value = true
-    })
+    local parameterTable = constructParameters("msxBounds", 'distance', "progressionExponent", "spacing",
+        "polynomialCoefficients", {
+            inputType = "RadioBoolean",
+            key = "evalOver",
+            label = { "Change Bottom Bound", "Change Top Bound" },
+            value = true
+        })
 
     retrieveParameters("animation_polynomial", parameterTable)
 
@@ -590,7 +601,7 @@ end
     local settings = parametersToSettings(parameterTable)
     local offsets = getStartAndEndNoteOffsets()
 
-    if rangeActivated(offsets) then
+    if RangeActivated(offsets) then
         local currentTime = offsets.startOffset + 1
 
         local iterations = 0
@@ -599,7 +610,8 @@ end
         local svs = {}
 
         while ((currentTime + (2 / INCREMENT)) <= offsets.endOffset) and (iterations < MAX_ITERATIONS) do
-            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset)
+            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset) ^
+                (1 / settings.progressionExponent)
 
             local polynomialHeight = (settings.polynomialCoefficients[1] * progress ^ 2 + settings.polynomialCoefficients[2] * progress + settings.polynomialCoefficients[3])
 
@@ -623,7 +635,7 @@ end
         generateAffines(lines, svs, offsets.startOffset, offsets.endOffset)
         parameterTable[#parameterTable].value = "Line Count: " .. #lines .. " // SV Count: " .. #svs
     end
-    Plot(settings.polynomialCoefficients)
+    Plot(settings.polynomialCoefficients, settings.progressionExponent)
 
     saveParameters("animation_polynomial", parameterTable)
 end
@@ -835,7 +847,10 @@ end
         return InputFloatWrapper("Progression Exponent", v,
             "Adjust this to change how the animation progresses over time. The higher the number, the faster the animation progresses at the beginning.")
     end,
-    fps = function (v) return InputFloatWrapper("Animation FPS", v, "FPS of the animation.") end,
+    fps = function (v)
+        return InputFloatWrapper("Animation FPS", v,
+            "Maximum FPS of the animation. Note that if there are too many timing lines, the animation (not game) FPS will go down.")
+    end,
     polynomialCoefficients = function (v)
         return InputFloat3Wrapper("Coefficients", v,
             "The boundary follows a curve, described by these coefficients. You can see what the boundary height vs. time graph looks like on the plot.")
@@ -1060,23 +1075,37 @@ end
 end
  
  
- function Plot(polynomialCoefficients)
-    imgui.Begin("Boundary Height vs. Time", imgui_window_flags.AlwaysAutoResize)
+ function Plot(polynomialCoefficients, progressionExponent, title)
+    imgui.Begin(title or "Boundary Height vs. Time", imgui_window_flags.AlwaysAutoResize)
 
-    local RESOLUTION = 20
+    local RESOLUTION = 50
     local tbl = {}
     for i = 0, RESOLUTION do
-        local progress = i / RESOLUTION
+        local progress = (i / RESOLUTION) ^ (1 / progressionExponent)
 
         table.insert(tbl,
             (polynomialCoefficients[1] * progress ^ 2 + polynomialCoefficients[2] * progress + polynomialCoefficients[3]))
     end
 
+    local sign1 = "+"
+    local sign2 = "+"
 
+    if (polynomialCoefficients[2] < 0) then
+        sign1 = "-"
+    end
+
+    if (polynomialCoefficients[3] < 0) then
+        sign2 = "-"
+    end
 
     imgui.PlotLines("", tbl, #tbl, 0,
         'Equation: y = ' ..
-        polynomialCoefficients[1] .. 't^2 + ' .. polynomialCoefficients[2] .. 't + ' .. polynomialCoefficients[3], 0,
+        polynomialCoefficients[1] ..
+        't^' ..
+        string.sub(2 / (progressionExponent), 1, 4) ..
+        ' ' .. sign1 .. ' ' ..
+        polynomialCoefficients[2] ..
+        't^' .. string.sub(1 / progressionExponent, 1, 4) .. ' ' .. sign2 .. ' ' .. polynomialCoefficients[3], 0,
         1,
         { 250, 150 })
 
@@ -1127,7 +1156,7 @@ end
     return imgui.Button(text .. " Lines")
 end
 
-function rangeActivated(offsets, text)
+function RangeActivated(offsets, text)
     text = text or "Place"
     if rangeSelected(offsets) then
         return activationButton(text) or (utils.IsKeyPressed(keys.A) and not utils.IsKeyDown(keys.LeftControl))
@@ -1136,7 +1165,7 @@ function rangeActivated(offsets, text)
     end
 end
 
-function noteActivated(offsets, text)
+function NoteActivated(offsets, text)
     text = text or "Place"
     if noteSelected(offsets) then
         return activationButton(text) or (utils.IsKeyPressed(keys.A) and not utils.IsKeyDown(keys.LeftControl))
@@ -1279,7 +1308,7 @@ function DeletionMenu()
 
     local offsets = getStartAndEndNoteOffsets()
 
-    if (rangeActivated(offsets, "Remove")) then
+    if (RangeActivated(offsets, "Remove")) then
         svs = getSVsInRange(offsets.startOffset, offsets.endOffset)
         lines = getLinesInRange(offsets.startOffset, offsets.endOffset)
 

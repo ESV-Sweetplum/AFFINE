@@ -1,10 +1,11 @@
 function SpectrumMenu()
-    local parameterTable = constructParameters("center", "maxSpread", "distance", "spacing", "polynomialCoefficients", {
-        inputType = "Checkbox",
-        key = "inverse",
-        label = "Inverse?",
-        value = false
-    })
+    local parameterTable = constructParameters("center", "maxSpread", "distance", "progressionExponent", "spacing",
+        "polynomialCoefficients", {
+            inputType = "Checkbox",
+            key = "inverse",
+            label = "Inverse?",
+            value = false
+        })
 
     retrieveParameters("animation_spectrum", parameterTable)
 
@@ -21,7 +22,9 @@ function SpectrumMenu()
         local svs = {}
 
         while ((currentTime + (2 / INCREMENT)) <= offsets.endOffset) and (iterations < MAX_ITERATIONS) do
-            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset)
+            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset) ^
+                settings.progressionExponent
+
 
             local heightDifferential = settings.maxSpread *
                 (settings.polynomialCoefficients[1] * progress ^ 2 + settings.polynomialCoefficients[2] * progress + settings.polynomialCoefficients[3])
@@ -46,7 +49,7 @@ function SpectrumMenu()
         generateAffines(lines, svs, offsets.startOffset, offsets.endOffset)
         parameterTable[#parameterTable].value = "Line Count: " .. #lines .. " // SV Count: " .. #svs
     end
-    Plot(settings.polynomialCoefficients)
+    Plot(settings.polynomialCoefficients, settings.progressionExponent)
 
     saveParameters("animation_spectrum", parameterTable)
 end

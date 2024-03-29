@@ -1,10 +1,11 @@
 function DynamicBoundaryMenu()
-    local parameterTable = constructParameters("msxBounds", 'distance', "spacing", "polynomialCoefficients", {
-        inputType = "RadioBoolean",
-        key = "evalOver",
-        label = { "Change Bottom Bound", "Change Top Bound" },
-        value = true
-    })
+    local parameterTable = constructParameters("msxBounds", 'distance', "progressionExponent", "spacing",
+        "polynomialCoefficients", {
+            inputType = "RadioBoolean",
+            key = "evalOver",
+            label = { "Change Bottom Bound", "Change Top Bound" },
+            value = true
+        })
 
     retrieveParameters("animation_polynomial", parameterTable)
 
@@ -21,7 +22,8 @@ function DynamicBoundaryMenu()
         local svs = {}
 
         while ((currentTime + (2 / INCREMENT)) <= offsets.endOffset) and (iterations < MAX_ITERATIONS) do
-            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset)
+            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset) ^
+                settings.progressionExponent
 
             local polynomialHeight = (settings.polynomialCoefficients[1] * progress ^ 2 + settings.polynomialCoefficients[2] * progress + settings.polynomialCoefficients[3])
 
@@ -45,7 +47,7 @@ function DynamicBoundaryMenu()
         generateAffines(lines, svs, offsets.startOffset, offsets.endOffset)
         parameterTable[#parameterTable].value = "Line Count: " .. #lines .. " // SV Count: " .. #svs
     end
-    Plot(settings.polynomialCoefficients)
+    Plot(settings.polynomialCoefficients, settings.progressionExponent)
 
     saveParameters("animation_polynomial", parameterTable)
 end

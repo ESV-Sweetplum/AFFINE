@@ -18,7 +18,7 @@ function BasicManualAnimationMenu()
 
         while (currentTime < offsets.endOffset) and (iterations < MAX_ITERATIONS) do
             local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset) ^
-                (1 / settings.progressionExponent)
+                settings.progressionExponent
 
             local msxTable = {}
 

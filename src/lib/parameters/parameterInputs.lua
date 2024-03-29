@@ -56,9 +56,12 @@ INPUT_DICTIONARY = {
     lineCount = function (v) return InputIntWrapper("Line Count", v, "The number of timing lines to place on one frame.") end,
     progressionExponent = function (v)
         return InputFloatWrapper("Progression Exponent", v,
-            "Adjust this to change how the animation progresses over time. The higher the number, the faster the animation progresses at the beginning.")
+            "Adjust this to change how the animation progresses over time. The higher the number, the slower the animation takes to start, but it ramps up much faster. If you aren't familiar with exponential graphs, keep this at 1.")
     end,
-    fps = function (v) return InputFloatWrapper("Animation FPS", v, "FPS of the animation.") end,
+    fps = function (v)
+        return InputFloatWrapper("Animation FPS", v,
+            "Maximum FPS of the animation. Note that if there are too many timing lines, the animation (not game) FPS will go down.")
+    end,
     polynomialCoefficients = function (v)
         return InputFloat3Wrapper("Coefficients", v,
             "The boundary follows a curve, described by these coefficients. You can see what the boundary height vs. time graph looks like on the plot.")
