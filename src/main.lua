@@ -82,7 +82,7 @@ end
 
 function DeletionMenu()
     local settings = {
-        deletionType = 1
+        deletionType = DEFAULT_MENU_ID
     }
 
     retrieveStateVariables("deletion", settings)
