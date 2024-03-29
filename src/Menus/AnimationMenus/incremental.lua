@@ -2,7 +2,8 @@ function IncrementalAnimationMenu()
     local settings = {
         msxList = "50 100 150 200",
         spacing = DEFAULT_SPACING,
-        bounce = false
+        bounce = false,
+        allLinesVisible = true
     }
 
     retrieveStateVariables("animation_incremental", settings)
@@ -19,6 +20,10 @@ function IncrementalAnimationMenu()
     if imgui.RadioButton("1234321", settings.bounce) then
         settings.bounce = true
     end
+
+    imgui.SameLine(0, 7.5)
+
+    _, settings.allLinesVisible = imgui.Checkbox("All Lines Visible?", settings.allLinesVisible)
 
     local offsets = getStartAndEndNoteOffsets()
 
@@ -41,10 +46,13 @@ function IncrementalAnimationMenu()
 
             local msxTable = {}
 
-            for i = 1, currentHeight do
-                table.insert(msxTable, totalMsxTable[i])
+            if (settings.allLinesVisible) then
+                for i = 1, currentHeight do
+                    table.insert(msxTable, totalMsxTable[i])
+                end
+            else
+                table.insert(msxTable, totalMsxTable[currentHeight])
             end
-
             local tbl = tableToLines(msxTable, currentTime + 5, 0, settings.spacing)
 
             lines = concatTables(lines, tbl.lines)

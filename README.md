@@ -43,7 +43,7 @@ All files necessary are contained within the `src` directory. When you're finish
 ## TO DO (before v1.1):
 
 - Add tooltips to each item
-- Add setting to Increment that shows only one line at a time
+- ~~Add setting to Increment that shows only one line at a time~~
 - Migrate Boundary (Static), Boundary (Dynamic), Incremental and Spectrum to use parameter tables
 - Compiler automatically add parameter get/set module
 - Move radio button code into a variable argument component

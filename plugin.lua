@@ -332,7 +332,8 @@ end
     local settings = {
         msxList = "50 100 150 200",
         spacing = DEFAULT_SPACING,
-        bounce = false
+        bounce = false,
+        allLinesVisible = true
     }
 
     retrieveStateVariables("animation_incremental", settings)
@@ -349,6 +350,10 @@ end
     if imgui.RadioButton("1234321", settings.bounce) then
         settings.bounce = true
     end
+
+    imgui.SameLine(0, 7.5)
+
+    _, settings.allLinesVisible = imgui.Checkbox("All Lines Visible?", settings.allLinesVisible)
 
     local offsets = getStartAndEndNoteOffsets()
 
@@ -371,10 +376,13 @@ end
 
             local msxTable = {}
 
-            for i = 1, currentHeight do
-                table.insert(msxTable, totalMsxTable[i])
+            if (settings.allLinesVisible) then
+                for i = 1, currentHeight do
+                    table.insert(msxTable, totalMsxTable[i])
+                end
+            else
+                table.insert(msxTable, totalMsxTable[currentHeight])
             end
-
             local tbl = tableToLines(msxTable, currentTime + 5, 0, settings.spacing)
 
             lines = concatTables(lines, tbl.lines)
@@ -992,30 +1000,6 @@ end
     return t1
  end 
  
- function activationButton(text)
-    text = text or "Place"
-    return imgui.Button(text .. " Lines")
-end
-
-function rangeActivated(offsets, text)
-    text = text or "Place"
-    if rangeSelected(offsets) then
-        return activationButton(text) or (utils.IsKeyPressed(keys.A) and not utils.IsKeyDown(keys.LeftControl))
-    else
-        return imgui.Text("Select a Region to " .. text .. " Lines.")
-    end
-end
-
-function noteActivated(offsets, text)
-    text = text or "Place"
-    if noteSelected(offsets) then
-        return activationButton(text) or (utils.IsKeyPressed(keys.A) and not utils.IsKeyDown(keys.LeftControl))
-    else
-        return imgui.Text("Select a Note to " .. text .. " Lines.")
-    end
-end
- 
- 
  function tooltip(text)
     if not imgui.IsItemHovered() then return end
     imgui.BeginTooltip()
@@ -1068,6 +1052,30 @@ end
 function InputInt2Wrapper(label, v)
     _, v = imgui.InputInt2(label, v)
     return v
+end
+ 
+ 
+ function activationButton(text)
+    text = text or "Place"
+    return imgui.Button(text .. " Lines")
+end
+
+function rangeActivated(offsets, text)
+    text = text or "Place"
+    if rangeSelected(offsets) then
+        return activationButton(text) or (utils.IsKeyPressed(keys.A) and not utils.IsKeyDown(keys.LeftControl))
+    else
+        return imgui.Text("Select a Region to " .. text .. " Lines.")
+    end
+end
+
+function noteActivated(offsets, text)
+    text = text or "Place"
+    if noteSelected(offsets) then
+        return activationButton(text) or (utils.IsKeyPressed(keys.A) and not utils.IsKeyDown(keys.LeftControl))
+    else
+        return imgui.Text("Select a Note to " .. text .. " Lines.")
+    end
 end
  
  
@@ -1191,7 +1199,7 @@ end
 
 function DeletionMenu()
     local settings = {
-        deletionType = 1
+        deletionType = DEFAULT_MENU_ID
     }
 
     retrieveStateVariables("deletion", settings)
