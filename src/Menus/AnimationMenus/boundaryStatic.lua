@@ -61,13 +61,11 @@ function StaticBoundaryMenu()
         end
 
         generateAffines(lines, svs, offsets.startOffset, offsets.endOffset)
-
-        settings.debug = #lines .. ' // ' .. #svs
     end
 
     plot(settings.polynomialCoefficients)
 
-    imgui.Text(settings.debug)
+
 
     saveStateVariables("animation_polynomial", settings)
 end

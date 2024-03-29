@@ -8,7 +8,7 @@ function draw()
     imgui.Begin("AFFINE", imgui_window_flags.AlwaysAutoResize)
 
     local settings = {
-        menuID = 1
+        menuID = DEFAULT_MENU_ID
     }
 
     -- IMPORTANT: DO NOT DELETE NEXT LINE BEFORE COMPILING.
@@ -29,7 +29,7 @@ end
 
 function AnimationMenu()
     local settings = {
-        menuID = 1
+        menuID = DEFAULT_MENU_ID
     }
 
     retrieveStateVariables("animation", settings)
@@ -47,7 +47,7 @@ end
 
 function StandardMenu()
     local settings = {
-        menuID = 1
+        menuID = DEFAULT_MENU_ID
     }
 
     retrieveStateVariables("standard", settings)
@@ -65,7 +65,7 @@ end
 
 function FixedMenu()
     local settings = {
-        menuID = 1
+        menuID = DEFAULT_MENU_ID
     }
 
     retrieveStateVariables("fixed", settings)

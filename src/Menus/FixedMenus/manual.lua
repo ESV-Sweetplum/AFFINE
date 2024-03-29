@@ -1,27 +1,17 @@
 function FixedManualMenu()
-    local settings = {
-        offset = DEFAULT_OFFSET,
-        delay = DEFAULT_DELAY,
-        inputStr = "69 420 727 1337",
-        spacing = DEFAULT_SPACING
-    }
+    local parameterTable = constructParameters('msxList', 'offset', 'delay', 'spacing')
 
-    retrieveStateVariables("fixed_manual", settings)
+    retrieveParameters("fixed_manual", parameterTable)
 
-    _, settings.inputStr = imgui.InputText("List", settings.inputStr, 6942)
-    _, settings.offset = imgui.InputInt("MSX Offset", settings.offset)
-    _, settings.delay = imgui.InputInt("Delay", settings.delay)
-    _, settings.spacing = imgui.InputFloat("MS Spacing", settings.spacing)
-
+    parameterInputs(parameterTable)
+    local settings = parametersToSettings(parameterTable)
     local offsets = getStartAndEndNoteOffsets()
 
     if noteActivated(offsets) then
-        msxTable = strToTable(settings.inputStr, "%S+")
-
+        msxTable = strToTable(settings.msxList, "%S+")
         local tbl = tableToLines(msxTable, offsets.startOffset + settings.delay, settings.offset, settings.spacing)
-
-        generateAffines(tbl.lines, tbl.svs, offsets.startOffset, offsets.endOffset)
+        generateAffines(tbl.lines, tbl.svs, offsets.startOffset)
     end
 
-    saveStateVariables("fixed_manual", settings)
+    saveParameters("fixed_manual", parameterTable)
 end

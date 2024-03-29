@@ -1,18 +1,10 @@
 function FixedRandomMenu()
-    local settings = {
-        delay = DEFAULT_DELAY,
-        msxBounds = DEFAULT_MSX_BOUNDS,
-        spacing = DEFAULT_SPACING,
-        lineCount = DEFAULT_LINE_COUNT
-    }
+    local parameterTable = constructParameters('msxBounds', 'lineCount', 'delay', 'spacing')
 
-    retrieveStateVariables("fixed_random", settings)
+    retrieveParameters("fixed_random", parameterTable)
 
-    _, settings.msxBounds = imgui.InputInt2("Start/End MSX", settings.msxBounds)
-    _, settings.lineCount = imgui.InputInt("Line Count", settings.lineCount)
-
-    _, settings.delay = imgui.InputInt("Delay", settings.delay)
-    _, settings.spacing = imgui.InputFloat("MS Spacing", settings.spacing)
+    parameterInputs(parameterTable)
+    local settings = parametersToSettings(parameterTable)
 
     local offsets = getStartAndEndNoteOffsets()
 
@@ -26,5 +18,5 @@ function FixedRandomMenu()
         generateAffines(tbl.lines, tbl.svs, offsets.startOffset, offsets.endOffset)
     end
 
-    saveStateVariables("fixed_random", settings)
+    saveParameters("fixed_random", parameterTable)
 end

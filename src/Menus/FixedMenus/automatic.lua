@@ -1,20 +1,10 @@
 function FixedAutomaticMenu()
-    local settings = {
-        delay = DEFAULT_DELAY,
-        msxBounds = DEFAULT_MSX_BOUNDS,
-        spacing = DEFAULT_SPACING,
-        distance = DEFAULT_DISTANCE,
-        debug = "Line Count"
-    }
+    local parameterTable = constructParameters('msxBounds', 'distance', 'delay', 'spacing')
 
-    retrieveStateVariables("fixed_automatic", settings)
+    retrieveParameters("fixed_automatic", parameterTable)
 
-    _, settings.msxBounds = imgui.InputInt2("Start/End MSX", settings.msxBounds)
-    _, settings.distance = imgui.InputInt2("Distance Between Lines", settings.distance)
-
-    _, settings.delay = imgui.InputInt("Delay", settings.delay)
-    _, settings.spacing = imgui.InputFloat("MS Spacing", settings.spacing)
-
+    parameterInputs(parameterTable)
+    local settings = parametersToSettings(parameterTable)
     local offsets = getStartAndEndNoteOffsets()
 
     if noteActivated(offsets) then
@@ -25,9 +15,7 @@ function FixedAutomaticMenu()
         generateAffines(tbl.lines, tbl.svs, offsets.startOffset, offsets.endOffset)
     end
 
-    imgui.Text(settings.debug)
-
-    saveStateVariables("fixed_automatic", settings)
+    saveParameters("fixed_automatic", parameterTable)
 end
 
 function placeAutomaticFrame(startTime, low, high, spacing, distance)

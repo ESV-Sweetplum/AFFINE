@@ -1,27 +1,15 @@
 function BasicManualAnimationMenu()
-    local settings = {
-        startStr            = "69 420 727 1337",
-        endStr              = "69 420 727 1337",
-        progressionExponent = 1,
-        spacing             = DEFAULT_SPACING,
-        fps                 = DEFAULT_FPS,
-        debug               = 'Lines // SVs'
-    }
+    local parameterTable = constructParameters('msxList1', 'msxList2', 'progressionExponent', 'fps', 'spacing')
 
-    retrieveStateVariables("animation_manual", settings)
+    retrieveParameters("animation_manual", parameterTable)
+    parameterInputs(parameterTable)
 
-    _, settings.startStr = imgui.InputText("Start Keyframes", settings.startStr, 6942)
-    _, settings.endStr = imgui.InputText("End Keyframes", settings.endStr, 6942)
-    _, settings.progressionExponent = imgui.InputFloat("Progression Exponent", settings.progressionExponent)
-
-    _, settings.fps = imgui.InputFloat("Animation FPS", settings.fps)
-    _, settings.spacing = imgui.InputFloat("MS Spacing", settings.spacing)
-
+    local settings = parametersToSettings(parameterTable)
     local offsets = getStartAndEndNoteOffsets()
 
     if rangeActivated(offsets) then
-        startMsxTable = strToTable(settings.startStr, "%S+")
-        endMsxTable = strToTable(settings.endStr, "%S+")
+        startMsxTable = strToTable(settings.msxList1, "%S+")
+        endMsxTable = strToTable(settings.msxList2, "%S+")
 
         local currentTime = offsets.startOffset + 1
         local iterations = 0
@@ -53,9 +41,7 @@ function BasicManualAnimationMenu()
         end
 
         generateAffines(lines, svs, offsets.startOffset, offsets.endOffset)
-
-        settings.debug = #lines .. " // " .. #svs
     end
 
-    saveStateVariables("animation_manual", settings)
+    saveParameters("animation_manual", parameterTable)
 end

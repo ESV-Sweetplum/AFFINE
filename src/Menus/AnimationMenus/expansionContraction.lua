@@ -1,18 +1,10 @@
 function ExpansionContractionMenu()
-    local settings = {
-        msxBounds = DEFAULT_MSX_BOUNDS,
-        spacing = DEFAULT_SPACING,
-        distance = DEFAULT_DISTANCE,
-        debug = 'Lines // SVs'
-    }
+    local parameterTable = constructParameters('msxBounds', 'distance', 'spacing')
 
-    retrieveStateVariables("animation_expansion_contraction", settings)
+    retrieveParameters("animation_expansion_contraction", parameterTable)
 
-    _, settings.msxBounds = imgui.InputInt2("Start/End MSX", settings.msxBounds)
-    _, settings.distance = imgui.InputInt2("Distance Between Lines", settings.distance)
-
-    _, settings.spacing = imgui.InputFloat("MS Spacing", settings.spacing)
-
+    parameterInputs(parameterTable)
+    local settings = parametersToSettings(parameterTable)
     local offsets = getStartAndEndNoteOffsets()
 
     if rangeActivated(offsets) then
@@ -46,11 +38,7 @@ function ExpansionContractionMenu()
         end
 
         generateAffines(lines, svs, offsets.startOffset, offsets.endOffset)
-
-        settings.debug = #lines .. ' // ' .. #svs
     end
 
-    imgui.Text(settings.debug)
-
-    saveStateVariables("animation_expansion_contraction", settings)
+    saveParameters("animation_expansion_contraction", parameterTable)
 end

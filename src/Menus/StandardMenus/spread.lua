@@ -1,12 +1,10 @@
 function StandardSpreadMenu()
-    local settings = {
-        distance = DEFAULT_DISTANCE
-    }
+    local parameterTable = constructParameters('distance')
 
-    retrieveStateVariables("standard_spread", settings)
+    retrieveParameters('standard_spread', parameterTable)
 
-    _, settings.distance = imgui.InputInt2("Distance Between Lines", settings.distance)
-
+    parameterInputs(parameterTable)
+    local settings = parametersToSettings(parameterTable)
     local offsets = getStartAndEndNoteOffsets()
 
     if rangeActivated(offsets) then
@@ -30,5 +28,5 @@ function StandardSpreadMenu()
         actions.PlaceTimingPointBatch(lines)
     end
 
-    saveStateVariables("standard_spread", settings)
+    saveParameters('standard_spread', parameterTable)
 end

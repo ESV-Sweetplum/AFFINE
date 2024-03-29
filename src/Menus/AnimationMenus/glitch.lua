@@ -1,22 +1,11 @@
 function GlitchMenu()
-    local settings = {
-        msxBounds = DEFAULT_MSX_BOUNDS,
-        msxBounds2 = DEFAULT_MSX_BOUNDS,
-        spacing = DEFAULT_SPACING,
-        lineCount = DEFAULT_LINE_COUNT,
-        fps = DEFAULT_FPS,
-        debug = 'Lines // SVs'
-    }
+    local parameterTable = constructParameters('msxBounds1', 'msxBounds2', 'lineCount', 'fps', 'spacing')
 
-    retrieveStateVariables("glitch", settings)
+    retrieveParameters("glitch", parameterTable)
 
-    _, settings.msxBounds = imgui.InputInt2("Start Lower/Upper MSX", settings.msxBounds)
-    _, settings.msxBounds2 = imgui.InputInt2("End Lower/Upper MSX", settings.msxBounds2)
-    _, settings.lineCount = imgui.InputInt("Line Count", settings.lineCount)
+    parameterInputs(parameterTable)
 
-    _, settings.fps = imgui.InputFloat("Animation FPS", settings.fps)
-    _, settings.spacing = imgui.InputFloat("MS Spacing", settings.spacing)
-
+    local settings = parametersToSettings(parameterTable)
     local offsets = getStartAndEndNoteOffsets()
 
     if rangeActivated(offsets) then
@@ -27,8 +16,8 @@ function GlitchMenu()
         while (currentTime <= offsets.endOffset) do
             local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset)
 
-            local lowerBound = mapProgress(settings.msxBounds[1], progress, settings.msxBounds2[1])
-            local upperBound = mapProgress(settings.msxBounds[2], progress, settings.msxBounds2[2])
+            local lowerBound = mapProgress(settings.msxBounds1[1], progress, settings.msxBounds2[1])
+            local upperBound = mapProgress(settings.msxBounds1[2], progress, settings.msxBounds2[2])
 
             msxTable = {}
             for i = 1, settings.lineCount do
@@ -49,11 +38,9 @@ function GlitchMenu()
         end
 
         generateAffines(lines, svs, offsets.startOffset, offsets.endOffset)
-
-        settings.debug = #lines .. " // " .. #svs
     end
 
-    imgui.Text(settings.debug)
 
-    saveStateVariables("glitch", settings)
+
+    saveParameters("glitch", parameterTable)
 end

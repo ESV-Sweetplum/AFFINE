@@ -10,15 +10,19 @@
     'Expansion / Contraction'
 } 
  
- DEFAULT_DELAY = 1
+ DEFAULT_MENU_ID = 1
+
+DEFAULT_MSX_LIST = '69 420 727 1337'
+DEFAULT_DELAY = 1
 DEFAULT_OFFSET = 0
-DEFAULT_SPACING = 1.01
+DEFAULT_SPACING = 1.1
 DEFAULT_MSX_BOUNDS = { 0, 400 }
 DEFAULT_DISTANCE = { 15, 15 }
 DEFAULT_LINE_COUNT = 10
 DEFAULT_FPS = 90
 DEFAULT_CENTER = 200
 DEFAULT_MAX_SPREAD = 200
+DEFAULT_PROGRESSION_EXPONENT = 1
 
 INCREMENT = 64
 MAX_ITERATIONS = 1000
@@ -50,14 +54,12 @@ MAX_ITERATIONS = 1000
 } 
  
  function StandardSpreadMenu()
-    local settings = {
-        distance = DEFAULT_DISTANCE
-    }
+    local parameterTable = constructParameters('distance')
 
-    retrieveStateVariables("standard_spread", settings)
+    retrieveParameters('standard_spread', parameterTable)
 
-    _, settings.distance = imgui.InputInt2("Distance Between Lines", settings.distance)
-
+    parameterInputs(parameterTable)
+    local settings = parametersToSettings(parameterTable)
     local offsets = getStartAndEndNoteOffsets()
 
     if rangeActivated(offsets) then
@@ -81,17 +83,11 @@ MAX_ITERATIONS = 1000
         actions.PlaceTimingPointBatch(lines)
     end
 
-    saveStateVariables("standard_spread", settings)
+    saveParameters('standard_spread', parameterTable)
 end
  
  
  function StandardAtNotesMenu()
-    local settings = {
-        debug = ''
-    }
-
-    retrieveStateVariables("atNotes", settings)
-
     local offsets = getSelectedOffsets()
 
     if noteActivated(offsets) then
@@ -103,32 +99,18 @@ end
             table.insert(lines, line(offset))
         end
 
-        settings.debug = #offsets
-
         actions.PlaceTimingPointBatch(lines)
     end
-
-    imgui.Text(settings.debug)
-
-    saveStateVariables('atNotes', settings)
 end
  
  
  function FixedRandomMenu()
-    local settings = {
-        delay = DEFAULT_DELAY,
-        msxBounds = DEFAULT_MSX_BOUNDS,
-        spacing = DEFAULT_SPACING,
-        lineCount = DEFAULT_LINE_COUNT
-    }
+    local parameterTable = constructParameters('msxBounds', 'lineCount', 'delay', 'spacing')
 
-    retrieveStateVariables("fixed_random", settings)
+    retrieveParameters("fixed_random", parameterTable)
 
-    _, settings.msxBounds = imgui.InputInt2("Start/End MSX", settings.msxBounds)
-    _, settings.lineCount = imgui.InputInt("Line Count", settings.lineCount)
-
-    _, settings.delay = imgui.InputInt("Delay", settings.delay)
-    _, settings.spacing = imgui.InputFloat("MS Spacing", settings.spacing)
+    parameterInputs(parameterTable)
+    local settings = parametersToSettings(parameterTable)
 
     local offsets = getStartAndEndNoteOffsets()
 
@@ -142,56 +124,36 @@ end
         generateAffines(tbl.lines, tbl.svs, offsets.startOffset, offsets.endOffset)
     end
 
-    saveStateVariables("fixed_random", settings)
+    saveParameters("fixed_random", parameterTable)
 end
  
  
  function FixedManualMenu()
-    local settings = {
-        offset = DEFAULT_OFFSET,
-        delay = DEFAULT_DELAY,
-        inputStr = "69 420 727 1337",
-        spacing = DEFAULT_SPACING
-    }
+    local parameterTable = constructParameters('msxList', 'offset', 'delay', 'spacing')
 
-    retrieveStateVariables("fixed_manual", settings)
+    retrieveParameters("fixed_manual", parameterTable)
 
-    _, settings.inputStr = imgui.InputText("List", settings.inputStr, 6942)
-    _, settings.offset = imgui.InputInt("MSX Offset", settings.offset)
-    _, settings.delay = imgui.InputInt("Delay", settings.delay)
-    _, settings.spacing = imgui.InputFloat("MS Spacing", settings.spacing)
-
+    parameterInputs(parameterTable)
+    local settings = parametersToSettings(parameterTable)
     local offsets = getStartAndEndNoteOffsets()
 
     if noteActivated(offsets) then
-        msxTable = strToTable(settings.inputStr, "%S+")
-
+        msxTable = strToTable(settings.msxList, "%S+")
         local tbl = tableToLines(msxTable, offsets.startOffset + settings.delay, settings.offset, settings.spacing)
-
-        generateAffines(tbl.lines, tbl.svs, offsets.startOffset, offsets.endOffset)
+        generateAffines(tbl.lines, tbl.svs, offsets.startOffset)
     end
 
-    saveStateVariables("fixed_manual", settings)
+    saveParameters("fixed_manual", parameterTable)
 end
  
  
  function FixedAutomaticMenu()
-    local settings = {
-        delay = DEFAULT_DELAY,
-        msxBounds = DEFAULT_MSX_BOUNDS,
-        spacing = DEFAULT_SPACING,
-        distance = DEFAULT_DISTANCE,
-        debug = "Line Count"
-    }
+    local parameterTable = constructParameters('msxBounds', 'distance', 'delay', 'spacing')
 
-    retrieveStateVariables("fixed_automatic", settings)
+    retrieveParameters("fixed_automatic", parameterTable)
 
-    _, settings.msxBounds = imgui.InputInt2("Start/End MSX", settings.msxBounds)
-    _, settings.distance = imgui.InputInt2("Distance Between Lines", settings.distance)
-
-    _, settings.delay = imgui.InputInt("Delay", settings.delay)
-    _, settings.spacing = imgui.InputFloat("MS Spacing", settings.spacing)
-
+    parameterInputs(parameterTable)
+    local settings = parametersToSettings(parameterTable)
     local offsets = getStartAndEndNoteOffsets()
 
     if noteActivated(offsets) then
@@ -202,9 +164,7 @@ end
         generateAffines(tbl.lines, tbl.svs, offsets.startOffset, offsets.endOffset)
     end
 
-    imgui.Text(settings.debug)
-
-    saveStateVariables("fixed_automatic", settings)
+    saveParameters("fixed_automatic", parameterTable)
 end
 
 function placeAutomaticFrame(startTime, low, high, spacing, distance)
@@ -277,13 +237,11 @@ end
         end
 
         generateAffines(lines, svs, offsets.startOffset, offsets.endOffset)
-
-        settings.debug = #lines .. ' // ' .. #svs
     end
     plot(settings.polynomialCoefficients)
 
 
-    imgui.Text(settings.debug)
+
 
     saveStateVariables("animation_spectrum", settings)
 end
@@ -322,29 +280,17 @@ end
  
  
  function BasicManualAnimationMenu()
-    local settings = {
-        startStr            = "69 420 727 1337",
-        endStr              = "69 420 727 1337",
-        progressionExponent = 1,
-        spacing             = DEFAULT_SPACING,
-        fps                 = DEFAULT_FPS,
-        debug               = 'Lines // SVs'
-    }
+    local parameterTable = constructParameters('msxList1', 'msxList2', 'progressionExponent', 'fps', 'spacing')
 
-    retrieveStateVariables("animation_manual", settings)
+    retrieveParameters("animation_manual", parameterTable)
+    parameterInputs(parameterTable)
 
-    _, settings.startStr = imgui.InputText("Start Keyframes", settings.startStr, 6942)
-    _, settings.endStr = imgui.InputText("End Keyframes", settings.endStr, 6942)
-    _, settings.progressionExponent = imgui.InputFloat("Progression Exponent", settings.progressionExponent)
-
-    _, settings.fps = imgui.InputFloat("Animation FPS", settings.fps)
-    _, settings.spacing = imgui.InputFloat("MS Spacing", settings.spacing)
-
+    local settings = parametersToSettings(parameterTable)
     local offsets = getStartAndEndNoteOffsets()
 
     if rangeActivated(offsets) then
-        startMsxTable = strToTable(settings.startStr, "%S+")
-        endMsxTable = strToTable(settings.endStr, "%S+")
+        startMsxTable = strToTable(settings.msxList1, "%S+")
+        endMsxTable = strToTable(settings.msxList2, "%S+")
 
         local currentTime = offsets.startOffset + 1
         local iterations = 0
@@ -376,24 +322,22 @@ end
         end
 
         generateAffines(lines, svs, offsets.startOffset, offsets.endOffset)
-
-        settings.debug = #lines .. " // " .. #svs
     end
 
-    saveStateVariables("animation_manual", settings)
+    saveParameters("animation_manual", parameterTable)
 end
  
  
  function IncrementalAnimationMenu()
     local settings = {
-        inputStr = "50 100 150 200",
+        msxList = "50 100 150 200",
         spacing = DEFAULT_SPACING,
         bounce = false
     }
 
     retrieveStateVariables("animation_incremental", settings)
 
-    _, settings.inputStr = imgui.InputText("List", settings.inputStr, 6942)
+    _, settings.msxList = imgui.InputText("List", settings.msxList, 6942)
     _, settings.spacing = imgui.InputFloat("MS Spacing", settings.spacing)
 
     if imgui.RadioButton("12341234", not settings.bounce) then
@@ -416,7 +360,7 @@ end
 
         local currentAddition = 1
 
-        local totalMsxTable = strToTable(settings.inputStr, "%S+")
+        local totalMsxTable = strToTable(settings.msxList, "%S+")
         local MAX_HEIGHT = #totalMsxTable
 
         local lines = {}
@@ -464,24 +408,13 @@ end
  
  
  function GlitchMenu()
-    local settings = {
-        msxBounds = DEFAULT_MSX_BOUNDS,
-        msxBounds2 = DEFAULT_MSX_BOUNDS,
-        spacing = DEFAULT_SPACING,
-        lineCount = DEFAULT_LINE_COUNT,
-        fps = DEFAULT_FPS,
-        debug = 'Lines // SVs'
-    }
+    local parameterTable = constructParameters('msxBounds1', 'msxBounds2', 'lineCount', 'fps', 'spacing')
 
-    retrieveStateVariables("glitch", settings)
+    retrieveParameters("glitch", parameterTable)
 
-    _, settings.msxBounds = imgui.InputInt2("Start Lower/Upper MSX", settings.msxBounds)
-    _, settings.msxBounds2 = imgui.InputInt2("End Lower/Upper MSX", settings.msxBounds2)
-    _, settings.lineCount = imgui.InputInt("Line Count", settings.lineCount)
+    parameterInputs(parameterTable)
 
-    _, settings.fps = imgui.InputFloat("Animation FPS", settings.fps)
-    _, settings.spacing = imgui.InputFloat("MS Spacing", settings.spacing)
-
+    local settings = parametersToSettings(parameterTable)
     local offsets = getStartAndEndNoteOffsets()
 
     if rangeActivated(offsets) then
@@ -492,8 +425,8 @@ end
         while (currentTime <= offsets.endOffset) do
             local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset)
 
-            local lowerBound = mapProgress(settings.msxBounds[1], progress, settings.msxBounds2[1])
-            local upperBound = mapProgress(settings.msxBounds[2], progress, settings.msxBounds2[2])
+            local lowerBound = mapProgress(settings.msxBounds1[1], progress, settings.msxBounds2[1])
+            local upperBound = mapProgress(settings.msxBounds1[2], progress, settings.msxBounds2[2])
 
             msxTable = {}
             for i = 1, settings.lineCount do
@@ -514,31 +447,21 @@ end
         end
 
         generateAffines(lines, svs, offsets.startOffset, offsets.endOffset)
-
-        settings.debug = #lines .. " // " .. #svs
     end
 
-    imgui.Text(settings.debug)
 
-    saveStateVariables("glitch", settings)
+
+    saveParameters("glitch", parameterTable)
 end
  
  
  function ExpansionContractionMenu()
-    local settings = {
-        msxBounds = DEFAULT_MSX_BOUNDS,
-        spacing = DEFAULT_SPACING,
-        distance = DEFAULT_DISTANCE,
-        debug = 'Lines // SVs'
-    }
+    local parameterTable = constructParameters('msxBounds', 'distance', 'spacing')
 
-    retrieveStateVariables("animation_expansion_contraction", settings)
+    retrieveParameters("animation_expansion_contraction", parameterTable)
 
-    _, settings.msxBounds = imgui.InputInt2("Start/End MSX", settings.msxBounds)
-    _, settings.distance = imgui.InputInt2("Distance Between Lines", settings.distance)
-
-    _, settings.spacing = imgui.InputFloat("MS Spacing", settings.spacing)
-
+    parameterInputs(parameterTable)
+    local settings = parametersToSettings(parameterTable)
     local offsets = getStartAndEndNoteOffsets()
 
     if rangeActivated(offsets) then
@@ -572,13 +495,9 @@ end
         end
 
         generateAffines(lines, svs, offsets.startOffset, offsets.endOffset)
-
-        settings.debug = #lines .. ' // ' .. #svs
     end
 
-    imgui.Text(settings.debug)
-
-    saveStateVariables("animation_expansion_contraction", settings)
+    saveParameters("animation_expansion_contraction", parameterTable)
 end
  
  
@@ -645,13 +564,11 @@ end
         end
 
         generateAffines(lines, svs, offsets.startOffset, offsets.endOffset)
-
-        settings.debug = #lines .. ' // ' .. #svs
     end
 
     plot(settings.polynomialCoefficients)
 
-    imgui.Text(settings.debug)
+
 
     saveStateVariables("animation_polynomial", settings)
 end
@@ -738,13 +655,11 @@ end
         end
 
         generateAffines(lines, svs, offsets.startOffset, offsets.endOffset)
-
-        settings.debug = #lines .. ' // ' .. #svs
     end
     plot(settings.polynomialCoefficients)
 
 
-    imgui.Text(settings.debug)
+
 
     saveStateVariables("animation_polynomial", settings)
 end
@@ -841,17 +756,32 @@ end
  
  function retrieveStateVariables(menu, variables)
     for key in pairs(variables) do
-        if (state.GetValue(menu..key) ~= nil) then
-            variables[key] = state.GetValue(menu..key)
+        if (state.GetValue(menu .. key) ~= nil) then
+            variables[key] = state.GetValue(menu .. key)
         end
     end
 end
 
 function saveStateVariables(menu, variables)
     for key in pairs(variables) do
-        state.SetValue(menu..key, variables[key])
+        state.SetValue(menu .. key, variables[key])
     end
-end 
+end
+
+function retrieveParameters(menu, parameterTable)
+    for idx, tbl in ipairs(parameterTable) do
+        if (state.GetValue(menu .. idx .. tbl.key) ~= nil) then
+            parameterTable[idx].value = state.GetValue(menu .. idx .. tbl.key)
+        end
+    end
+end
+
+function saveParameters(menu, parameterTable)
+    for idx, tbl in ipairs(parameterTable) do
+        state.setValue(menu .. idx .. tbl.key, tbl.value)
+    end
+end
+ 
  
  function noteSelected(offsets)
     return offsets ~= -1
@@ -867,6 +797,74 @@ end
  
  function getProgress(starting, value, ending)
     return (value - starting) / (ending - starting)
+end
+ 
+ 
+ function parametersToSettings(parameterTable)
+    local settings = {}
+
+    for _, tbl in ipairs(parameterTable) do
+        settings[tbl.key] = tbl.value
+    end
+
+    return settings
+end
+ 
+ 
+ INPUT_DICTIONARY = {
+    msxList = function (v) return InputTextWrapper("MSX List", v) end,
+    msxList1 = function (v) return InputTextWrapper("Start MSX List", v) end,
+    msxList2 = function (v) return InputTextWrapper("End MSX List", v) end,
+    msxBounds = function (v) return InputInt2Wrapper("Lower/Upper MSX", v) end,
+    msxBounds1 = function (v) return InputInt2Wrapper("Start Lower/Upper MSX", v) end,
+    msxBounds2 = function (v) return InputInt2Wrapper("End Lower/Upper MSX", v) end,
+    offset = function (v) return InputIntWrapper("MSX Offset", v) end,
+    delay = function (v) return InputIntWrapper("MS Delay", v) end,
+    spacing = function (v) return InputFloatWrapper("MS Spacing", v) end,
+    debug = function (v) if v ~= '' then return imgui.Text(v) end end,
+    distance = function (v) return InputInt2Wrapper('Distance Between Lines', v) end,
+    lineCount = function (v) return InputIntWrapper("Line Count", v) end,
+    progressionExponent = function (v) return InputFloatWrapper("Progression Exponent", v) end,
+    fps = function (v) return InputFloatWrapper("Animation FPS", v) end
+}
+
+function parameterInputs(parameterTable)
+    for _, tbl in ipairs(parameterTable) do
+        tbl.value = INPUT_DICTIONARY[tbl.key](tbl.value)
+    end
+end
+ 
+ 
+ DEFAULT_DICTIONARY = {
+    msxBounds = DEFAULT_MSX_BOUNDS,
+    msxBounds1 = DEFAULT_MSX_BOUNDS,
+    msxBounds2 = DEFAULT_MSX_BOUNDS,
+    msxList = DEFAULT_MSX_LIST,
+    msxList1 = DEFAULT_MSX_LIST,
+    msxList2 = DEFAULT_MSX_LIST,
+    offset = DEFAULT_OFFSET,
+    spacing = DEFAULT_SPACING,
+    delay = DEFAULT_DELAY,
+    distance = DEFAULT_DISTANCE,
+    lineCount = DEFAULT_LINE_COUNT,
+    progressionExponent = DEFAULT_PROGRESSION_EXPONENT,
+    fps = DEFAULT_FPS
+}
+
+
+function constructParameters(...)
+    local parameterTable = {}
+
+    for _, v in ipairs({ ... }) do
+        table.insert(parameterTable, {
+            key = v,
+            value = DEFAULT_DICTIONARY[v]
+        })
+    end
+
+    table.insert(parameterTable, { key = "debug", value = "" })
+
+    return parameterTable
 end
  
  
@@ -975,6 +973,8 @@ end
  
  
  function generateAffines(lines, svs, lower, upper)
+    upper = upper or map.GetNearestSnapTimeFromTime(true, 1, lower);
+
     lines = cleanLines(lines, lower, upper)
     svs = cleanSVs(svs, lower, upper)
 
@@ -1014,8 +1014,19 @@ function noteActivated(offsets, text)
         return imgui.Text("Select a Note to " .. text .. " Lines.")
     end
 end
-
-function plot(polynomialCoefficients)
+ 
+ 
+ function tooltip(text)
+    if not imgui.IsItemHovered() then return end
+    imgui.BeginTooltip()
+    imgui.PushTextWrapPos(imgui.GetFontSize() * 20)
+    imgui.Text(text)
+    imgui.PopTextWrapPos()
+    imgui.EndTooltip()
+end
+ 
+ 
+ function plot(polynomialCoefficients)
     imgui.Begin("Boundary Height vs. Time", imgui_window_flags.AlwaysAutoResize)
 
     local RESOLUTION = 20
@@ -1027,13 +1038,36 @@ function plot(polynomialCoefficients)
             (polynomialCoefficients[1] * progress ^ 2 + polynomialCoefficients[2] * progress + polynomialCoefficients[3]))
     end
 
+
+
     imgui.PlotLines("", tbl, #tbl, 0,
         'Equation: y = ' ..
-        polynomialCoefficients[1] .. 'x^2 + ' .. polynomialCoefficients[2] .. 'x + ' .. polynomialCoefficients[3], 0,
+        polynomialCoefficients[1] .. 't^2 + ' .. polynomialCoefficients[2] .. 't + ' .. polynomialCoefficients[3], 0,
         1,
         { 250, 150 })
 
     imgui.End()
+end
+ 
+ 
+ function InputIntWrapper(label, v)
+    _, v = imgui.InputInt(label, v, 0, 0)
+    return v
+end
+
+function InputFloatWrapper(label, v)
+    _, v = imgui.InputFloat(label, v, 0, 0, "%.2f")
+    return v
+end
+
+function InputTextWrapper(label, v)
+    _, v = imgui.InputText(label, v, 6942)
+    return v
+end
+
+function InputInt2Wrapper(label, v)
+    _, v = imgui.InputInt2(label, v)
+    return v
 end
  
  
@@ -1047,7 +1081,7 @@ function draw()
     imgui.Begin("AFFINE", imgui_window_flags.AlwaysAutoResize)
 
     local settings = {
-        menuID = 1
+        menuID = DEFAULT_MENU_ID
     }
 
     -- IMPORTANT: DO NOT DELETE NEXT LINE BEFORE COMPILING.
@@ -1104,7 +1138,7 @@ end
 
 function AnimationMenu()
     local settings = {
-        menuID = 1
+        menuID = DEFAULT_MENU_ID
     }
 
     retrieveStateVariables("animation", settings)
@@ -1122,7 +1156,7 @@ end
 
 function StandardMenu()
     local settings = {
-        menuID = 1
+        menuID = DEFAULT_MENU_ID
     }
 
     retrieveStateVariables("standard", settings)
@@ -1140,7 +1174,7 @@ end
 
 function FixedMenu()
     local settings = {
-        menuID = 1
+        menuID = DEFAULT_MENU_ID
     }
 
     retrieveStateVariables("fixed", settings)
