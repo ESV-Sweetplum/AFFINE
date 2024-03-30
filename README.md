@@ -1,4 +1,4 @@
-# AFFINE v1.1.0
+# AFFINE v1.1.1
 
 AFFINE (pronounced aff-een) is a [Quaver](https://www.quavergame.com) plugin designed to simplify map making. In particular, AFFINE assists with the creation of static and dynamic timing lines.
 
@@ -11,23 +11,20 @@ AFFINE (pronounced aff-een) is a [Quaver](https://www.quavergame.com) plugin des
 
 ## Menus:
 
-- ***(Standard > Spread)*** Place a gradient of timing lines over a selected region.
-- ***(Standard > At Notes)*** Place timing lines at selected notes.  
-⠀
-- The following can be done on a still frame (0.0x SV):
-    - ***(Fixed > Manual)*** Place timing lines at desired height.
-    - ***(Fixed > Automatic)*** Place a gradient of timing lines between designated heights.
-    - ***(Fixed > Random)*** Place a random amount of timing lines within a region.  
-⠀
-- ***(Animation > Manual (Basic))*** Set up keyframes for individual timing lines to move from one MSX to another.
-- ***(Animation > Increment)*** Setup a base manual frame. For each note present within the animation boundary, a new frame is generated, progressively forming the base manual frame.
-- ***(Animation > Boundary (Static))*** Hide and show backdrop timing lines using a boundary.
-- ***(Animation > Boundary (Dynamic))*** Scale backdrop timing lines with a boundary.
-- ***(Animation > Glitch)*** Create an animation with constantly changing random notes. 
-- ***(Animation > Spectrum)*** Create an animation with a spectrum with variable height.
-- ***(Animation > Expansion / Contraction)*** Create an animation with expanding / contracting timing lines.
+- **_(Standard > Spread)_** Place a gradient of timing lines over a selected region.
+- **_(Standard > At Notes)_** Place timing lines at selected notes.  
+  ⠀
+- The following can be done on a still frame (0.0x SV): - **_(Fixed > Manual)_** Place timing lines at desired height. - **_(Fixed > Automatic)_** Place a gradient of timing lines between designated heights. - **_(Fixed > Random)_** Place a random amount of timing lines within a region.  
+  ⠀
+- **_(Animation > Manual (Basic))_** Set up keyframes for individual timing lines to move from one MSX to another.
+- **_(Animation > Increment)_** Setup a base manual frame. For each note present within the animation boundary, a new frame is generated, progressively forming the base manual frame.
+- **_(Animation > Boundary (Static))_** Hide and show backdrop timing lines using a boundary.
+- **_(Animation > Boundary (Dynamic))_** Scale backdrop timing lines with a boundary.
+- **_(Animation > Glitch)_** Create an animation with constantly changing random notes.
+- **_(Animation > Spectrum)_** Create an animation with a spectrum with variable height.
+- **_(Animation > Expansion / Contraction)_** Create an animation with expanding / contracting timing lines.
 
-- ***(Deletion)*** Easily delete all timing lines and scroll velocities within a certain range.
+- **_(Deletion)_** Easily delete all timing lines and scroll velocities within a certain range.
 
 ## Basic Tutorial:
 
@@ -40,9 +37,10 @@ AFFINE (pronounced aff-een) is a [Quaver](https://www.quavergame.com) plugin des
 ## Installation:
 
 1. Go to the [latest release](https://www.github.com/ESV-Sweetplum/AFFINE/releases/latest) and download `AFFINE.zip`.
-2. Inside the zip folder will be a folder called `AFFINE`. Place this into your Quaver plugin folder. 
+2. Inside the zip folder will be a folder called `AFFINE`. Place this into your Quaver plugin folder.
 
-    2a. If you're having trouble finding the plugin folder, go to the song selection menu. Then, right-click any map, and select the `Open Folder` option. In your file explorer, backtrack to the `Quaver` folder. Inside the `Quaver` folder will be a folder called `Plugins`. Place AFFINE here.
+   2a. If you're having trouble finding the plugin folder, go to the song selection menu. Then, right-click any map, and select the `Open Folder` option. In your file explorer, backtrack to the `Quaver` folder. Inside the `Quaver` folder will be a folder called `Plugins`. Place AFFINE here.
+
 3. Done!
 
 ## Building and Modifying:
@@ -58,4 +56,4 @@ All files necessary are contained within the `src` directory. When you're finish
 ## Special thanks to:
 
 - [amoguSV](https://github.com/kloi34/AmoguSV): The internal logic for displacements, increments, and teleportation was taken from this plugin. Highly recommended to use this plugin alongside AFFINE.
-- [IceDynamix' Plugin Guide](https://github.com/IceDynamix/QuaverPluginGuide/blob/master/quaver_plugin_guide.md): All `imgui` documentation was from this document. This is almost necessary for new plugin developers. 
+- [IceDynamix' Plugin Guide](https://github.com/IceDynamix/QuaverPluginGuide/blob/master/quaver_plugin_guide.md): All `imgui` documentation was from this document. This is almost necessary for new plugin developers.
