@@ -1,30 +1,36 @@
-const { downloadRelease } = require('@terascope/fetch-github-release');
-const fs = require("fs")
+const { downloadRelease } = require("@terascope/fetch-github-release");
+const fs = require("fs");
 
-const user = 'ESV-Sweetplum';
-const repo = 'AFFINE';
-const outputdir = './';
+const user = "ESV-Sweetplum";
+const repo = "AFFINE";
+const outputdir = "./";
 
 function filterRelease(release) {
-    return !release.prerelease;
+  return !release.prerelease;
 }
 
 function filterAsset(asset) {
-    return asset.name.includes('AFFINE');
+  return asset.name.includes("AFFINE");
 }
 
 async function main() {
-    await downloadRelease(user, repo, outputdir, filterRelease, filterAsset)
-        .catch((err) => {
-            console.error(err.message);
-        });
+  await downloadRelease(
+    user,
+    repo,
+    outputdir,
+    filterRelease,
+    filterAsset
+  ).catch((err) => {
+    console.error(err.message);
+  });
 
-    fs.copyFileSync("./AFFINE/plugin.lua", "./plugin.lua")
-    fs.copyFileSync("./AFFINE/settings.ini", "./settings.ini")
+  fs.copyFileSync("./AFFINE/plugin.lua", "./plugin.lua");
+  fs.copyFileSync("./AFFINE/settings.ini", "./settings.ini");
+  fs.copyFileSync("./AFFINE/config.exe", "./config.exe");
 
-    fs.rmSync("./AFFINE", { recursive: true })
+  fs.rmSync("./AFFINE", { recursive: true });
 
-    process.exit()
+  process.exit();
 }
 
-main()
+main();

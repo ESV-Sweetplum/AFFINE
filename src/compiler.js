@@ -23,15 +23,18 @@ const CONSTANT_FILES = getFilesRecursively("./src/CONSTANTS").map((file) => fs.r
 const FUNCTION_TABLES = CONSTANT_FILES.reduce((str, file) => {
     const idx = file.split("\n").findIndex((v) => v.includes('FUNCTIONS'))
 
-    return `${str} \n \n ${file.replace("\r", "").split('\n').slice(idx).join("\n")}`
+    return `${str}\n\n${file.replaceAll("\r", "").split('\n').slice(idx).join("\n")}`
 }, '')
 
 const CONSTANTS = CONSTANT_FILES.reduce((str, file) => {
     const idx = file.split("\n").findIndex((v) => v.includes('FUNCTIONS'))
     if (idx === -1) {
-        return `${str} \n \n ${file}`
+        if (file.includes("DEFAULT")) {
+            return `${file}\n\n${str}`
+        }
+        return `${str}\n\n${file}`
     }
-    return `${str} \n \n ${file.replace("\r", "").split('\n').slice(0, idx - 1).join("\n")}`
+    return `${str}\n\n${file.replaceAll("\r", "").split('\n').slice(0, idx - 1).join("\n")}`
 }, '')
 
 
@@ -45,7 +48,9 @@ const IGNORED_FILES = [
 let files = getFilesRecursively("./src").filter((file) => file.endsWith(".lua")).filter((file) => !IGNORED_FILES.some((v) => file.includes(v)))
 
 files.forEach((file) => {
-    mainFile = `${fs.readFileSync(file, 'utf-8')} \n \n ${mainFile}`
+    mainFile = `${fs.readFileSync(file, 'utf-8')}\n\n${mainFile}`
 })
 
-fs.writeFileSync("./plugin.lua", `${CONSTANTS} \n \n ${mainFile}`)
+const bruh = `${CONSTANTS}\n\n${mainFile}`.replaceAll("\r", "").replaceAll(/(\n){3,}/g, "\n\n")
+
+fs.writeFileSync("./plugin.lua", bruh)

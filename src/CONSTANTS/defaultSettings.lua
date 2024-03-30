@@ -1,17 +1,19 @@
-DEFAULT_MENU_ID = 1
+DEFAULT_MENU_ID = 1                            -- integer
 
-DEFAULT_MSX_LIST = '69 420 727 1337'
-DEFAULT_DELAY = 1
-DEFAULT_OFFSET = 0
-DEFAULT_SPACING = 1.1
-DEFAULT_MSX_BOUNDS = { 0, 400 }
-DEFAULT_DISTANCE = { 15, 15 }
-DEFAULT_LINE_COUNT = 10
-DEFAULT_FPS = 90
-DEFAULT_CENTER = 200
-DEFAULT_MAX_SPREAD = 200
-DEFAULT_PROGRESSION_EXPONENT = 1
-DEFAULT_POLYNOMIAL_COEFFICIENTS = { -4, 4, 0 }
+DEFAULT_MSX_LIST = '69 420 727 1337'           -- integer[any]
+DEFAULT_DELAY = 1                              -- integer
+DEFAULT_OFFSET = 0                             -- integer
+DEFAULT_SPACING = 1.1                          -- float
+DEFAULT_MSX_BOUNDS = { 0, 400 }                -- integer[2]
+DEFAULT_DISTANCE = { 15, 15 }                  -- integer[2]
+DEFAULT_LINE_COUNT = 10                        -- integer
+DEFAULT_FPS = 90                               -- float
+DEFAULT_CENTER = 200                           -- integer
+DEFAULT_MAX_SPREAD = 200                       -- integer
+DEFAULT_PROGRESSION_EXPONENT = 1               -- float
+DEFAULT_POLYNOMIAL_COEFFICIENTS = { -4, 4, 0 } -- integer[3]
 
-INCREMENT = 64
-MAX_ITERATIONS = 1000
+INCREMENT = 64                                 -- integer
+MAX_ITERATIONS = 1000                          -- integer
+
+-- END DEFAULT SETTINGS (DONT DELETE THIS LINE)

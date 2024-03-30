@@ -1,6 +1,24 @@
- 
- 
- ANIMATION_MENU_LIST = {
+DEFAULT_MENU_ID = 1                            -- integer
+
+DEFAULT_MSX_LIST = '69 420 727 1337'           -- integer[any]
+DEFAULT_DELAY = 1                              -- integer
+DEFAULT_OFFSET = 0                             -- integer
+DEFAULT_SPACING = 1.1                          -- float
+DEFAULT_MSX_BOUNDS = { 0, 400 }                -- integer[2]
+DEFAULT_DISTANCE = { 15, 15 }                  -- integer[2]
+DEFAULT_LINE_COUNT = 10                        -- integer
+DEFAULT_FPS = 90                               -- float
+DEFAULT_CENTER = 200                           -- integer
+DEFAULT_MAX_SPREAD = 200                       -- integer
+DEFAULT_PROGRESSION_EXPONENT = 1               -- float
+DEFAULT_POLYNOMIAL_COEFFICIENTS = { -4, 4, 0 } -- integer[3]
+
+INCREMENT = 64                                 -- integer
+MAX_ITERATIONS = 1000                          -- integer
+
+-- END DEFAULT SETTINGS (DONT DELETE THIS LINE)
+
+ANIMATION_MENU_LIST = {
     'Manual (Basic)',
     'Incremental',
     'Boundary (Static)',
@@ -8,53 +26,33 @@
     'Glitch',
     'Spectrum',
     'Expansion / Contraction'
-} 
- 
- DEFAULT_MENU_ID = 1
+}
 
-DEFAULT_MSX_LIST = '69 420 727 1337'
-DEFAULT_DELAY = 1
-DEFAULT_OFFSET = 0
-DEFAULT_SPACING = 1.1
-DEFAULT_MSX_BOUNDS = { 0, 400 }
-DEFAULT_DISTANCE = { 15, 15 }
-DEFAULT_LINE_COUNT = 10
-DEFAULT_FPS = 90
-DEFAULT_CENTER = 200
-DEFAULT_MAX_SPREAD = 200
-DEFAULT_PROGRESSION_EXPONENT = 1
-DEFAULT_POLYNOMIAL_COEFFICIENTS = { -4, 4, 0 }
-
-INCREMENT = 64
-MAX_ITERATIONS = 1000
- 
- 
- DELETION_TYPE_LIST = {
+DELETION_TYPE_LIST = {
     'Timing Lines + Scroll Velocities',
     'Timing Lines Only',
     'Scroll Velocities Only',
 }
- 
- 
- FIXED_MENU_LIST = {
+
+FIXED_MENU_LIST = {
     'Manual',
     'Automatic',
     'Random'
-} 
- 
- MAIN_MENU_LIST = {
+}
+
+MAIN_MENU_LIST = {
     'Standard',
     'Fixed',
     'Animation (LAGGY)',
     'Deletion'
-} 
- 
- STANDARD_MENU_LIST = {
+}
+
+STANDARD_MENU_LIST = {
     'Spread',
     'At Notes'
-} 
- 
- function StandardSpreadMenu()
+}
+
+function StandardSpreadMenu()
     local parameterTable = constructParameters('distance')
 
     retrieveParameters('standard_spread', parameterTable)
@@ -88,9 +86,8 @@ MAX_ITERATIONS = 1000
 
     saveParameters('standard_spread', parameterTable)
 end
- 
- 
- function StandardAtNotesMenu()
+
+function StandardAtNotesMenu()
     local offsets = getSelectedOffsets()
 
     if NoteActivated(offsets) then
@@ -105,9 +102,8 @@ end
         actions.PlaceTimingPointBatch(lines)
     end
 end
- 
- 
- function FixedRandomMenu()
+
+function FixedRandomMenu()
     local parameterTable = constructParameters('msxBounds', 'lineCount', 'delay', 'spacing')
 
     retrieveParameters("fixed_random", parameterTable)
@@ -128,12 +124,10 @@ end
         parameterTable[#parameterTable].value = "Line Count: " .. #tbl.lines .. " // SV Count: " .. #tbl.svs
     end
 
-
     saveParameters("fixed_random", parameterTable)
 end
- 
- 
- function FixedManualMenu()
+
+function FixedManualMenu()
     local parameterTable = constructParameters('msxList', 'offset', 'delay', 'spacing')
 
     retrieveParameters("fixed_manual", parameterTable)
@@ -150,12 +144,10 @@ end
         parameterTable[#parameterTable].value = "Line Count: " .. #tbl.lines .. " // SV Count: " .. #tbl.svs
     end
 
-
     saveParameters("fixed_manual", parameterTable)
 end
- 
- 
- function FixedAutomaticMenu()
+
+function FixedAutomaticMenu()
     local parameterTable = constructParameters('msxBounds', 'distance', 'delay', 'spacing')
 
     retrieveParameters("fixed_automatic", parameterTable)
@@ -188,9 +180,8 @@ function placeAutomaticFrame(startTime, low, high, spacing, distance)
     end
     return tableToLines(msxTable, startTime, 0, spacing)
 end
- 
- 
- function SpectrumMenu()
+
+function SpectrumMenu()
     local parameterTable = constructParameters("center", "maxSpread", "distance", "progressionExponent", "spacing",
         "polynomialCoefficients", {
             inputType = "Checkbox",
@@ -216,7 +207,6 @@ end
         while ((currentTime + (2 / INCREMENT)) <= offsets.endOffset) and (iterations < MAX_ITERATIONS) do
             local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset) ^
                 settings.progressionExponent
-
 
             local heightDifferential = settings.maxSpread *
                 (settings.polynomialCoefficients[1] * progress ^ 2 + settings.polynomialCoefficients[2] * progress + settings.polynomialCoefficients[3])
@@ -277,9 +267,8 @@ function placeSpectrumFrame(startTime, center, maxSpread, lineDistance, spacing,
         return tableToLines(msxTable, startTime, 0, spacing)
     end
 end
- 
- 
- function BasicManualAnimationMenu()
+
+function BasicManualAnimationMenu()
     local parameterTable = constructParameters('msxList1', 'msxList2', 'progressionExponent', 'fps', 'spacing')
 
     retrieveParameters("animation_manual", parameterTable)
@@ -327,9 +316,8 @@ end
 
     saveParameters("animation_manual", parameterTable)
 end
- 
- 
- function IncrementalAnimationMenu()
+
+function IncrementalAnimationMenu()
     local parameterTable = constructParameters('msxList', 'spacing', {
         inputType = "RadioBoolean",
         key = "bounce",
@@ -407,9 +395,8 @@ end
 
     saveParameters("animation_incremental", parameterTable)
 end
- 
- 
- function GlitchMenu()
+
+function GlitchMenu()
     local parameterTable = constructParameters('msxBounds1', 'msxBounds2', 'lineCount', 'progressionExponent', 'fps',
         'spacing')
 
@@ -428,7 +415,6 @@ end
         while (currentTime <= offsets.endOffset) do
             local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset) ^
                 settings.progressionExponent
-
 
             local lowerBound = mapProgress(settings.msxBounds1[1], progress, settings.msxBounds2[1])
             local upperBound = mapProgress(settings.msxBounds1[2], progress, settings.msxBounds2[2])
@@ -455,13 +441,10 @@ end
         parameterTable[#parameterTable].value = "Line Count: " .. #lines .. " // SV Count: " .. #svs
     end
 
-
-
     saveParameters("glitch", parameterTable)
 end
- 
- 
- function ExpansionContractionMenu()
+
+function ExpansionContractionMenu()
     local parameterTable = constructParameters('msxBounds', 'distance', 'progressionExponent', 'spacing')
 
     retrieveParameters("animation_expansion_contraction", parameterTable)
@@ -507,9 +490,8 @@ end
 
     saveParameters("animation_expansion_contraction", parameterTable)
 end
- 
- 
- function StaticBoundaryMenu()
+
+function StaticBoundaryMenu()
     local parameterTable = constructParameters("msxBounds", "distance", "progressionExponent", "spacing",
         "polynomialCoefficients", {
             inputType = "RadioBoolean",
@@ -531,11 +513,9 @@ end
         local lines = {}
         local svs = {}
 
-
         while ((currentTime + (2 / INCREMENT)) <= offsets.endOffset) and (iterations < MAX_ITERATIONS) do
             local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset) ^
                 settings.progressionExponent
-
 
             local boundary = settings.msxBounds[2] *
                 (settings.polynomialCoefficients[1] * progress ^ 2 + settings.polynomialCoefficients[2] * progress + settings.polynomialCoefficients[3])
@@ -584,9 +564,8 @@ function placeStaticFrame(startTime, min, max, lineDistance, spacing, boundary, 
 
     return tableToLines(msxTable, startTime, 0, spacing)
 end
- 
- 
- function DynamicBoundaryMenu()
+
+function DynamicBoundaryMenu()
     local parameterTable = constructParameters("msxBounds", 'distance', "progressionExponent", "spacing",
         "polynomialCoefficients", {
             inputType = "RadioBoolean",
@@ -658,9 +637,8 @@ function placeDynamicFrame(startTime, min, max, lineDistance, spacing, polynomia
 
     return tableToLines(msxTable, startTime, 0, spacing)
 end
- 
- 
- function table.contains(table, element)
+
+function table.contains(table, element)
     for _, value in pairs(table) do
         if value == element then
             return true
@@ -668,9 +646,8 @@ end
     end
     return false
 end
- 
- 
- function teleport(time, dist)
+
+function teleport(time, dist)
     return {
         sv(time, INCREMENT * dist),
         sv(time + (1 / INCREMENT), 64000)
@@ -680,14 +657,12 @@ end
 function insertTeleport(svs, time, dist)
     return concatTables(svs, teleport(time, dist))
 end
- 
- 
- function sv(time, multiplier)
+
+function sv(time, multiplier)
     return utils.CreateScrollVelocity(time, multiplier)
 end
- 
- 
- function getSVsInRange(lower, upper)
+
+function getSVsInRange(lower, upper)
     local base = map.ScrollVelocities
 
     local tbl = {}
@@ -700,11 +675,8 @@ end
 
     return tbl
 end
- 
- 
-  
- 
- function cleanSVs(svs, lower, upper)
+
+function cleanSVs(svs, lower, upper)
     local tbl = {}
 
     for _, currentSV in pairs(svs) do
@@ -718,9 +690,8 @@ end
 
     return tbl
 end
- 
- 
- function strToTable(str, predicate) 
+
+function strToTable(str, predicate) 
     t = {}
 
     for i in string.gmatch(str, predicate) do
@@ -728,9 +699,9 @@ end
     end
     
     return t
-end 
- 
- function retrieveStateVariables(menu, variables)
+end
+
+function retrieveStateVariables(menu, variables)
     for key in pairs(variables) do
         if (state.GetValue(menu .. key) ~= nil) then
             variables[key] = state.GetValue(menu .. key)
@@ -757,26 +728,24 @@ function saveParameters(menu, parameterTable)
         state.setValue(menu .. idx .. tbl.key, tbl.value)
     end
 end
- 
- 
- function noteSelected(offsets)
+
+function noteSelected(offsets)
     return offsets ~= -1
 end
 
 function rangeSelected(offsets)
     return (offsets ~= -1) and (offsets.startOffset ~= offsets.endOffset) 
-end 
- 
- function mapProgress(starting, progress, ending)
+end
+
+function mapProgress(starting, progress, ending)
     return progress * (ending - starting) + starting
-end 
- 
- function getProgress(starting, value, ending)
+end
+
+function getProgress(starting, value, ending)
     return (value - starting) / (ending - starting)
 end
- 
- 
- function parametersToSettings(parameterTable)
+
+function parametersToSettings(parameterTable)
     local settings = {}
 
     for _, tbl in ipairs(parameterTable) do
@@ -785,9 +754,8 @@ end
 
     return settings
 end
- 
- 
- INPUT_DICTIONARY = {
+
+INPUT_DICTIONARY = {
     msxList = function (v)
         return InputTextWrapper("MSX List", v,
             "List of MSX values to place. For each number given, a timing line will be placed at that number MSX above the receptor.")
@@ -874,9 +842,8 @@ function parameterInputs(parameterTable)
         end
     end
 end
- 
- 
- DEFAULT_DICTIONARY = {
+
+DEFAULT_DICTIONARY = {
     msxBounds = DEFAULT_MSX_BOUNDS,
     msxBounds1 = DEFAULT_MSX_BOUNDS,
     msxBounds2 = DEFAULT_MSX_BOUNDS,
@@ -920,9 +887,8 @@ function constructParameters(...)
 
     return parameterTable
 end
- 
- 
- function getStartAndEndNoteOffsets()
+
+function getStartAndEndNoteOffsets()
     local offsets = {}
 
     if (#state.SelectedHitObjects == 0) then
@@ -935,9 +901,8 @@ end
 
     return { startOffset = math.min(table.unpack(offsets)), endOffset = math.max(table.unpack(offsets)) }
 end
- 
- 
- function getSelectedOffsets()
+
+function getSelectedOffsets()
     local offsets = {}
 
     if (#state.SelectedHitObjects == 0) then
@@ -952,9 +917,8 @@ end
 
     return offsets
 end
- 
- 
- function tableToLines(svTable, time, msxOffset, spacing)
+
+function tableToLines(svTable, time, msxOffset, spacing)
     local lines = {}
     local svs = {}
 
@@ -976,9 +940,8 @@ end
     }
     return tbl
 end
- 
- 
- function line(time)
+
+function line(time)
     local data = map.GetTimingPointAt(time)
 
     if (not data) then
@@ -991,9 +954,8 @@ end
 
     return utils.CreateTimingPoint(time, data.Bpm, data.Signature)
 end
- 
- 
- function getLinesInRange(lower, upper)
+
+function getLinesInRange(lower, upper)
     local base = map.TimingPoints
 
     local tbl = {}
@@ -1006,9 +968,8 @@ end
 
     return tbl
 end
- 
- 
- function cleanLines(lines, lower, upper)
+
+function cleanLines(lines, lower, upper)
     local lastLineTime = math.max(lines[#lines].StartTime, upper)
 
     local tbl = {}
@@ -1024,9 +985,8 @@ end
 
     return tbl
 end
- 
- 
- function generateAffines(lines, svs, lower, upper)
+
+function generateAffines(lines, svs, lower, upper)
     if (not upper or upper == lower) then
         upper = map.GetNearestSnapTimeFromTime(true, 1, lower);
     end
@@ -1039,16 +999,15 @@ end
         utils.CreateEditorAction(action_type.AddScrollVelocityBatch, svs)
     })
 end
- 
- 
- function concatTables(t1, t2)
+
+function concatTables(t1, t2)
     for i=1, #t2 do
        t1[#t1+1] = t2[i]
     end
     return t1
- end 
- 
- function Tooltip(text)
+ end
+
+function Tooltip(text)
     imgui.SameLine(0, 4)
     imgui.TextDisabled("(?)")
     if not imgui.IsItemHovered() then return end
@@ -1058,9 +1017,8 @@ end
     imgui.PopTextWrapPos()
     imgui.EndTooltip()
 end
- 
- 
- function RadioBoolean(labelFalse, labelTrue, v, tooltip)
+
+function RadioBoolean(labelFalse, labelTrue, v, tooltip)
     if imgui.RadioButton(labelFalse, not v) then
         v = false
     end
@@ -1073,9 +1031,8 @@ end
 
     return v
 end
- 
- 
- function Plot(polynomialCoefficients, progressionExponent, title)
+
+function Plot(polynomialCoefficients, progressionExponent, title)
     imgui.Begin(title or "Boundary Height vs. Time", imgui_window_flags.AlwaysAutoResize)
 
     local RESOLUTION = 50
@@ -1111,9 +1068,8 @@ end
 
     imgui.End()
 end
- 
- 
- function InputIntWrapper(label, v, tooltip)
+
+function InputIntWrapper(label, v, tooltip)
     _, v = imgui.InputInt(label, v, 0, 0)
     Tooltip(tooltip)
     return v
@@ -1149,9 +1105,8 @@ function CheckboxWrapper(label, v, tooltip, sameLine)
     Tooltip(tooltip)
     return v
 end
- 
- 
- function activationButton(text)
+
+function activationButton(text)
     text = text or "Place"
     return imgui.Button(text .. " Lines")
 end
@@ -1173,9 +1128,8 @@ function NoteActivated(offsets, text)
         return imgui.Text("Select a Note to " .. text .. " Lines.")
     end
 end
- 
- 
- function chooseMenu(tbl, menuID)
+
+function chooseMenu(tbl, menuID)
     if (tbl[menuID]) then
         tbl[menuID]();
     end
@@ -1189,9 +1143,9 @@ function draw()
     }
 
     -- IMPORTANT: DO NOT DELETE NEXT LINE BEFORE COMPILING.
-     
- 
- ANIMATION_MENU_FUNCTIONS = {
+    
+
+ANIMATION_MENU_FUNCTIONS = {
     BasicManualAnimationMenu,
     IncrementalAnimationMenu,
     StaticBoundaryMenu,
@@ -1200,32 +1154,24 @@ function draw()
     SpectrumMenu,
     ExpansionContractionMenu
 }
- 
- 
-  
- 
-  
- 
- FIXED_MENU_FUNCTIONS = {
+
+FIXED_MENU_FUNCTIONS = {
     FixedManualMenu,
     FixedAutomaticMenu,
     FixedRandomMenu
 }
- 
- 
- MAIN_MENU_FUNCTIONS = {
+
+MAIN_MENU_FUNCTIONS = {
     StandardMenu,
     FixedMenu,
     AnimationMenu,
     DeletionMenu
 }
- 
- 
- STANDARD_MENU_FUNCTIONS = {
+
+STANDARD_MENU_FUNCTIONS = {
     StandardSpreadMenu,
     StandardAtNotesMenu
 }
-
 
     retrieveStateVariables("main", settings)
 
