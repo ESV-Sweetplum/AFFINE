@@ -1,9 +1,11 @@
 STANDARD_MENU_LIST = {
     'Spread',
-    'At Notes'
+    'At Notes',
+    "Rainbow"
 }
 
 STANDARD_MENU_FUNCTIONS = {
     StandardSpreadMenu,
-    StandardAtNotesMenu
+    StandardAtNotesMenu,
+    StandardRainbowMenu
 }
