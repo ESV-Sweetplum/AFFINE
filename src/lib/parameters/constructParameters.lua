@@ -14,7 +14,8 @@ DEFAULT_DICTIONARY = {
     polynomialCoefficients = DEFAULT_POLYNOMIAL_COEFFICIENTS,
     fps = DEFAULT_FPS,
     center = DEFAULT_CENTER,
-    maxSpread = DEFAULT_MAX_SPREAD
+    maxSpread = DEFAULT_MAX_SPREAD,
+    colorList = DEFAULT_COLOR_LIST
 }
 
 function constructParameters(...)

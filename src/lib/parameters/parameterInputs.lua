@@ -65,6 +65,10 @@ INPUT_DICTIONARY = {
     polynomialCoefficients = function (v)
         return InputFloat3Wrapper("Coefficients", v,
             "The boundary follows a curve, described by these coefficients. You can see what the boundary height vs. time graph looks like on the plot.")
+    end,
+    colorList = function (v)
+        return InputTextWrapper("Snap Color List", v,
+            "These numbers are the denominator of the snaps. Here are the corresponding values:\n1 = Red\n2 = Blue\n3 = Purple\n4 = Yellow\n6 = Pink\n8 = Orange\n12 = Pink\n16 = Green")
     end
 }
 

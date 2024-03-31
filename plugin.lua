@@ -12,6 +12,7 @@ DEFAULT_CENTER = 200                           -- integer
 DEFAULT_MAX_SPREAD = 200                       -- integer
 DEFAULT_PROGRESSION_EXPONENT = 1               -- float
 DEFAULT_POLYNOMIAL_COEFFICIENTS = { -4, 4, 0 } -- integer[3]
+DEFAULT_COLOR_LIST = '1 8 4 16 2 12 3 6'       -- integer[any]
 
 INCREMENT = 64                                 -- integer
 MAX_ITERATIONS = 1000                          -- integer
@@ -96,12 +97,16 @@ function StandardSpreadMenu()
 end
 
 function StandardRainbowMenu()
+    local parameterTable = constructParameters("colorList")
+
+    retrieveParameters("rainbow", parameterTable)
+
+    parameterInputs(parameterTable)
+    local settings = parametersToSettings(parameterTable)
     local offsets = getSelectedOffsets()
-
-    local rainbowTable = { 1, 8, 4, 16, 2, 12, 3, 6 }
-
     if NoteActivated(offsets) then
         local lines = {}
+        local rainbowTable = strToTable(settings.colorList, "%S+")
         local rainbowIndex = 1
 
         if (type(offsets) == "integer") then return end
@@ -112,15 +117,17 @@ function StandardRainbowMenu()
             if (rainbowIndex == 1) then hidden = false else hidden = true end
             lines = concatTables(lines, applyColorToTime(rainbowTable[rainbowIndex], offset, hidden))
             rainbowIndex = rainbowIndex + 1
-            if (rainbowIndex > 8) then
+            if (rainbowIndex > #rainbowTable) then
                 rainbowIndex = 1
             end
         end
 
-        lines = cleanLines(lines, offsets[1], offsets[#offsets] + 10)
+        lines = cleanLines(lines, offsets[1] - 10, offsets[#offsets] + 10)
 
         actions.PlaceTimingPointBatch(lines)
     end
+
+    saveParameters("rainbow", parameterTable)
 end
 
 function StandardAtNotesMenu()
@@ -901,6 +908,10 @@ INPUT_DICTIONARY = {
     polynomialCoefficients = function (v)
         return InputFloat3Wrapper("Coefficients", v,
             "The boundary follows a curve, described by these coefficients. You can see what the boundary height vs. time graph looks like on the plot.")
+    end,
+    colorList = function (v)
+        return InputTextWrapper("Snap Color List", v,
+            "These numbers are the denominator of the snaps. Here are the corresponding values:\n1 = Red\n2 = Blue\n3 = Purple\n4 = Yellow\n6 = Pink\n8 = Orange\n12 = Pink\n16 = Green")
     end
 }
 
@@ -938,7 +949,8 @@ DEFAULT_DICTIONARY = {
     polynomialCoefficients = DEFAULT_POLYNOMIAL_COEFFICIENTS,
     fps = DEFAULT_FPS,
     center = DEFAULT_CENTER,
-    maxSpread = DEFAULT_MAX_SPREAD
+    maxSpread = DEFAULT_MAX_SPREAD,
+    colorList = DEFAULT_COLOR_LIST
 }
 
 function constructParameters(...)

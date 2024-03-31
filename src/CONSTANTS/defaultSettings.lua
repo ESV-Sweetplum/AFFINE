@@ -12,6 +12,7 @@ DEFAULT_CENTER = 200                           -- integer
 DEFAULT_MAX_SPREAD = 200                       -- integer
 DEFAULT_PROGRESSION_EXPONENT = 1               -- float
 DEFAULT_POLYNOMIAL_COEFFICIENTS = { -4, 4, 0 } -- integer[3]
+DEFAULT_COLOR_LIST = '1 8 4 16 2 12 3 6'       -- integer[any]
 
 INCREMENT = 64                                 -- integer
 MAX_ITERATIONS = 1000                          -- integer
