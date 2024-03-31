@@ -86,7 +86,7 @@ function StandardSpreadMenu()
             end
         end
 
-        lines = cleanLines(lines, offsets.startOffset, offsets.endOffset + 1)
+        lines = cleanLines(lines, offsets.startOffset, offsets.endOffset + 10)
 
         parameterTable[#parameterTable].value = "Line Count: " .. #lines -- DEBUG TEXT
 
