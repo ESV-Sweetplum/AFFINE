@@ -1,4 +1,4 @@
-# AFFINE v1.1.1
+# AFFINE v1.1.2
 
 AFFINE (pronounced aff-een) is a [Quaver](https://www.quavergame.com) plugin designed to simplify map making. In particular, AFFINE assists with the creation of static and dynamic timing lines.
 
@@ -13,6 +13,7 @@ AFFINE (pronounced aff-een) is a [Quaver](https://www.quavergame.com) plugin des
 
 - **_(Standard > Spread)_** Place a gradient of timing lines over a selected region.
 - **_(Standard > At Notes)_** Place timing lines at selected notes.
+- **_(Standard > Rainbow_)** Select a group of notes to apply the given colors to the notes, cycling when the end of the list is reached.
 - **_(Fixed > Manual)_** Place still timing lines at desired height.
 - **_(Fixed > Automatic)_** Place a gradient of still timing lines between designated heights.
 - **_(Fixed > Random)_** Place a random amount of still timing lines within a region, at random locations.
