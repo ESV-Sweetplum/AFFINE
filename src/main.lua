@@ -11,6 +11,9 @@ function draw()
         menuID = DEFAULT_MENU_ID
     }
 
+    -- drawCapybara2(0)
+    -- drawSpike(state.WindowSize[1] * 1.5 / 25)
+
     -- IMPORTANT: DO NOT DELETE NEXT LINE BEFORE COMPILING.
     -- {function tables}
 

@@ -12,10 +12,10 @@ AFFINE (pronounced aff-een) is a [Quaver](https://www.quavergame.com) plugin des
 ## Menus:
 
 - **_(Standard > Spread)_** Place a gradient of timing lines over a selected region.
-- **_(Standard > At Notes)_** Place timing lines at selected notes.  
-  ⠀
-- The following can be done on a still frame (0.0x SV): - **_(Fixed > Manual)_** Place timing lines at desired height. - **_(Fixed > Automatic)_** Place a gradient of timing lines between designated heights. - **_(Fixed > Random)_** Place a random amount of timing lines within a region.  
-  ⠀
+- **_(Standard > At Notes)_** Place timing lines at selected notes.
+- **_(Fixed > Manual)_** Place still timing lines at desired height.
+- **_(Fixed > Automatic)_** Place a gradient of still timing lines between designated heights.
+- **_(Fixed > Random)_** Place a random amount of still timing lines within a region, at random locations.
 - **_(Animation > Manual (Basic))_** Set up keyframes for individual timing lines to move from one MSX to another.
 - **_(Animation > Increment)_** Setup a base manual frame. For each note present within the animation boundary, a new frame is generated, progressively forming the base manual frame.
 - **_(Animation > Boundary (Static))_** Hide and show backdrop timing lines using a boundary.
@@ -23,7 +23,6 @@ AFFINE (pronounced aff-een) is a [Quaver](https://www.quavergame.com) plugin des
 - **_(Animation > Glitch)_** Create an animation with constantly changing random notes.
 - **_(Animation > Spectrum)_** Create an animation with a spectrum with variable height.
 - **_(Animation > Expansion / Contraction)_** Create an animation with expanding / contracting timing lines.
-
 - **_(Deletion)_** Easily delete all timing lines and scroll velocities within a certain range.
 
 ## Basic Tutorial:

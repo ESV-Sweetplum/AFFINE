@@ -15,6 +15,5 @@ function FixedManualMenu()
         parameterTable[#parameterTable].value = "Line Count: " .. #tbl.lines .. " // SV Count: " .. #tbl.svs
     end
 
-
     saveParameters("fixed_manual", parameterTable)
 end

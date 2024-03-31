@@ -23,7 +23,14 @@ function StandardSpreadMenu()
             iterations = iterations + 1
         end
 
-        lines = cleanLines(lines, offsets.startOffset, offsets.endOffset)
+        local notes = getNotesInRange(offsets.startOffset, offsets.endOffset)
+        if (type(notes) ~= "integer") then
+            for _, offset in pairs(notes) do
+                lines = concatTables(lines, keepColorLine(offset, true))
+            end
+        end
+
+        lines = cleanLines(lines, offsets.startOffset, offsets.endOffset + 1)
 
         parameterTable[#parameterTable].value = "Line Count: " .. #lines -- DEBUG TEXT
 
