@@ -1,9 +1,11 @@
 function activationButton(text)
     text = text or "Place"
+
     return imgui.Button(text .. " Lines")
 end
 
 function RangeActivated(offsets, text)
+    addSeparator()
     text = text or "Place"
     if rangeSelected(offsets) then
         return activationButton(text) or (utils.IsKeyPressed(keys.A) and not utils.IsKeyDown(keys.LeftControl))
@@ -13,6 +15,7 @@ function RangeActivated(offsets, text)
 end
 
 function NoteActivated(offsets, text)
+    addSeparator()
     text = text or "Place"
     if noteSelected(offsets) then
         return activationButton(text) or (utils.IsKeyPressed(keys.A) and not utils.IsKeyDown(keys.LeftControl))

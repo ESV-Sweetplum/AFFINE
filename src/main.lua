@@ -7,6 +7,10 @@ end
 function draw()
     imgui.Begin("AFFINE", imgui_window_flags.AlwaysAutoResize)
 
+    -- imgui.SetWindowSize)
+
+    imgui.PushItemWidth(300)
+
     local settings = {
         menuID = DEFAULT_MENU_ID
     }
@@ -21,9 +25,11 @@ function draw()
 
     imgui.BeginTabBar("Main Tabs")
 
+    addPadding()
+
     if imgui.BeginTabItem("Create") then
         local mainMenuIndex = settings.menuID - 1
-        local _, mainMenuIndex = imgui.Combo("Line Placement Type", mainMenuIndex, CREATE_MENU_LIST, #CREATE_MENU_LIST)
+        local _, mainMenuIndex = imgui.Combo(" ", mainMenuIndex, CREATE_MENU_LIST, #CREATE_MENU_LIST)
         settings.menuID = mainMenuIndex + 1
         chooseMenu(CREATE_MENU_FUNCTIONS, settings.menuID)
         imgui.EndTabItem()

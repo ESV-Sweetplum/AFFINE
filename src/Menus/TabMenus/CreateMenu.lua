@@ -1,4 +1,4 @@
-function CreateMenu(menuName, typeText, functions)
+function CreateMenu(menuName, typeText, list, functions)
     local settings = {
         menuID = DEFAULT_MENU_ID
     }
@@ -6,10 +6,11 @@ function CreateMenu(menuName, typeText, functions)
     retrieveStateVariables(menuName, settings)
 
     local createMenuIndex = settings.menuID - 1
-    local _, createMenuIndex = imgui.Combo(typeText .. " Type", createMenuIndex, ANIMATION_MENU_LIST,
-        #ANIMATION_MENU_LIST)
+    local _, createMenuIndex = imgui.Combo("  ", createMenuIndex, list,
+        #list)
     addSeparator()
     settings.menuID = createMenuIndex + 1
+    imgui.PushItemWidth(150)
 
     chooseMenu(functions, settings.menuID)
 

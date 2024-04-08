@@ -5,10 +5,11 @@ function DeleteMenu()
 
     retrieveStateVariables("deletion", settings)
 
+    imgui.PushItemWidth(200)
+
     local deletionTypeIndex = settings.deletionType - 1
     local _, deletionTypeIndex = imgui.Combo("Deletion Type", deletionTypeIndex, DELETION_TYPE_LIST,
         #DELETION_TYPE_LIST)
-    addSeparator()
     settings.deletionType = deletionTypeIndex + 1
 
     local offsets = getStartAndEndNoteOffsets()

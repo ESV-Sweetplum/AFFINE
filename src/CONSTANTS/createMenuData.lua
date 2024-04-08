@@ -5,7 +5,7 @@ CREATE_MENU_LIST = {
 }
 
 CREATE_MENU_FUNCTIONS = {
-    function () CreateMenu("Standard", "Standard Placement", STANDARD_MENU_FUNCTIONS) end,
-    function () CreateMenu("Fixed", "Fixed Placement", FIXED_MENU_FUNCTIONS) end,
-    function () CreateMenu("Animation", "Animation", ANIMATION_MENU_FUNCTIONS) end
+    function () CreateMenu("Standard", "Standard Placement", STANDARD_MENU_LIST, STANDARD_MENU_FUNCTIONS) end,
+    function () CreateMenu("Fixed", "Fixed Placement", FIXED_MENU_LIST, FIXED_MENU_FUNCTIONS) end,
+    function () CreateMenu("Animation", "Animation", ANIMATION_MENU_LIST, ANIMATION_MENU_FUNCTIONS) end
 }
