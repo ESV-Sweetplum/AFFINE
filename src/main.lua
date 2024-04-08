@@ -23,12 +23,18 @@ function draw()
 
     if imgui.BeginTabItem("Create") then
         local mainMenuIndex = settings.menuID - 1
-        local _, mainMenuIndex = imgui.Combo("Line Placement Type", mainMenuIndex, CREATE_MENU_LIST, #CREATE_MENU_LIST)
+        local _, mainMenuIndex = imgui.Combo("Line Placement Type", mainMenuIndex, CREATE_TAB_LIST, #CREATE_TAB_LIST)
         settings.menuID = mainMenuIndex + 1
-        chooseMenu(CREATE_MENU_FUNCTIONS, settings.menuID)
+        chooseMenu(CREATE_TAB_FUNCTIONS, settings.menuID)
         imgui.EndTabItem()
     end
 
+    if imgui.BeginTabItem("Edit") then
+        local mainMenuIndex = settings.menuID - 1
+        local _, mainMenuIndex = imgui.Combo("Edit Type", mainMenuIndex, EDIT_MENU_LIST, #EDIT_MENU_LIST)
+        settings.menuID = mainMenuIndex + 1
+        imgui.EndTabItem()
+    end
     if imgui.BeginTabItem("Delete") then
         DeleteMenu()
         imgui.EndTabItem()
