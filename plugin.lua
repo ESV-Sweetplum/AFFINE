@@ -29,6 +29,12 @@ ANIMATION_MENU_LIST = {
     'Expansion / Contraction'
 }
 
+CREATE_MENU_LIST = {
+    'Standard',
+    'Fixed',
+    'Animation (LAGGY)'
+}
+
 DELETION_TYPE_LIST = {
     'Timing Lines + Scroll Velocities',
     'Timing Lines Only',
@@ -39,13 +45,6 @@ FIXED_MENU_LIST = {
     'Manual',
     'Automatic',
     'Random'
-}
-
-MAIN_MENU_LIST = {
-    'Standard',
-    'Fixed',
-    'Animation (LAGGY)',
-    'Deletion'
 }
 
 STANDARD_MENU_LIST = {
@@ -1465,17 +1464,16 @@ ANIMATION_MENU_FUNCTIONS = {
     ExpansionContractionMenu
 }
 
+CREATE_MENU_FUNCTIONS = {
+    function () CreateMenu("Standard", "Standard Placement", STANDARD_MENU_FUNCTIONS) end,
+    function () CreateMenu("Fixed", "Fixed Placement", FIXED_MENU_FUNCTIONS) end,
+    function () CreateMenu("Animation", "Animation", ANIMATION_MENU_FUNCTIONS) end
+}
+
 FIXED_MENU_FUNCTIONS = {
     FixedManualMenu,
     FixedAutomaticMenu,
     FixedRandomMenu
-}
-
-MAIN_MENU_FUNCTIONS = {
-    StandardMenu,
-    FixedMenu,
-    AnimationMenu,
-    DeletionMenu
 }
 
 STANDARD_MENU_FUNCTIONS = {
@@ -1486,33 +1484,63 @@ STANDARD_MENU_FUNCTIONS = {
 
     retrieveStateVariables("main", settings)
 
-    local mainMenuIndex = settings.menuID - 1
-    local _, mainMenuIndex = imgui.Combo("Line Placement Type", mainMenuIndex, MAIN_MENU_LIST, #MAIN_MENU_LIST)
-    settings.menuID = mainMenuIndex + 1
+    imgui.BeginTabBar("Main Tabs")
 
-    chooseMenu(MAIN_MENU_FUNCTIONS, settings.menuID)
+    if imgui.BeginTabItem("Create") then
+        local mainMenuIndex = settings.menuID - 1
+        local _, mainMenuIndex = imgui.Combo("Line Placement Type", mainMenuIndex, CREATE_MENU_LIST, #CREATE_MENU_LIST)
+        settings.menuID = mainMenuIndex + 1
+        chooseMenu(CREATE_MENU_FUNCTIONS, settings.menuID)
+        imgui.EndTabItem()
+    end
+
+    if imgui.BeginTabItem("Delete") then
+        DeletionMenu()
+        imgui.EndTabItem()
+    end
+
+    imgui.EndTabBar()
 
     saveStateVariables("main", settings)
 
     imgui.End()
 end
 
-function AnimationMenu()
+function CreateMenu(menuName, typeText, functions)
     local settings = {
         menuID = DEFAULT_MENU_ID
     }
 
-    retrieveStateVariables("animation", settings)
+    retrieveStateVariables(menuName, settings)
 
-    local animationMenuIndex = settings.menuID - 1
-    local _, animationMenuIndex = imgui.Combo("Animation Type", animationMenuIndex, ANIMATION_MENU_LIST,
+    local createMenuIndex = settings.menuID - 1
+    local _, createMenuIndex = imgui.Combo(typeText .. " Type", createMenuIndex, ANIMATION_MENU_LIST,
         #ANIMATION_MENU_LIST)
     addSeparator()
-    settings.menuID = animationMenuIndex + 1
+    settings.menuID = createMenuIndex + 1
 
-    chooseMenu(ANIMATION_MENU_FUNCTIONS, settings.menuID)
+    chooseMenu(functions, settings.menuID)
 
-    saveStateVariables("animation", settings)
+    saveStateVariables(menuName, settings)
+end
+
+function AnimationMenu()
+    CreateMenu("Animation", "Animation", ANIMATION_MENU_FUNCTIONS)
+    -- local settings = {
+    --     menuID = DEFAULT_MENU_ID
+    -- }
+
+    -- retrieveStateVariables("animation", settings)
+
+    -- local animationMenuIndex = settings.menuID - 1
+    -- local _, animationMenuIndex = imgui.Combo("Animation Type", animationMenuIndex, ANIMATION_MENU_LIST,
+    --     #ANIMATION_MENU_LIST)
+    -- addSeparator()
+    -- settings.menuID = animationMenuIndex + 1
+
+    -- chooseMenu(ANIMATION_MENU_FUNCTIONS, settings.menuID)
+
+    -- saveStateVariables("animation", settings)
 end
 
 function StandardMenu()
