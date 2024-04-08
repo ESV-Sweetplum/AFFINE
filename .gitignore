@@ -1,2 +1,5 @@
 updater/node_modules/
 config/node_modules/
+
+updater/affine-updater.exe
+config/config.exe
