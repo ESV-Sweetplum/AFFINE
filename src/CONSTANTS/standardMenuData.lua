@@ -1,11 +1,13 @@
 STANDARD_MENU_LIST = {
     'Spread',
-    'At Notes',
+    'At Notes (Preserve Location)',
+    'At Notes (Preserve Snap)',
     "Rainbow"
 }
 
 STANDARD_MENU_FUNCTIONS = {
     StandardSpreadMenu,
-    StandardAtNotesMenu,
+    function () StandardAtNotesMenu(2) end,
+    function () StandardAtNotesMenu(1) end,
     StandardRainbowMenu
 }

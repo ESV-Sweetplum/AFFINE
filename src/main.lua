@@ -31,8 +31,9 @@ function draw()
 
     if imgui.BeginTabItem("Edit") then
         local mainMenuIndex = settings.menuID - 1
-        local _, mainMenuIndex = imgui.Combo("Edit Type", mainMenuIndex, EDIT_MENU_LIST, #EDIT_MENU_LIST)
+        local _, mainMenuIndex = imgui.Combo("Edit Type", mainMenuIndex, EDIT_TAB_LIST, #EDIT_TAB_LIST)
         settings.menuID = mainMenuIndex + 1
+        chooseMenu(EDIT_TAB_FUNCTIONS, settings.menuID)
         imgui.EndTabItem()
     end
     if imgui.BeginTabItem("Delete") then

@@ -41,8 +41,9 @@ DELETION_TYPE_LIST = {
     'Scroll Velocities Only',
 }
 
-EDIT_MENU_LIST = {
-    "Offset"
+EDIT_TAB_LIST = {
+    "Copy + Paste",
+    -- "Offset"
 }
 
 FIXED_MENU_LIST = {
@@ -53,7 +54,8 @@ FIXED_MENU_LIST = {
 
 STANDARD_MENU_LIST = {
     'Spread',
-    'At Notes',
+    'At Notes (Preserve Location)',
+    'At Notes (Preserve Snap)',
     "Rainbow"
 }
 
@@ -93,7 +95,7 @@ function DeleteMenu()
     saveStateVariables("deletion", settings)
 end
 
-function CreateMenu(menuName, typeText, functions)
+function CreateMenu(menuName, typeText, list, functions)
     local settings = {
         menuID = DEFAULT_MENU_ID
     }
@@ -101,8 +103,8 @@ function CreateMenu(menuName, typeText, functions)
     retrieveStateVariables(menuName, settings)
 
     local createMenuIndex = settings.menuID - 1
-    local _, createMenuIndex = imgui.Combo(typeText .. " Type", createMenuIndex, ANIMATION_MENU_LIST,
-        #ANIMATION_MENU_LIST)
+    local _, createMenuIndex = imgui.Combo(typeText .. " Type", createMenuIndex, list,
+        #list)
     addSeparator()
     settings.menuID = createMenuIndex + 1
 
@@ -138,8 +140,8 @@ function StandardSpreadMenu()
 
         local notes = getNotesInRange(offsets.startOffset, offsets.endOffset)
         if (type(notes) ~= "integer") then
-            for _, offset in pairs(notes) do
-                lines = concatTables(lines, keepColorLine(offset, true))
+            for _, note in pairs(notes) do
+                lines = concatTables(lines, keepColorLine(note.StartTime, true))
             end
         end
 
@@ -187,7 +189,7 @@ function StandardRainbowMenu()
     saveParameters("rainbow", parameterTable)
 end
 
-function StandardAtNotesMenu()
+function StandardAtNotesMenu(preservationType)
     local offsets = getSelectedOffsets()
 
     if NoteActivated(offsets) then
@@ -195,10 +197,15 @@ function StandardAtNotesMenu()
 
         if (type(offsets) == "integer") then return end
 
-        for _, offset in pairs(offsets) do
-            lines = concatTables(lines, keepColorLine(offset))
+        if (preservationType == 1) then -- PRESERVE SNAP
+            for _, offset in pairs(offsets) do
+                lines = concatTables(lines, keepColorLine(offset))
+            end
+        else -- PRESERVE LOCATION
+            for _, offset in pairs(offsets) do
+                table.insert(lines, line(offset))
+            end
         end
-
         lines = cleanLines(lines, offsets[1], offsets[#offsets] + 10)
 
         actions.PlaceTimingPointBatch(lines)
@@ -281,6 +288,64 @@ function placeAutomaticFrame(startTime, low, high, spacing, distance)
         iterations = iterations + 1
     end
     return tableToLines(msxTable, startTime, 0, spacing)
+end
+
+function CopyAndPasteMenu()
+    local offsets = getStartAndEndNoteOffsets()
+
+    local storedLines = state.GetValue("storedLines") or {}
+    local storedSVs = state.GetValue("storedSVs") or {}
+
+    if RangeActivated(offsets, "Copy") then
+        if (type(offsets) == "integer") then return end
+
+        local lines = getLinesInRange(offsets.startOffset, offsets.endOffset)
+        local svs = getSVsInRange(offsets.startOffset, offsets.endOffset)
+
+        local zeroOffsetLines = {}
+        local zeroOffsetSVs = {}
+
+        for _, givenLine in pairs(lines) do
+            table.insert(zeroOffsetLines,
+                line(givenLine.StartTime - offsets.startOffset, givenLine.Bpm, givenLine.Hidden))
+        end
+        imgui.Text("hi 3")
+
+        for _, givenSV in pairs(svs) do
+            table.insert(zeroOffsetSVs, sv(givenSV.StartTime - offsets.startOffset, givenSV.Multiplier))
+        end
+        imgui.Text("hi 4")
+
+        state.SetValue("storedLines", zeroOffsetLines)
+        state.SetValue("storedSVs", zeroOffsetSVs)
+        imgui.Text("hi 5")
+    end
+
+    if (#storedLines or #storedSVs) then
+        if NoteActivated(offsets, "Paste") then
+            if (type(offsets) == "integer") then return end
+
+            local linesToAdd = {}
+            local svsToAdd = {}
+
+            for _, storedLine in pairs(storedLines) do
+                table.insert(linesToAdd,
+                    line(storedLine.StartTime + offsets.startOffset, storedLine.Bpm, storedLine.Hidden))
+            end
+            for _, storedSV in pairs(storedSVs) do
+                table.insert(svsToAdd, sv(storedSV.StartTime + offsets.startOffset, storedSV.Multiplier))
+            end
+
+            actions.PerformBatch({
+                utils.CreateEditorAction(action_type.AddTimingPointBatch, linesToAdd),
+                utils.CreateEditorAction(action_type.AddScrollVelocityBatch, svsToAdd),
+            })
+        end
+    end
+
+    addSeparator()
+
+    imgui.Text(#storedLines .. " Stored Lines // " .. #storedSVs .. " Stored SVs")
 end
 
 function SpectrumMenu()
@@ -1066,6 +1131,20 @@ function getSelectedOffsets()
     return offsets
 end
 
+function getNotesInRange(lower, upper)
+    local base = map.HitObjects
+
+    local tbl = {}
+
+    for _, v in pairs(base) do
+        if (v.StartTime >= lower) and (v.StartTime <= upper) then
+            table.insert(tbl, v)
+        end
+    end
+
+    return tbl
+end
+
 function tableToLines(svTable, time, msxOffset, spacing)
     local lines = {}
     local svs = {}
@@ -1152,20 +1231,6 @@ function generateAffines(lines, svs, lower, upper, keepColors)
         utils.CreateEditorAction(action_type.AddTimingPointBatch, lines),
         utils.CreateEditorAction(action_type.AddScrollVelocityBatch, svs)
     })
-end
-
-function getNotesInRange(lower, upper)
-    local base = map.HitObjects
-
-    local tbl = {}
-
-    for _, v in pairs(base) do
-        if (v.StartTime >= lower) and (v.StartTime <= upper) then
-            table.insert(tbl, v.StartTime)
-        end
-    end
-
-    return tbl
 end
 
 function concatTables(t1, t2)
@@ -1523,9 +1588,14 @@ ANIMATION_MENU_FUNCTIONS = {
 }
 
 CREATE_TAB_FUNCTIONS = {
-    function () CreateMenu("Standard", "Standard Placement", STANDARD_MENU_FUNCTIONS) end,
-    function () CreateMenu("Fixed", "Fixed Placement", FIXED_MENU_FUNCTIONS) end,
-    function () CreateMenu("Animation", "Animation", ANIMATION_MENU_FUNCTIONS) end
+    function () CreateMenu("Standard", "Standard Placement", STANDARD_MENU_LIST, STANDARD_MENU_FUNCTIONS) end,
+    function () CreateMenu("Fixed", "Fixed Placement", FIXED_MENU_LIST, FIXED_MENU_FUNCTIONS) end,
+    function () CreateMenu("Animation", "Animation", ANIMATION_MENU_LIST, ANIMATION_MENU_FUNCTIONS) end
+}
+
+EDIT_TAB_FUNCTIONS = {
+    CopyAndPasteMenu,
+    -- function () end -- OffsetMenu
 }
 
 FIXED_MENU_FUNCTIONS = {
@@ -1536,7 +1606,8 @@ FIXED_MENU_FUNCTIONS = {
 
 STANDARD_MENU_FUNCTIONS = {
     StandardSpreadMenu,
-    StandardAtNotesMenu,
+    function () StandardAtNotesMenu(2) end,
+    function () StandardAtNotesMenu(1) end,
     StandardRainbowMenu
 }
 
@@ -1554,8 +1625,9 @@ STANDARD_MENU_FUNCTIONS = {
 
     if imgui.BeginTabItem("Edit") then
         local mainMenuIndex = settings.menuID - 1
-        local _, mainMenuIndex = imgui.Combo("Edit Type", mainMenuIndex, EDIT_MENU_LIST, #EDIT_MENU_LIST)
+        local _, mainMenuIndex = imgui.Combo("Edit Type", mainMenuIndex, EDIT_TAB_LIST, #EDIT_TAB_LIST)
         settings.menuID = mainMenuIndex + 1
+        chooseMenu(EDIT_TAB_FUNCTIONS, settings.menuID)
         imgui.EndTabItem()
     end
     if imgui.BeginTabItem("Delete") then

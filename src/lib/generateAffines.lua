@@ -11,17 +11,3 @@ function generateAffines(lines, svs, lower, upper, keepColors)
         utils.CreateEditorAction(action_type.AddScrollVelocityBatch, svs)
     })
 end
-
-function getNotesInRange(lower, upper)
-    local base = map.HitObjects
-
-    local tbl = {}
-
-    for _, v in pairs(base) do
-        if (v.StartTime >= lower) and (v.StartTime <= upper) then
-            table.insert(tbl, v.StartTime)
-        end
-    end
-
-    return tbl
-end
