@@ -1,3 +1,8 @@
+---Create Menu
+---@param menuName string
+---@param typeText string
+---@param list string[]
+---@param functions fun()[]
 function CreateMenu(menuName, typeText, list, functions)
     local settings = {
         menuID = DEFAULT_MENU_ID

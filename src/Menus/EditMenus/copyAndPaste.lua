@@ -8,6 +8,7 @@ function CopyAndPasteMenu()
         if (type(offsets) == "integer") then return end
 
         local lines = getLinesInRange(offsets.startOffset, offsets.endOffset)
+
         local svs = getSVsInRange(offsets.startOffset, offsets.endOffset)
 
         local zeroOffsetLines = {}

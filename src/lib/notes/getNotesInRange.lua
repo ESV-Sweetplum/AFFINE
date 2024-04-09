@@ -1,3 +1,7 @@
+---Returns all HitObjects within a certain temporal range.
+---@param lower number
+---@param upper number
+---@return HitObjectInfo[]
 function getNotesInRange(lower, upper)
     local base = map.HitObjects
 

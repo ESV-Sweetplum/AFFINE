@@ -1,3 +1,5 @@
+---Gets the first and last note offsets.
+---@return -1 | {startOffset: integer, endOffset: integer}
 function getStartAndEndNoteOffsets()
     local offsets = {}
 

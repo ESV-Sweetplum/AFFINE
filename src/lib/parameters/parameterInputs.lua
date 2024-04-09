@@ -80,6 +80,8 @@ CUSTOM_INPUT_DICTIONARY = {
     Float = function (label, v, tooltip, sameLine) return InputFloatWrapper(label, v, tooltip) end
 }
 
+---Creates imgui inputs using the given parameter table.
+---@param parameterTable Parameter[]
 function parameterInputs(parameterTable)
     for _, tbl in ipairs(parameterTable) do
         if (tbl.inputType ~= nil) then

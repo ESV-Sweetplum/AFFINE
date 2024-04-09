@@ -1,3 +1,7 @@
+---comment
+---@param str string
+---@param predicate string
+---@return table
 function strToTable(str, predicate) 
     t = {}
 

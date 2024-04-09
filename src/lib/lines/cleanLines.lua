@@ -1,3 +1,8 @@
+---Removes lines above or below the specified boundary. Then, adds an extra line at the nearest 1/1 snap to maintain snap coloring.
+---@param lines TimingPointInfo[]
+---@param lower number
+---@param upper number
+---@return TimingPointInfo[]
 function cleanLines(lines, lower, upper)
     local lastLineTime = math.max(lines[#lines].StartTime, upper)
 

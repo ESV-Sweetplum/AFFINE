@@ -1,3 +1,8 @@
+---Takes a color and a time, and returns timing lines that make that time that color.
+---@param color number
+---@param time number
+---@param hidden boolean
+---@return TimingPointInfo[]
 function applyColorToTime(color, time, hidden)
     local lines = {}
 

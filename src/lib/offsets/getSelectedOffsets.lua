@@ -1,3 +1,5 @@
+---Gets all selected note offsets, with no duplicate values.
+---@return -1 | integer[]
 function getSelectedOffsets()
     local offsets = {}
 
@@ -5,7 +7,7 @@ function getSelectedOffsets()
         return -1
     end
 
-    for i, hitObject in pairs(state.SelectedHitObjects) do
+    for _, hitObject in pairs(state.SelectedHitObjects) do
         if (table.contains(offsets, hitObject.StartTime)) then goto continue end
         table.insert(offsets, hitObject.StartTime)
         ::continue::

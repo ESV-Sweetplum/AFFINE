@@ -1,3 +1,6 @@
+---Outputs settings based on inputted parameters.
+---@param parameterTable Parameter[]
+---@return table
 function parametersToSettings(parameterTable)
     local settings = {}
 

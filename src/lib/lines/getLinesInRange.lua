@@ -1,3 +1,7 @@
+---Returns all timing points within a temporal boundary.
+---@param lower number
+---@param upper number
+---@return TimingPointInfo[]
 function getLinesInRange(lower, upper)
     local base = map.TimingPoints
 

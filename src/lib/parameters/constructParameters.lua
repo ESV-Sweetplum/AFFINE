@@ -18,6 +18,10 @@ DEFAULT_DICTIONARY = {
     colorList = DEFAULT_COLOR_LIST
 }
 
+
+---Given a set of input names, creates an ordered table of key value pairs (normal table isn't used to preserve order).
+---@param ... string | table
+---@return Parameter[]
 function constructParameters(...)
     local parameterTable = {}
 
@@ -28,7 +32,8 @@ function constructParameters(...)
                 key = v.key,
                 value = v.value,
                 label = v.label,
-                sameLine = v.sameLine or false
+                sameLine = v.sameLine or false,
+                tooltip = v.tooltip or ""
             })
             goto continue
         end
@@ -43,3 +48,4 @@ function constructParameters(...)
 
     return parameterTable
 end
+

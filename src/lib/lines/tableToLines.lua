@@ -1,3 +1,9 @@
+---Takes a table of strings, and returns an AFFINE frame.
+---@param svTable string[]
+---@param time number
+---@param msxOffset number
+---@param spacing number
+---@return AffineFrame
 function tableToLines(svTable, time, msxOffset, spacing)
     local lines = {}
     local svs = {}
