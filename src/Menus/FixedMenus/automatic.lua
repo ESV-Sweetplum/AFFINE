@@ -12,7 +12,7 @@ function FixedAutomaticMenu()
             settings.msxBounds[2],
             settings.spacing, settings.distance)
 
-        generateAffines(tbl.lines, tbl.svs, offsets.startOffset, offsets.endOffset)
+        generateAffines(tbl.lines, tbl.svs, offsets.startOffset, offsets.endOffset, "Automatic Fixed")
         parameterTable[#parameterTable].value = "Line Count: " .. #tbl.lines .. " // SV Count: " .. #tbl.svs
     end
 

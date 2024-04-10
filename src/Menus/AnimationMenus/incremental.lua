@@ -32,7 +32,6 @@ function IncrementalAnimationMenu()
 
         local lines = {}
         local svs = {}
-
         while (currentIndex <= #times) do
             local currentTime = times[currentIndex] + 1
 
@@ -50,7 +49,7 @@ function IncrementalAnimationMenu()
             lines = concatTables(lines, tbl.lines)
             svs = concatTables(svs, tbl.svs)
 
-            insertTeleport(svs, currentTime + 1 / INCREMENT, 1000)
+            insertTeleport(svs, currentTime + 1 / INCREMENT, FRAME_SIZE)
 
             currentIndex = currentIndex + 1
 
@@ -70,7 +69,8 @@ function IncrementalAnimationMenu()
             end
         end
 
-        generateAffines(lines, svs, offsets.startOffset, offsets.endOffset)
+        generateAffines(lines, svs, offsets.startOffset, offsets.endOffset, "Incremental",
+            constructDebugTable(lines, svs))
         parameterTable[#parameterTable].value = "Line Count: " .. #lines .. " // SV Count: " .. #svs
     end
 

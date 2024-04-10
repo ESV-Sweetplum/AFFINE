@@ -1,0 +1,4 @@
+---@class TableStats
+---@field mean number
+---@field variance number
+---@field stdDev number

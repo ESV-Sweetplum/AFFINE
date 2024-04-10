@@ -15,6 +15,7 @@ function BasicManualAnimationMenu()
         local iterations = 0
         local lines = {}
         local svs = {}
+        local frameLengths = {}
 
         while (currentTime < offsets.endOffset) and (iterations < MAX_ITERATIONS) do
             local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset) ^
@@ -30,17 +31,24 @@ function BasicManualAnimationMenu()
 
             if (tbl.time > offsets.endOffset) then break end
 
-            currentTime = math.max(currentTime + (1000 / settings.fps) - 2, tbl.time)
+            timeDiff = math.max(1000 / settings.fps - 2, tbl.time - currentTime)
+
+            table.insert(frameLengths, timeDiff)
+
+            currentTime = currentTime + timeDiff
 
             lines = concatTables(lines, tbl.lines)
             svs = concatTables(svs, tbl.svs)
 
-            insertTeleport(svs, currentTime + 1 / INCREMENT, 1000)
+            insertTeleport(svs, currentTime + 1 / INCREMENT, FRAME_SIZE)
 
             currentTime = currentTime + 2
         end
 
-        generateAffines(lines, svs, offsets.startOffset, offsets.endOffset)
+        local stats = getStatisticsFromTable(frameLengths)
+
+        generateAffines(lines, svs, offsets.startOffset, offsets.endOffset, "Manual Animation",
+            constructDebugTable(lines, svs, stats))
         parameterTable[#parameterTable].value = "Line Count: " .. #lines .. " // SV Count: " .. #svs
     end
 

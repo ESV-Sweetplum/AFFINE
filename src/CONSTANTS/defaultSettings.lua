@@ -16,5 +16,6 @@ DEFAULT_COLOR_LIST = '1 8 4 16 2 12 3 6'       -- integer[any]
 
 INCREMENT = 64                                 -- integer
 MAX_ITERATIONS = 1000                          -- integer
+FRAME_SIZE = 500                               -- integer
 
 -- END DEFAULT SETTINGS (DONT DELETE THIS LINE)

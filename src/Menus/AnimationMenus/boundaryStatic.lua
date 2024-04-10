@@ -19,6 +19,7 @@ function StaticBoundaryMenu()
         local iterations = 0
         local lines = {}
         local svs = {}
+        local frameLengths = {}
 
 
         while ((currentTime + (2 / INCREMENT)) <= offsets.endOffset) and (iterations < MAX_ITERATIONS) do
@@ -34,19 +35,24 @@ function StaticBoundaryMenu()
 
             if (tbl.time > offsets.endOffset) then break end
 
+            table.insert(frameLengths, tbl.time - currentTime + 2)
+
             currentTime = tbl.time
 
             lines = concatTables(lines, tbl.lines)
             svs = concatTables(svs, tbl.svs)
 
-            insertTeleport(svs, currentTime + 1 / INCREMENT, 1000)
+            insertTeleport(svs, currentTime + 1 / INCREMENT, FRAME_SIZE)
 
             iterations = iterations + 1
 
             currentTime = currentTime + 2
         end
 
-        generateAffines(lines, svs, offsets.startOffset, offsets.endOffset)
+        local stats = getStatisticsFromTable(frameLengths)
+
+        generateAffines(lines, svs, offsets.startOffset, offsets.endOffset, "Static Boundary",
+            constructDebugTable(lines, svs, stats))
         parameterTable[#parameterTable].value = "Line Count: " .. #lines .. " // SV Count: " .. #svs
     end
 

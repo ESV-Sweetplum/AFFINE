@@ -16,6 +16,7 @@ DEFAULT_COLOR_LIST = '1 8 4 16 2 12 3 6'       -- integer[any]
 
 INCREMENT = 64                                 -- integer
 MAX_ITERATIONS = 1000                          -- integer
+FRAME_SIZE = 500                               -- integer
 
 -- END DEFAULT SETTINGS (DONT DELETE THIS LINE)
 
@@ -64,6 +65,11 @@ STANDARD_MENU_LIST = {
 ---@field Bpm number
 ---@field Signature number
 ---@field Hidden boolean
+
+---@class TableStats
+---@field mean number
+---@field variance number
+---@field stdDev number
 
 ---@class SliderVelocityInfo
 ---@field StartTime number
@@ -264,7 +270,7 @@ function FixedRandomMenu()
         end
         local tbl = tableToLines(msxTable, offsets.startOffset + settings.delay, 0, settings.spacing)
 
-        generateAffines(tbl.lines, tbl.svs, offsets.startOffset, offsets.endOffset)
+        generateAffines(tbl.lines, tbl.svs, offsets.startOffset, offsets.endOffset, "Random Fixed")
         parameterTable[#parameterTable].value = "Line Count: " .. #tbl.lines .. " // SV Count: " .. #tbl.svs
     end
 
@@ -283,7 +289,7 @@ function FixedManualMenu()
     if NoteActivated(offsets) then
         msxTable = strToTable(settings.msxList, "%S+")
         local tbl = tableToLines(msxTable, offsets.startOffset + settings.delay, settings.offset, settings.spacing)
-        generateAffines(tbl.lines, tbl.svs, offsets.startOffset, offsets.endOffset)
+        generateAffines(tbl.lines, tbl.svs, offsets.startOffset, offsets.endOffset, "Manual Fixed")
 
         parameterTable[#parameterTable].value = "Line Count: " .. #tbl.lines .. " // SV Count: " .. #tbl.svs
     end
@@ -305,7 +311,7 @@ function FixedAutomaticMenu()
             settings.msxBounds[2],
             settings.spacing, settings.distance)
 
-        generateAffines(tbl.lines, tbl.svs, offsets.startOffset, offsets.endOffset)
+        generateAffines(tbl.lines, tbl.svs, offsets.startOffset, offsets.endOffset, "Automatic Fixed")
         parameterTable[#parameterTable].value = "Line Count: " .. #tbl.lines .. " // SV Count: " .. #tbl.svs
     end
 
@@ -406,6 +412,7 @@ function SpectrumMenu()
         local iterations = 0
         local lines = {}
         local svs = {}
+        local frameLengths = {}
 
         while ((currentTime + (2 / INCREMENT)) <= offsets.endOffset) and (iterations < MAX_ITERATIONS) do
             local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset) ^
@@ -419,19 +426,24 @@ function SpectrumMenu()
 
             if (tbl.time > offsets.endOffset) then break end
 
+            table.insert(frameLengths, tbl.time - currentTime)
+
             currentTime = tbl.time
 
             lines = concatTables(lines, tbl.lines)
             svs = concatTables(svs, tbl.svs)
 
-            insertTeleport(svs, currentTime + 1 / INCREMENT, 1000)
+            insertTeleport(svs, currentTime + 1 / INCREMENT, FRAME_SIZE)
 
             iterations = iterations + 1
 
             currentTime = currentTime + 2
         end
 
-        generateAffines(lines, svs, offsets.startOffset, offsets.endOffset)
+        local stats = getStatisticsFromTable(frameLengths)
+
+        generateAffines(lines, svs, offsets.startOffset, offsets.endOffset, "Spectrum",
+            constructDebugTable(lines, svs, stats))
         parameterTable[#parameterTable].value = "Line Count: " .. #lines .. " // SV Count: " .. #svs
     end
     Plot(settings.polynomialCoefficients, settings.progressionExponent)
@@ -488,6 +500,7 @@ function BasicManualAnimationMenu()
         local iterations = 0
         local lines = {}
         local svs = {}
+        local frameLengths = {}
 
         while (currentTime < offsets.endOffset) and (iterations < MAX_ITERATIONS) do
             local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset) ^
@@ -503,17 +516,24 @@ function BasicManualAnimationMenu()
 
             if (tbl.time > offsets.endOffset) then break end
 
-            currentTime = math.max(currentTime + (1000 / settings.fps) - 2, tbl.time)
+            timeDiff = math.max(1000 / settings.fps - 2, tbl.time - currentTime)
+
+            table.insert(frameLengths, timeDiff)
+
+            currentTime = currentTime + timeDiff
 
             lines = concatTables(lines, tbl.lines)
             svs = concatTables(svs, tbl.svs)
 
-            insertTeleport(svs, currentTime + 1 / INCREMENT, 1000)
+            insertTeleport(svs, currentTime + 1 / INCREMENT, FRAME_SIZE)
 
             currentTime = currentTime + 2
         end
 
-        generateAffines(lines, svs, offsets.startOffset, offsets.endOffset)
+        local stats = getStatisticsFromTable(frameLengths)
+
+        generateAffines(lines, svs, offsets.startOffset, offsets.endOffset, "Manual Animation",
+            constructDebugTable(lines, svs, stats))
         parameterTable[#parameterTable].value = "Line Count: " .. #lines .. " // SV Count: " .. #svs
     end
 
@@ -554,7 +574,6 @@ function IncrementalAnimationMenu()
 
         local lines = {}
         local svs = {}
-
         while (currentIndex <= #times) do
             local currentTime = times[currentIndex] + 1
 
@@ -572,7 +591,7 @@ function IncrementalAnimationMenu()
             lines = concatTables(lines, tbl.lines)
             svs = concatTables(svs, tbl.svs)
 
-            insertTeleport(svs, currentTime + 1 / INCREMENT, 1000)
+            insertTeleport(svs, currentTime + 1 / INCREMENT, FRAME_SIZE)
 
             currentIndex = currentIndex + 1
 
@@ -592,7 +611,8 @@ function IncrementalAnimationMenu()
             end
         end
 
-        generateAffines(lines, svs, offsets.startOffset, offsets.endOffset)
+        generateAffines(lines, svs, offsets.startOffset, offsets.endOffset, "Incremental",
+            constructDebugTable(lines, svs))
         parameterTable[#parameterTable].value = "Line Count: " .. #lines .. " // SV Count: " .. #svs
     end
 
@@ -614,6 +634,7 @@ function GlitchMenu()
         local currentTime = offsets.startOffset
         local lines = {}
         local svs = {}
+        local frameLengths = {}
 
         while (currentTime <= offsets.endOffset) do
             local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset) ^
@@ -630,17 +651,24 @@ function GlitchMenu()
 
             if (tbl.time > offsets.endOffset) then break end
 
-            currentTime = math.max(currentTime + (1000 / settings.fps) - 2, tbl.time)
+            local timeDiff = math.max(1000 / settings.fps - 2, tbl.time - currentTime)
+
+            table.insert(frameLengths, timeDiff + 2)
+
+            currentTime = currentTime + timeDiff
 
             lines = concatTables(lines, tbl.lines)
             svs = concatTables(svs, tbl.svs)
 
-            insertTeleport(svs, currentTime + 1 / INCREMENT, 1000)
+            insertTeleport(svs, currentTime + 1 / INCREMENT, FRAME_SIZE)
 
             currentTime = currentTime + 2
         end
 
-        generateAffines(lines, svs, offsets.startOffset, offsets.endOffset)
+        local stats = getStatisticsFromTable(frameLengths)
+
+        generateAffines(lines, svs, offsets.startOffset, offsets.endOffset, "Glitch",
+            constructDebugTable(lines, svs, stats))
         parameterTable[#parameterTable].value = "Line Count: " .. #lines .. " // SV Count: " .. #svs
     end
 
@@ -663,6 +691,7 @@ function ExpansionContractionMenu()
 
         local lines = {}
         local svs = {}
+        local frameLengths = {}
 
         while (currentTime <= offsets.endOffset) and (iterations < MAX_ITERATIONS) do
             local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset) ^
@@ -675,19 +704,24 @@ function ExpansionContractionMenu()
 
             if (tbl.time > offsets.endOffset) then break end
 
+            table.insert(frameLengths, tbl.time - currentTime + 2)
+
             currentTime = tbl.time
 
             lines = concatTables(lines, tbl.lines)
             svs = concatTables(svs, tbl.svs)
 
-            insertTeleport(svs, currentTime + 1 / INCREMENT, 1000)
+            insertTeleport(svs, currentTime + 1 / INCREMENT, FRAME_SIZE)
 
             iterations = iterations + 1
 
             currentTime = currentTime + 2
         end
 
-        generateAffines(lines, svs, offsets.startOffset, offsets.endOffset)
+        local stats = getStatisticsFromTable(frameLengths)
+
+        generateAffines(lines, svs, offsets.startOffset, offsets.endOffset, "Expansion/Contraction",
+            constructDebugTable(lines, svs, stats))
         parameterTable[#parameterTable].value = "Line Count: " .. #lines .. " // SV Count: " .. #svs
     end
 
@@ -715,6 +749,7 @@ function StaticBoundaryMenu()
         local iterations = 0
         local lines = {}
         local svs = {}
+        local frameLengths = {}
 
         while ((currentTime + (2 / INCREMENT)) <= offsets.endOffset) and (iterations < MAX_ITERATIONS) do
             local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset) ^
@@ -728,19 +763,24 @@ function StaticBoundaryMenu()
 
             if (tbl.time > offsets.endOffset) then break end
 
+            table.insert(frameLengths, tbl.time - currentTime + 2)
+
             currentTime = tbl.time
 
             lines = concatTables(lines, tbl.lines)
             svs = concatTables(svs, tbl.svs)
 
-            insertTeleport(svs, currentTime + 1 / INCREMENT, 1000)
+            insertTeleport(svs, currentTime + 1 / INCREMENT, FRAME_SIZE)
 
             iterations = iterations + 1
 
             currentTime = currentTime + 2
         end
 
-        generateAffines(lines, svs, offsets.startOffset, offsets.endOffset)
+        local stats = getStatisticsFromTable(frameLengths)
+
+        generateAffines(lines, svs, offsets.startOffset, offsets.endOffset, "Static Boundary",
+            constructDebugTable(lines, svs, stats))
         parameterTable[#parameterTable].value = "Line Count: " .. #lines .. " // SV Count: " .. #svs
     end
 
@@ -790,6 +830,7 @@ function DynamicBoundaryMenu()
 
         local lines = {}
         local svs = {}
+        local frameLengths = {}
 
         while ((currentTime + (2 / INCREMENT)) <= offsets.endOffset) and (iterations < MAX_ITERATIONS) do
             local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset) ^
@@ -802,19 +843,24 @@ function DynamicBoundaryMenu()
 
             if (tbl.time > offsets.endOffset) then break end
 
+            table.insert(frameLengths, tbl.time - currentTime + 2)
+
             currentTime = tbl.time
 
             lines = concatTables(lines, tbl.lines)
             svs = concatTables(svs, tbl.svs)
 
-            insertTeleport(svs, currentTime + 1 / INCREMENT, 1000)
+            insertTeleport(svs, currentTime + 1 / INCREMENT, FRAME_SIZE)
 
             iterations = iterations + 1
 
             currentTime = currentTime + 2
         end
 
-        generateAffines(lines, svs, offsets.startOffset, offsets.endOffset)
+        local stats = getStatisticsFromTable(frameLengths)
+
+        generateAffines(lines, svs, offsets.startOffset, offsets.endOffset, "Dynamic Boundary",
+            constructDebugTable(lines, svs, stats))
         parameterTable[#parameterTable].value = "Line Count: " .. #lines .. " // SV Count: " .. #svs
     end
     Plot(settings.polynomialCoefficients, settings.progressionExponent)
@@ -922,18 +968,70 @@ function cleanSVs(svs, lower, upper)
     return tbl
 end
 
----comment
+---Takes a string, and splits it using a predicate. Similar to Array.split().
 ---@param str string
 ---@param predicate string
 ---@return table
-function strToTable(str, predicate) 
+function strToTable(str, predicate)
     t = {}
 
     for i in string.gmatch(str, predicate) do
         t[#t + 1] = i
     end
-    
+
     return t
+end
+
+---Gets the statistical variance
+---@param table number[]
+---@param mean? number
+---@return number
+function getVariance(table, mean)
+    if (not mean) then mean = getMean(table) end
+
+    local sum = 0
+    for _, v in pairs(table) do
+        sum = sum + (v - mean) ^ 2
+    end
+
+    return sum / (#table - 1)
+end
+
+---Gets the statistical standard deviation from a numerical table.
+---@param table number[]
+---@return number
+function getStdDev(table)
+    local mean = getMean(table)
+    local variance = getVariance(table, mean)
+    return variance ^ 0.5
+end
+
+---Gets statistical analysis of a numerical table.
+---@param table number[]
+---@return TableStats
+function getStatisticsFromTable(table)
+    local stdDev = getStdDev(table)
+
+    local tbl = {
+        mean = getMean(table),
+        variance = stdDev ^ 2,
+        stdDev = stdDev
+    }
+
+    return tbl
+end
+
+---Gets the statistical mean of a numerical table.
+---@param table number[]
+---@return number
+function getMean(table)
+    local sum = 0
+
+    for _, v in pairs(table) do
+        sum = sum + v
+    end
+
+    return sum / #table
 end
 
 function retrieveStateVariables(menu, variables)
@@ -1370,8 +1468,9 @@ end
 ---@param svs SliderVelocityInfo[]
 ---@param lower number
 ---@param upper number
----@param keepColors? boolean
-function generateAffines(lines, svs, lower, upper, keepColors)
+---@param affineType string
+---@param debugData? table
+function generateAffines(lines, svs, lower, upper, affineType, debugData)
     if (not upper or upper == lower) then
         ---@diagnostic disable-next-line: cast-local-type
         upper = map.GetNearestSnapTimeFromTime(true, 1, lower);
@@ -1380,14 +1479,42 @@ function generateAffines(lines, svs, lower, upper, keepColors)
     lines = cleanLines(lines, lower, upper)
     svs = cleanSVs(svs, lower, upper)
 
+    local debugString = ""
+    if (debugData) then
+        for k, v in pairs(debugData) do
+            debugString = debugString .. " | " .. k .. ": " .. v
+        end
+    end
+
+    local bookmarks = {
+        utils.CreateBookmark(lower, affineType .. " Start" .. debugString),
+        utils.CreateBookmark(upper, affineType .. " End")
+    }
+
     actions.PerformBatch({
         utils.CreateEditorAction(action_type.AddTimingPointBatch, lines),
         utils.CreateEditorAction(action_type.AddScrollVelocityBatch, svs),
+        utils.CreateEditorAction(action_type.AddBookmarkBatch, bookmarks),
     })
+end
 
-    local bookmark = utils.CreateBookmark(lower, "penis")
+---Debug table constructor for placing AFFINE frames.
+---@param lines TimingPointInfo[]
+---@param svs SliderVelocityInfo[]
+---@param stats? TableStats
+---@return table
+function constructDebugTable(lines, svs, stats)
+    local tbl = {
+        L = #lines,
+        S = #svs
+    }
 
-    actions.AddBookmark(lower, "penis")
+    if (stats) then
+        tbl.mspf_mean = string.format("%.2f", stats.mean)
+        tbl.mspf_stdDev = string.format("%.2f", stats.stdDev)
+    end
+
+    return tbl
 end
 
 ---Joins two tables together, with no nesting.
