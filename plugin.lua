@@ -90,6 +90,10 @@ STANDARD_MENU_LIST = {
 ---@field HitSound any
 ---@field EditorLayer integer
 
+---@class BookmarkInfo
+---@field StartTime integer
+---@field Note string
+
 ---@class AffineFrame
 ---@field lines TimingPointInfo[]
 ---@field svs SliderVelocityInfo[]
@@ -1048,6 +1052,9 @@ function saveStateVariables(menu, variables)
     end
 end
 
+---Gets parameters for a certain menu.
+---@param menu string
+---@param parameterTable Parameter[]
 function retrieveParameters(menu, parameterTable)
     for idx, tbl in ipairs(parameterTable) do
         if (state.GetValue(menu .. idx .. tbl.key) ~= nil) then
@@ -1056,6 +1063,9 @@ function retrieveParameters(menu, parameterTable)
     end
 end
 
+---Saves parameters for a certain menu.
+---@param menu string
+---@param parameterTable Parameter[]
 function saveParameters(menu, parameterTable)
     for idx, tbl in ipairs(parameterTable) do
         state.setValue(menu .. idx .. tbl.key, tbl.value)
@@ -1527,6 +1537,15 @@ function concatTables(t1, t2)
     end
     return t1
  end
+
+---@diagnostic disable: return-type-mismatch
+--- Creates a Bookmark. To place it, you must use an `action`.
+---@param time integer
+---@param note string
+---@return BookmarkInfo
+function bookmark(time, note)
+    return utils.CreateBookmark(time, note)
+end
 
 function Tooltip(text)
     imgui.SameLine(0, 4)

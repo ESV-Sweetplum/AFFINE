@@ -12,6 +12,9 @@ function saveStateVariables(menu, variables)
     end
 end
 
+---Gets parameters for a certain menu.
+---@param menu string
+---@param parameterTable Parameter[]
 function retrieveParameters(menu, parameterTable)
     for idx, tbl in ipairs(parameterTable) do
         if (state.GetValue(menu .. idx .. tbl.key) ~= nil) then
@@ -20,6 +23,9 @@ function retrieveParameters(menu, parameterTable)
     end
 end
 
+---Saves parameters for a certain menu.
+---@param menu string
+---@param parameterTable Parameter[]
 function saveParameters(menu, parameterTable)
     for idx, tbl in ipairs(parameterTable) do
         state.setValue(menu .. idx .. tbl.key, tbl.value)

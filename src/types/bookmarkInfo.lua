@@ -1,0 +1,3 @@
+---@class BookmarkInfo
+---@field StartTime integer
+---@field Note string
