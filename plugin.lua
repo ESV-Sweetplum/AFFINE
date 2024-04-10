@@ -1510,8 +1510,8 @@ function constructDebugTable(lines, svs, stats)
     }
 
     if (stats) then
-        tbl.mspf_mean = string.format("%.2f", stats.mean)
-        tbl.mspf_stdDev = string.format("%.2f", stats.stdDev)
+        tbl.mspfMean = string.format("%.2f", stats.mean)
+        tbl.mspfStdDev = string.format("%.2f", stats.stdDev)
     end
 
     return tbl
