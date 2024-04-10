@@ -1,4 +1,4 @@
-function DeleteMenu()
+function ManualDeleteMenu()
     local settings = {
         deletionType = DEFAULT_MENU_ID
     }

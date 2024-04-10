@@ -99,7 +99,7 @@ STANDARD_MENU_LIST = {
 ---@field svs SliderVelocityInfo[]
 ---@field time number
 
-function DeleteMenu()
+function ManualDeleteMenu()
     local settings = {
         deletionType = DEFAULT_MENU_ID
     }
@@ -1937,8 +1937,12 @@ STANDARD_MENU_FUNCTIONS = {
         chooseMenu(EDIT_TAB_FUNCTIONS, settings.menuID)
         imgui.EndTabItem()
     end
-    if imgui.BeginTabItem("Delete") then
-        DeleteMenu()
+
+    if imgui.BeginTabItem("Delete (Automatic)") then
+        imgui.EndTabItem()
+    end
+    if imgui.BeginTabItem("Delete (Manual)") then
+        ManualDeleteMenu()
         imgui.EndTabItem()
     end
 

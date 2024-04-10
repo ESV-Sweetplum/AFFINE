@@ -36,8 +36,13 @@ function draw()
         chooseMenu(EDIT_TAB_FUNCTIONS, settings.menuID)
         imgui.EndTabItem()
     end
-    if imgui.BeginTabItem("Delete") then
-        DeleteMenu()
+
+    if imgui.BeginTabItem("Delete (Automatic)") then
+        local affineTable = decryptAffineBookmark()
+        imgui.EndTabItem()
+    end
+    if imgui.BeginTabItem("Delete (Manual)") then
+        ManualDeleteMenu()
         imgui.EndTabItem()
     end
 
