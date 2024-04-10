@@ -3,10 +3,10 @@
 ---@param svs SliderVelocityInfo[]
 ---@param lower number
 ---@param upper number
----@param keepColors boolean
+---@param keepColors? boolean
 function generateAffines(lines, svs, lower, upper, keepColors)
     if (not upper or upper == lower) then
----@diagnostic disable-next-line: cast-local-type
+        ---@diagnostic disable-next-line: cast-local-type
         upper = map.GetNearestSnapTimeFromTime(true, 1, lower);
     end
 
@@ -15,6 +15,6 @@ function generateAffines(lines, svs, lower, upper, keepColors)
 
     actions.PerformBatch({
         utils.CreateEditorAction(action_type.AddTimingPointBatch, lines),
-        utils.CreateEditorAction(action_type.AddScrollVelocityBatch, svs)
+        utils.CreateEditorAction(action_type.AddScrollVelocityBatch, svs),
     })
 end

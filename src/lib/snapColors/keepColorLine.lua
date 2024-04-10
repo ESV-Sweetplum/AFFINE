@@ -1,6 +1,6 @@
 ---Simplifies the workflow to find and maintain snap colors.
 ---@param time number
----@param hidden boolean
+---@param hidden? boolean
 ---@return TimingPointInfo[]
 function keepColorLine(time, hidden)
     color = colorFromTime(time)

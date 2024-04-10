@@ -1013,6 +1013,7 @@ function map.GetNearestSnapTimeFromTime(forwards, snap, time) end
 function utils.CreateScrollVelocity(time, multiplier) end
 function utils.CreateHitObject(startTime, lane, endTime, hitsounds, editorLayer) end
 function utils.CreateTimingPoint(startTime, bpm, signature, hidden) end
+function utils.CreateBookmark(startTime, note) end
 function utils.CreateEditorLayer(name, hidden, colorRgb) end
 function utils.CreateEditorAction(type, args) end
 function utils.EditorActionPlaceHitObject() end

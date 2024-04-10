@@ -59,6 +59,36 @@ STANDARD_MENU_LIST = {
     "Rainbow"
 }
 
+---@class TimingPointInfo
+---@field StartTime number
+---@field Bpm number
+---@field Signature number
+---@field Hidden boolean
+
+---@class SliderVelocityInfo
+---@field StartTime number
+---@field Multiplier number
+
+---@class Parameter
+---@field key string
+---@field value any
+---@field inputType? string
+---@field label? string
+---@field sameLine? boolean
+---@field tooltip? string
+
+---@class HitObjectInfo
+---@field StartTime number
+---@field Lane 1|2|3|4|5|6|7
+---@field EndTime number
+---@field HitSound any
+---@field EditorLayer integer
+
+---@class AffineFrame
+---@field lines TimingPointInfo[]
+---@field svs SliderVelocityInfo[]
+---@field time number
+
 function DeleteMenu()
     local settings = {
         deletionType = DEFAULT_MENU_ID
@@ -95,6 +125,11 @@ function DeleteMenu()
     saveStateVariables("deletion", settings)
 end
 
+---Create Menu
+---@param menuName string
+---@param typeText string
+---@param list string[]
+---@param functions fun()[]
 function CreateMenu(menuName, typeText, list, functions)
     local settings = {
         menuID = DEFAULT_MENU_ID
@@ -300,6 +335,7 @@ function CopyAndPasteMenu()
         if (type(offsets) == "integer") then return end
 
         local lines = getLinesInRange(offsets.startOffset, offsets.endOffset)
+
         local svs = getSVsInRange(offsets.startOffset, offsets.endOffset)
 
         local zeroOffsetLines = {}
@@ -805,6 +841,11 @@ function placeDynamicFrame(startTime, min, max, lineDistance, spacing, polynomia
     return tableToLines(msxTable, startTime, 0, spacing)
 end
 
+---Returns true if the table contains the specified element.
+---@param table table
+---@param element any
+---@return boolean
+---@diagnostic disable-next-line: duplicate-set-field
 function table.contains(table, element)
     for _, value in pairs(table) do
         if value == element then
@@ -814,6 +855,10 @@ function table.contains(table, element)
     return false
 end
 
+---Generates two svs for a teleport.
+---@param time number
+---@param dist number
+---@return SliderVelocityInfo[]
 function teleport(time, dist)
     return {
         sv(time, INCREMENT * dist),
@@ -821,14 +866,28 @@ function teleport(time, dist)
     }
 end
 
+---Adds a teleport sv to an existsing table of svs.
+---@param svs SliderVelocityInfo[]
+---@param time number
+---@param dist number
+---@return SliderVelocityInfo[]
 function insertTeleport(svs, time, dist)
     return concatTables(svs, teleport(time, dist))
 end
 
+---@diagnostic disable: return-type-mismatch
+---Creates a SliderVelocity. To place it, you must use an `action`.
+---@param time number
+---@param multiplier number
+---@return SliderVelocityInfo
 function sv(time, multiplier)
     return utils.CreateScrollVelocity(time, multiplier)
 end
 
+---Returns all ScrollVelocities within a certain temporal range.
+---@param lower number
+---@param upper number
+---@return SliderVelocityInfo[]
 function getSVsInRange(lower, upper)
     local base = map.ScrollVelocities
 
@@ -843,6 +902,11 @@ function getSVsInRange(lower, upper)
     return tbl
 end
 
+---Removes SVs outside of range, places 0.00x SV at the beginning, and places a 1.00x SV at the end.
+---@param svs SliderVelocityInfo[]
+---@param lower number
+---@param upper number
+---@return SliderVelocityInfo[]
 function cleanSVs(svs, lower, upper)
     local tbl = {}
 
@@ -858,6 +922,10 @@ function cleanSVs(svs, lower, upper)
     return tbl
 end
 
+---comment
+---@param str string
+---@param predicate string
+---@return table
 function strToTable(str, predicate) 
     t = {}
 
@@ -896,11 +964,18 @@ function saveParameters(menu, parameterTable)
     end
 end
 
+---Simplifies the workflow to find and maintain snap colors.
+---@param time number
+---@param hidden? boolean
+---@return TimingPointInfo[]
 function keepColorLine(time, hidden)
     color = colorFromTime(time)
     return applyColorToTime(color, time, hidden or false)
 end
 
+---Gets the snap color from a given time.
+---@param time number
+---@return number
 function colorFromTime(time)
     local timingPoint = map.GetTimingPointAt(time)
     if (not timingPoint) then return 1 end
@@ -919,6 +994,11 @@ function colorFromTime(time)
     return approximateSnap -- ROUNDING
 end
 
+---Takes a color and a time, and returns timing lines that make that time that color.
+---@param color number
+---@param time number
+---@param hidden boolean
+---@return TimingPointInfo[]
 function applyColorToTime(color, time, hidden)
     local lines = {}
 
@@ -937,22 +1017,41 @@ function applyColorToTime(color, time, hidden)
     return lines
 end
 
+---Returns true if a note is selected.
+---@param offsets any
+---@return boolean
 function noteSelected(offsets)
     return offsets ~= -1
 end
 
+---Returns true if two or more notes are selected, with differing offsets.
+---@param offsets any
+---@return boolean
 function rangeSelected(offsets)
     return (offsets ~= -1) and (offsets.startOffset ~= offsets.endOffset) 
 end
 
+---When given a progression value (0-1), returns the numerical distance along the progress line.
+---@param starting number
+---@param progress number
+---@param ending number
+---@return number
 function mapProgress(starting, progress, ending)
     return progress * (ending - starting) + starting
 end
 
+---Gets the percentage from the starting value.
+---@param starting number
+---@param value number
+---@param ending number
+---@return number
 function getProgress(starting, value, ending)
     return (value - starting) / (ending - starting)
 end
 
+---Outputs settings based on inputted parameters.
+---@param parameterTable Parameter[]
+---@return table
 function parametersToSettings(parameterTable)
     local settings = {}
 
@@ -1045,6 +1144,8 @@ CUSTOM_INPUT_DICTIONARY = {
     Float = function (label, v, tooltip, sameLine) return InputFloatWrapper(label, v, tooltip) end
 }
 
+---Creates imgui inputs using the given parameter table.
+---@param parameterTable Parameter[]
 function parameterInputs(parameterTable)
     for _, tbl in ipairs(parameterTable) do
         if (tbl.inputType ~= nil) then
@@ -1075,6 +1176,9 @@ DEFAULT_DICTIONARY = {
     colorList = DEFAULT_COLOR_LIST
 }
 
+---Given a set of input names, creates an ordered table of key value pairs (normal table isn't used to preserve order).
+---@param ... string | table
+---@return Parameter[]
 function constructParameters(...)
     local parameterTable = {}
 
@@ -1085,7 +1189,8 @@ function constructParameters(...)
                 key = v.key,
                 value = v.value,
                 label = v.label,
-                sameLine = v.sameLine or false
+                sameLine = v.sameLine or false,
+                tooltip = v.tooltip or ""
             })
             goto continue
         end
@@ -1101,6 +1206,8 @@ function constructParameters(...)
     return parameterTable
 end
 
+---Gets the first and last note offsets.
+---@return -1 | {startOffset: integer, endOffset: integer}
 function getStartAndEndNoteOffsets()
     local offsets = {}
 
@@ -1115,6 +1222,8 @@ function getStartAndEndNoteOffsets()
     return { startOffset = math.min(table.unpack(offsets)), endOffset = math.max(table.unpack(offsets)) }
 end
 
+---Gets all selected note offsets, with no duplicate values.
+---@return -1 | integer[]
 function getSelectedOffsets()
     local offsets = {}
 
@@ -1122,7 +1231,7 @@ function getSelectedOffsets()
         return -1
     end
 
-    for i, hitObject in pairs(state.SelectedHitObjects) do
+    for _, hitObject in pairs(state.SelectedHitObjects) do
         if (table.contains(offsets, hitObject.StartTime)) then goto continue end
         table.insert(offsets, hitObject.StartTime)
         ::continue::
@@ -1131,6 +1240,22 @@ function getSelectedOffsets()
     return offsets
 end
 
+---@diagnostic disable: return-type-mismatch
+--- Creates a HitObject. To place it, you must use an `action`.
+---@param startTime integer
+---@param lane integer
+---@param endTime? integer
+---@param hitsound? any
+---@param editorLayer? integer
+---@return HitObjectInfo
+function note(startTime, lane, endTime, hitsound, editorLayer)
+    return utils.CreateHitObject(startTime, lane, endTime or 0, hitsound or 0, editorLayer or 0)
+end
+
+---Returns all HitObjects within a certain temporal range.
+---@param lower number
+---@param upper number
+---@return HitObjectInfo[]
 function getNotesInRange(lower, upper)
     local base = map.HitObjects
 
@@ -1145,6 +1270,12 @@ function getNotesInRange(lower, upper)
     return tbl
 end
 
+---Takes a table of strings, and returns an AFFINE frame.
+---@param svTable string[]
+---@param time number
+---@param msxOffset number
+---@param spacing number
+---@return AffineFrame
 function tableToLines(svTable, time, msxOffset, spacing)
     local lines = {}
     local svs = {}
@@ -1168,6 +1299,12 @@ function tableToLines(svTable, time, msxOffset, spacing)
     return tbl
 end
 
+---@diagnostic disable: return-type-mismatch
+--- Creates a TimingPoint. To place it, you must use an `action`.
+---@param time number
+---@param bpm? number
+---@param hidden? boolean
+---@return TimingPointInfo
 function line(time, bpm, hidden)
     if (hidden == nil) then hidden = false end
     local data = map.GetTimingPointAt(time)
@@ -1183,6 +1320,10 @@ function line(time, bpm, hidden)
     return utils.CreateTimingPoint(time, bpm or data.Bpm, data.Signature, hidden)
 end
 
+---Returns all timing points within a temporal boundary.
+---@param lower number
+---@param upper number
+---@return TimingPointInfo[]
 function getLinesInRange(lower, upper)
     local base = map.TimingPoints
 
@@ -1197,6 +1338,11 @@ function getLinesInRange(lower, upper)
     return tbl
 end
 
+---Removes lines above or below the specified boundary. Then, adds an extra line at the nearest 1/1 snap to maintain snap coloring.
+---@param lines TimingPointInfo[]
+---@param lower number
+---@param upper number
+---@return TimingPointInfo[]
 function cleanLines(lines, lower, upper)
     local lastLineTime = math.max(lines[#lines].StartTime, upper)
 
@@ -1219,8 +1365,15 @@ function cleanLines(lines, lower, upper)
     return tbl
 end
 
+---Places given svs and lines, and cleans both.
+---@param lines TimingPointInfo[]
+---@param svs SliderVelocityInfo[]
+---@param lower number
+---@param upper number
+---@param keepColors? boolean
 function generateAffines(lines, svs, lower, upper, keepColors)
     if (not upper or upper == lower) then
+        ---@diagnostic disable-next-line: cast-local-type
         upper = map.GetNearestSnapTimeFromTime(true, 1, lower);
     end
 
@@ -1229,10 +1382,18 @@ function generateAffines(lines, svs, lower, upper, keepColors)
 
     actions.PerformBatch({
         utils.CreateEditorAction(action_type.AddTimingPointBatch, lines),
-        utils.CreateEditorAction(action_type.AddScrollVelocityBatch, svs)
+        utils.CreateEditorAction(action_type.AddScrollVelocityBatch, svs),
     })
+
+    local bookmark = utils.CreateBookmark(lower, "penis")
+
+    actions.AddBookmark(lower, "penis")
 end
 
+---Joins two tables together, with no nesting.
+---@param t1 table
+---@param t2 table
+---@return table
 function concatTables(t1, t2)
     for i=1, #t2 do
        t1[#t1+1] = t2[i]
