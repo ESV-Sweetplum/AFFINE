@@ -10,6 +10,28 @@ function draw()
     -- imgui.SetWindowSize)
 
     imgui.PushItemWidth(300)
+    local prevVal = state.GetValue("prevVal") or 0
+    local colStatus = state.GetValue("colStatus") or 0
+
+    imgui.PushStyleColor(imgui_col.Border, { colStatus, colStatus, colStatus, 1 })
+
+    local modTime = (state.SongTime - map.GetTimingPointAt(state.SongTime).StartTime) %
+        ((60000 / map.GetTimingPointAt(state.SongTime).Bpm))
+
+    local frameTime = modTime - prevVal
+
+    if ((modTime < prevVal)) then
+        colStatus = 1
+    else
+        colStatus = colStatus - frameTime / (60000 / map.GetTimingPointAt(state.SongTime).Bpm)
+    end
+
+    if ((state.SongTime - map.GetTimingPointAt(state.SongTime).StartTime) < 0) then
+        colStatus = 0
+    end
+
+    state.SetValue("colStatus", math.max(colStatus, 0))
+    state.SetValue("prevVal", modTime)
 
     local settings = {
         menuID = DEFAULT_MENU_ID

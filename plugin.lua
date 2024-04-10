@@ -791,13 +791,13 @@ function cleanSVs(svs, lower, upper)
     return tbl
 end
 
-function strToTable(str, predicate) 
+function strToTable(str, predicate)
     t = {}
 
     for i in string.gmatch(str, predicate) do
         t[#t + 1] = i
     end
-    
+
     return t
 end
 
@@ -875,7 +875,7 @@ function noteSelected(offsets)
 end
 
 function rangeSelected(offsets)
-    return (offsets ~= -1) and (offsets.startOffset ~= offsets.endOffset) 
+    return (offsets ~= -1) and (offsets.startOffset ~= offsets.endOffset)
 end
 
 function mapProgress(starting, progress, ending)
@@ -1167,11 +1167,11 @@ function getNotesInRange(lower, upper)
 end
 
 function concatTables(t1, t2)
-    for i=1, #t2 do
-       t1[#t1+1] = t2[i]
+    for i = 1, #t2 do
+        t1[#t1 + 1] = t2[i]
     end
     return t1
- end
+end
 
 function Tooltip(text)
     imgui.SameLine(0, 4)
@@ -1506,6 +1506,28 @@ function draw()
     -- imgui.SetWindowSize)
 
     imgui.PushItemWidth(300)
+    local prevVal = state.GetValue("prevVal") or 0
+    local colStatus = state.GetValue("colStatus") or 0
+
+    imgui.PushStyleColor(imgui_col.Border, { colStatus, colStatus, colStatus, 1 })
+
+    local modTime = (state.SongTime - map.GetTimingPointAt(state.SongTime).StartTime) %
+        ((60000 / map.GetTimingPointAt(state.SongTime).Bpm))
+
+    local frameTime = modTime - prevVal
+
+    if ((modTime < prevVal)) then
+        colStatus = 1
+    else
+        colStatus = colStatus - frameTime / (60000 / map.GetTimingPointAt(state.SongTime).Bpm)
+    end
+
+    if ((state.SongTime - map.GetTimingPointAt(state.SongTime).StartTime) < 0) then
+        colStatus = 0
+    end
+
+    state.SetValue("colStatus", math.max(colStatus, 0))
+    state.SetValue("prevVal", modTime)
 
     local settings = {
         menuID = DEFAULT_MENU_ID
@@ -1515,35 +1537,35 @@ function draw()
     -- drawSpike(state.WindowSize[1] * 1.5 / 25)
 
     -- IMPORTANT: DO NOT DELETE NEXT LINE BEFORE COMPILING.
-    
 
-ANIMATION_MENU_FUNCTIONS = {
-    BasicManualAnimationMenu,
-    IncrementalAnimationMenu,
-    StaticBoundaryMenu,
-    DynamicBoundaryMenu,
-    GlitchMenu,
-    SpectrumMenu,
-    ExpansionContractionMenu
-}
 
-CREATE_MENU_FUNCTIONS = {
-    function () CreateMenu("Standard", "Standard Placement", STANDARD_MENU_LIST, STANDARD_MENU_FUNCTIONS) end,
-    function () CreateMenu("Fixed", "Fixed Placement", FIXED_MENU_LIST, FIXED_MENU_FUNCTIONS) end,
-    function () CreateMenu("Animation", "Animation", ANIMATION_MENU_LIST, ANIMATION_MENU_FUNCTIONS) end
-}
+    ANIMATION_MENU_FUNCTIONS = {
+        BasicManualAnimationMenu,
+        IncrementalAnimationMenu,
+        StaticBoundaryMenu,
+        DynamicBoundaryMenu,
+        GlitchMenu,
+        SpectrumMenu,
+        ExpansionContractionMenu
+    }
 
-FIXED_MENU_FUNCTIONS = {
-    FixedManualMenu,
-    FixedAutomaticMenu,
-    FixedRandomMenu
-}
+    CREATE_MENU_FUNCTIONS = {
+        function () CreateMenu("Standard", "Standard Placement", STANDARD_MENU_LIST, STANDARD_MENU_FUNCTIONS) end,
+        function () CreateMenu("Fixed", "Fixed Placement", FIXED_MENU_LIST, FIXED_MENU_FUNCTIONS) end,
+        function () CreateMenu("Animation", "Animation", ANIMATION_MENU_LIST, ANIMATION_MENU_FUNCTIONS) end
+    }
 
-STANDARD_MENU_FUNCTIONS = {
-    StandardSpreadMenu,
-    StandardAtNotesMenu,
-    StandardRainbowMenu
-}
+    FIXED_MENU_FUNCTIONS = {
+        FixedManualMenu,
+        FixedAutomaticMenu,
+        FixedRandomMenu
+    }
+
+    STANDARD_MENU_FUNCTIONS = {
+        StandardSpreadMenu,
+        StandardAtNotesMenu,
+        StandardRainbowMenu
+    }
 
     retrieveStateVariables("main", settings)
 
