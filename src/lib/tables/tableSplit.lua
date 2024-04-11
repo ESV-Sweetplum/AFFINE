@@ -2,7 +2,7 @@
 ---@param str string
 ---@param predicate string
 ---@return table
-function strToTable(str, predicate)
+function table.split(str, predicate)
     t = {}
 
     for i in string.gmatch(str, predicate) do

@@ -8,7 +8,7 @@ function StandardAtNotesMenu(preservationType)
 
         if (preservationType == 1) then -- PRESERVE SNAP
             for _, offset in pairs(offsets) do
-                lines = concatTables(lines, keepColorLine(offset))
+                lines = combineTables(lines, keepColorLine(offset))
             end
         else -- PRESERVE LOCATION
             for _, offset in pairs(offsets) do

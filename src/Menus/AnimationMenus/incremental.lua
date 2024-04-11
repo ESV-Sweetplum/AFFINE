@@ -27,7 +27,7 @@ function IncrementalAnimationMenu()
 
         local currentAddition = 1
 
-        local totalMsxTable = strToTable(settings.msxList, "%S+")
+        local totalMsxTable = table.split(settings.msxList, "%S+")
         local MAX_HEIGHT = #totalMsxTable
 
         local lines = {}
@@ -46,8 +46,8 @@ function IncrementalAnimationMenu()
             end
             local tbl = tableToLines(msxTable, currentTime + 5, 0, settings.spacing)
 
-            lines = concatTables(lines, tbl.lines)
-            svs = concatTables(svs, tbl.svs)
+            lines = combineTables(lines, tbl.lines)
+            svs = combineTables(svs, tbl.svs)
 
             insertTeleport(svs, currentTime + 1 / INCREMENT, FRAME_SIZE)
 

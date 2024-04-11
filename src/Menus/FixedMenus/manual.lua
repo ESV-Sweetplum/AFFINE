@@ -8,7 +8,7 @@ function FixedManualMenu()
     local offsets = getStartAndEndNoteOffsets()
 
     if NoteActivated(offsets) then
-        msxTable = strToTable(settings.msxList, "%S+")
+        msxTable = table.split(settings.msxList, "%S+")
         local tbl = tableToLines(msxTable, offsets.startOffset + settings.delay, settings.offset, settings.spacing)
         generateAffines(tbl.lines, tbl.svs, offsets.startOffset, offsets.endOffset, "Manual Fixed")
 

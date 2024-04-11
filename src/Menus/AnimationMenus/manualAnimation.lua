@@ -8,8 +8,8 @@ function BasicManualAnimationMenu()
     local offsets = getStartAndEndNoteOffsets()
 
     if RangeActivated(offsets) then
-        startMsxTable = strToTable(settings.msxList1, "%S+")
-        endMsxTable = strToTable(settings.msxList2, "%S+")
+        startMsxTable = table.split(settings.msxList1, "%S+")
+        endMsxTable = table.split(settings.msxList2, "%S+")
 
         local currentTime = offsets.startOffset + 1
         local iterations = 0
@@ -37,8 +37,8 @@ function BasicManualAnimationMenu()
 
             currentTime = currentTime + timeDiff
 
-            lines = concatTables(lines, tbl.lines)
-            svs = concatTables(svs, tbl.svs)
+            lines = combineTables(lines, tbl.lines)
+            svs = combineTables(svs, tbl.svs)
 
             insertTeleport(svs, currentTime + 1 / INCREMENT, FRAME_SIZE)
 

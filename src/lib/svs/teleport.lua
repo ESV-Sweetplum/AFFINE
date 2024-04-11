@@ -15,5 +15,5 @@ end
 ---@param dist number
 ---@return SliderVelocityInfo[]
 function insertTeleport(svs, time, dist)
-    return concatTables(svs, teleport(time, dist))
+    return combineTables(svs, teleport(time, dist))
 end

@@ -186,7 +186,7 @@ function StandardSpreadMenu()
         local notes = getNotesInRange(offsets.startOffset, offsets.endOffset)
         if (type(notes) ~= "integer") then
             for _, note in pairs(notes) do
-                lines = concatTables(lines, keepColorLine(note.StartTime, true))
+                lines = combineTables(lines, keepColorLine(note.StartTime, true))
             end
         end
 
@@ -210,7 +210,7 @@ function StandardRainbowMenu()
     local offsets = getSelectedOffsets()
     if NoteActivated(offsets) then
         local lines = {}
-        local rainbowTable = strToTable(settings.colorList, "%S+")
+        local rainbowTable = table.split(settings.colorList, "%S+")
         local rainbowIndex = 1
 
         if (type(offsets) == "integer") then return end
@@ -219,7 +219,7 @@ function StandardRainbowMenu()
 
         for _, offset in pairs(offsets) do
             if (rainbowIndex == 1) then hidden = false else hidden = true end
-            lines = concatTables(lines, applyColorToTime(rainbowTable[rainbowIndex], offset, hidden))
+            lines = combineTables(lines, applyColorToTime(rainbowTable[rainbowIndex], offset, hidden))
             rainbowIndex = rainbowIndex + 1
             if (rainbowIndex > #rainbowTable) then
                 rainbowIndex = 1
@@ -244,7 +244,7 @@ function StandardAtNotesMenu(preservationType)
 
         if (preservationType == 1) then -- PRESERVE SNAP
             for _, offset in pairs(offsets) do
-                lines = concatTables(lines, keepColorLine(offset))
+                lines = combineTables(lines, keepColorLine(offset))
             end
         else -- PRESERVE LOCATION
             for _, offset in pairs(offsets) do
@@ -291,7 +291,7 @@ function FixedManualMenu()
     local offsets = getStartAndEndNoteOffsets()
 
     if NoteActivated(offsets) then
-        msxTable = strToTable(settings.msxList, "%S+")
+        msxTable = table.split(settings.msxList, "%S+")
         local tbl = tableToLines(msxTable, offsets.startOffset + settings.delay, settings.offset, settings.spacing)
         generateAffines(tbl.lines, tbl.svs, offsets.startOffset, offsets.endOffset, "Manual Fixed")
 
@@ -434,8 +434,8 @@ function SpectrumMenu()
 
             currentTime = tbl.time
 
-            lines = concatTables(lines, tbl.lines)
-            svs = concatTables(svs, tbl.svs)
+            lines = combineTables(lines, tbl.lines)
+            svs = combineTables(svs, tbl.svs)
 
             insertTeleport(svs, currentTime + 1 / INCREMENT, FRAME_SIZE)
 
@@ -497,8 +497,8 @@ function BasicManualAnimationMenu()
     local offsets = getStartAndEndNoteOffsets()
 
     if RangeActivated(offsets) then
-        startMsxTable = strToTable(settings.msxList1, "%S+")
-        endMsxTable = strToTable(settings.msxList2, "%S+")
+        startMsxTable = table.split(settings.msxList1, "%S+")
+        endMsxTable = table.split(settings.msxList2, "%S+")
 
         local currentTime = offsets.startOffset + 1
         local iterations = 0
@@ -526,8 +526,8 @@ function BasicManualAnimationMenu()
 
             currentTime = currentTime + timeDiff
 
-            lines = concatTables(lines, tbl.lines)
-            svs = concatTables(svs, tbl.svs)
+            lines = combineTables(lines, tbl.lines)
+            svs = combineTables(svs, tbl.svs)
 
             insertTeleport(svs, currentTime + 1 / INCREMENT, FRAME_SIZE)
 
@@ -573,7 +573,7 @@ function IncrementalAnimationMenu()
 
         local currentAddition = 1
 
-        local totalMsxTable = strToTable(settings.msxList, "%S+")
+        local totalMsxTable = table.split(settings.msxList, "%S+")
         local MAX_HEIGHT = #totalMsxTable
 
         local lines = {}
@@ -592,8 +592,8 @@ function IncrementalAnimationMenu()
             end
             local tbl = tableToLines(msxTable, currentTime + 5, 0, settings.spacing)
 
-            lines = concatTables(lines, tbl.lines)
-            svs = concatTables(svs, tbl.svs)
+            lines = combineTables(lines, tbl.lines)
+            svs = combineTables(svs, tbl.svs)
 
             insertTeleport(svs, currentTime + 1 / INCREMENT, FRAME_SIZE)
 
@@ -661,8 +661,8 @@ function GlitchMenu()
 
             currentTime = currentTime + timeDiff
 
-            lines = concatTables(lines, tbl.lines)
-            svs = concatTables(svs, tbl.svs)
+            lines = combineTables(lines, tbl.lines)
+            svs = combineTables(svs, tbl.svs)
 
             insertTeleport(svs, currentTime + 1 / INCREMENT, FRAME_SIZE)
 
@@ -712,8 +712,8 @@ function ExpansionContractionMenu()
 
             currentTime = tbl.time
 
-            lines = concatTables(lines, tbl.lines)
-            svs = concatTables(svs, tbl.svs)
+            lines = combineTables(lines, tbl.lines)
+            svs = combineTables(svs, tbl.svs)
 
             insertTeleport(svs, currentTime + 1 / INCREMENT, FRAME_SIZE)
 
@@ -771,8 +771,8 @@ function StaticBoundaryMenu()
 
             currentTime = tbl.time
 
-            lines = concatTables(lines, tbl.lines)
-            svs = concatTables(svs, tbl.svs)
+            lines = combineTables(lines, tbl.lines)
+            svs = combineTables(svs, tbl.svs)
 
             insertTeleport(svs, currentTime + 1 / INCREMENT, FRAME_SIZE)
 
@@ -851,8 +851,8 @@ function DynamicBoundaryMenu()
 
             currentTime = tbl.time
 
-            lines = concatTables(lines, tbl.lines)
-            svs = concatTables(svs, tbl.svs)
+            lines = combineTables(lines, tbl.lines)
+            svs = combineTables(svs, tbl.svs)
 
             insertTeleport(svs, currentTime + 1 / INCREMENT, FRAME_SIZE)
 
@@ -891,6 +891,43 @@ function placeDynamicFrame(startTime, min, max, lineDistance, spacing, polynomia
     return tableToLines(msxTable, startTime, 0, spacing)
 end
 
+local separatorTable = { " ", "!", "@", "#", "$", "%", "^", "&" }
+
+function tableToStr(tbl, nestingIdx)
+    local str = ""
+    local nestingIdx = nestingIdx or 0
+
+    for k, v in pairs(tbl) do
+        local value
+
+        if (type(v) == "table") then
+            value = "{" .. tableToStr(v, nestingIdx + 1) .. "}"
+        else
+            value = v
+        end
+        if (type(k) == "number") then
+            str = str .. value .. separatorTable[nestingIdx + 1]
+        else
+            str = str .. k .. "=" .. value .. separatorTable[nestingIdx + 1]
+        end
+    end
+    return str:sub(1, str:len() - 1)
+end
+
+---Takes a string, and splits it using a predicate. Similar to Array.split().
+---@param str string
+---@param predicate string
+---@return table
+function table.split(str, predicate)
+    t = {}
+
+    for i in string.gmatch(str, predicate) do
+        t[#t + 1] = i
+    end
+
+    return t
+end
+
 ---Returns true if the table contains the specified element.
 ---@param table table
 ---@param element any
@@ -903,6 +940,62 @@ function table.contains(table, element)
         end
     end
     return false
+end
+
+local separatorTable = { " ", "!", "@", "#", "$", "%", "^", "&" }
+
+function strToTable(str, nestingIdx)
+    local tbl = {}
+    local nestingIdx = nestingIdx or 0
+
+    for kvPair in str:gmatch("[^" .. separatorTable[nestingIdx + 1] .. "]+") do
+        if kvPair:match("^{.+}$") then
+            table.insert(tbl, strToTable(kvPair:sub(2, kvPair:len() - 1), nestingIdx + 1))
+        else
+            if (kvPair:find("^(%w+)=(%S+)$")) then
+                k, v = kvPair:match("^(%w+)=(%S+)$")
+                if v:match("^{.+}$") then
+                    tbl[k] = strToTable(v:sub(2, v:len() - 1), nestingIdx + 1)
+                else
+                    tbl[k] = v
+                end
+            else
+                table.insert(tbl, kvPair)
+            end
+        end
+    end
+
+    return tbl
+end
+
+---Debug table constructor for placing AFFINE frames.
+---@param lines TimingPointInfo[]
+---@param svs SliderVelocityInfo[]
+---@param stats? TableStats
+---@return table
+function constructDebugTable(lines, svs, stats)
+    local tbl = {
+        L = #lines,
+        S = #svs
+    }
+
+    if (stats) then
+        tbl.mspfMean = string.format("%.2f", stats.mean)
+        tbl.mspfStdDev = string.format("%.2f", stats.stdDev)
+    end
+
+    return tbl
+end
+
+---Joins two tables together, with no nesting.
+---@param t1 table
+---@param t2 table
+---@return table
+function combineTables(t1, t2)
+    for i = 1, #t2 do
+        t1[#t1 + 1] = t2[i]
+    end
+    return t1
 end
 
 ---Generates two svs for a teleport.
@@ -922,7 +1015,7 @@ end
 ---@param dist number
 ---@return SliderVelocityInfo[]
 function insertTeleport(svs, time, dist)
-    return concatTables(svs, teleport(time, dist))
+    return combineTables(svs, teleport(time, dist))
 end
 
 ---@diagnostic disable: return-type-mismatch
@@ -970,20 +1063,6 @@ function cleanSVs(svs, lower, upper)
     table.insert(tbl, sv(upper + 1, 1))
 
     return tbl
-end
-
----Takes a string, and splits it using a predicate. Similar to Array.split().
----@param str string
----@param predicate string
----@return table
-function strToTable(str, predicate)
-    t = {}
-
-    for i in string.gmatch(str, predicate) do
-        t[#t + 1] = i
-    end
-
-    return t
 end
 
 ---Gets the statistical variance
@@ -1508,36 +1587,6 @@ function generateAffines(lines, svs, lower, upper, affineType, debugData)
     })
 end
 
----Debug table constructor for placing AFFINE frames.
----@param lines TimingPointInfo[]
----@param svs SliderVelocityInfo[]
----@param stats? TableStats
----@return table
-function constructDebugTable(lines, svs, stats)
-    local tbl = {
-        L = #lines,
-        S = #svs
-    }
-
-    if (stats) then
-        tbl.mspfMean = string.format("%.2f", stats.mean)
-        tbl.mspfStdDev = string.format("%.2f", stats.stdDev)
-    end
-
-    return tbl
-end
-
----Joins two tables together, with no nesting.
----@param t1 table
----@param t2 table
----@return table
-function concatTables(t1, t2)
-    for i=1, #t2 do
-       t1[#t1+1] = t2[i]
-    end
-    return t1
- end
-
 ---@diagnostic disable: return-type-mismatch
 --- Creates a Bookmark. To place it, you must use an `action`.
 ---@param time integer
@@ -1545,6 +1594,17 @@ function concatTables(t1, t2)
 ---@return BookmarkInfo
 function bookmark(time, note)
     return utils.CreateBookmark(time, note)
+end
+
+function decryptAffineBookmark()
+    if (not map.Bookmarks[1]) then return {} end
+    local note = map.Bookmarks[1].note
+
+    if (not string.find(note, "AffineData: ")) then return {} end
+
+    local affineData = {}
+
+    return affineData
 end
 
 function Tooltip(text)
@@ -1871,6 +1931,9 @@ function chooseMenu(tbl, menuID)
     end
 end
 
+local data = {}
+local loaded = false
+
 function draw()
     imgui.Begin("AFFINE", imgui_window_flags.AlwaysAutoResize)
 
@@ -1939,7 +2002,29 @@ STANDARD_MENU_FUNCTIONS = {
     end
 
     if imgui.BeginTabItem("Delete (Automatic)") then
-        imgui.EndTabItem()
+        if ((not loaded) or imgui.Button("Get")) then
+            data = getData({})
+        end
+
+        for _, tbl in pairs(data) do
+            local str = ""
+
+            for k, v in pairs(tbl) do
+                local valStr
+                if (type(v) == "table") then
+                    valStr = "{" .. tableToStr(v) .. "}"
+                else
+                    valStr = v
+                end
+
+                str = str .. " " .. valStr
+            end
+            imgui.Selectable(str)
+        end
+
+        if (imgui.Button("Save")) then
+            saveData(data)
+        end
     end
     if imgui.BeginTabItem("Delete (Manual)") then
         ManualDeleteMenu()
@@ -1961,4 +2046,22 @@ function addSeparator()
     addPadding()
     imgui.Separator()
     addPadding()
+end
+
+function saveData(table)
+    if (map.Bookmarks[1]) then
+        if (map.Bookmarks[1].note:find("DATA: ")) then
+            actions.RemoveBookmark(map.Bookmarks[1])
+        end
+    end
+    actions.AddBookmark(0, "DATA: " .. tableToStr(table))
+end
+
+function getData(default)
+    if (not map.Bookmarks[1]) then return default end
+    if (not string.find(map.Bookmarks[1].note, "DATA: ")) then return default end
+
+    local str = map.Bookmarks[1].note:sub(7, map.Bookmarks[1].note:len())
+
+    return strToTable(str)
 end

@@ -39,8 +39,8 @@ function StaticBoundaryMenu()
 
             currentTime = tbl.time
 
-            lines = concatTables(lines, tbl.lines)
-            svs = concatTables(svs, tbl.svs)
+            lines = combineTables(lines, tbl.lines)
+            svs = combineTables(svs, tbl.svs)
 
             insertTeleport(svs, currentTime + 1 / INCREMENT, FRAME_SIZE)
 

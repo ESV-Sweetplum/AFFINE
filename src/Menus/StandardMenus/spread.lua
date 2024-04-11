@@ -26,7 +26,7 @@ function StandardSpreadMenu()
         local notes = getNotesInRange(offsets.startOffset, offsets.endOffset)
         if (type(notes) ~= "integer") then
             for _, note in pairs(notes) do
-                lines = concatTables(lines, keepColorLine(note.StartTime, true))
+                lines = combineTables(lines, keepColorLine(note.StartTime, true))
             end
         end
 

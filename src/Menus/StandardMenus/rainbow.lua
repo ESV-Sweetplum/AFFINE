@@ -8,7 +8,7 @@ function StandardRainbowMenu()
     local offsets = getSelectedOffsets()
     if NoteActivated(offsets) then
         local lines = {}
-        local rainbowTable = strToTable(settings.colorList, "%S+")
+        local rainbowTable = table.split(settings.colorList, "%S+")
         local rainbowIndex = 1
 
         if (type(offsets) == "integer") then return end
@@ -17,7 +17,7 @@ function StandardRainbowMenu()
 
         for _, offset in pairs(offsets) do
             if (rainbowIndex == 1) then hidden = false else hidden = true end
-            lines = concatTables(lines, applyColorToTime(rainbowTable[rainbowIndex], offset, hidden))
+            lines = combineTables(lines, applyColorToTime(rainbowTable[rainbowIndex], offset, hidden))
             rainbowIndex = rainbowIndex + 1
             if (rainbowIndex > #rainbowTable) then
                 rainbowIndex = 1
