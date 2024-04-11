@@ -1,3 +1,4 @@
+
 function activationButton(text)
     text = text or "Place"
     return imgui.Button(text .. " Lines")

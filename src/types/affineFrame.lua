@@ -1,3 +1,5 @@
+---@meta AffineFrame
+
 ---@class AffineFrame
 ---@field lines TimingPointInfo[]
 ---@field svs SliderVelocityInfo[]

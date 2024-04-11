@@ -1,3 +1,5 @@
+---@meta Parameter
+
 ---@class Parameter
 ---@field key string
 ---@field value any

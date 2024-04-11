@@ -1,3 +1,5 @@
+---@meta TimingPointInfo
+
 ---@class TimingPointInfo
 ---@field StartTime number
 ---@field Bpm number
