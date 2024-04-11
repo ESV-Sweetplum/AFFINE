@@ -1117,6 +1117,21 @@ function getMean(table)
     return sum / #table
 end
 
+function saveStateVariables(menu, variables)
+    for key in pairs(variables) do
+        state.SetValue(menu .. key, variables[key])
+    end
+end
+
+function saveMapState(table)
+    if (map.Bookmarks[1]) then
+        if (map.Bookmarks[1].note:find("DATA: ")) then
+            actions.RemoveBookmark(map.Bookmarks[1])
+        end
+    end
+    bookmark(-69420, "DATA: " .. tableToStr(table))
+end
+
 function retrieveStateVariables(menu, variables)
     for key in pairs(variables) do
         if (state.GetValue(menu .. key) ~= nil) then
@@ -1125,30 +1140,14 @@ function retrieveStateVariables(menu, variables)
     end
 end
 
-function saveStateVariables(menu, variables)
-    for key in pairs(variables) do
-        state.SetValue(menu .. key, variables[key])
-    end
-end
+function getMapState(default)
+    default = default or {}
+    if (not map.Bookmarks[1]) then return default end
+    if (not string.find(map.Bookmarks[1].note, "DATA: ")) then return default end
 
----Gets parameters for a certain menu.
----@param menu string
----@param parameterTable Parameter[]
-function retrieveParameters(menu, parameterTable)
-    for idx, tbl in ipairs(parameterTable) do
-        if (state.GetValue(menu .. idx .. tbl.key) ~= nil) then
-            parameterTable[idx].value = state.GetValue(menu .. idx .. tbl.key)
-        end
-    end
-end
+    local str = map.Bookmarks[1].note:sub(7, map.Bookmarks[1].note:len())
 
----Saves parameters for a certain menu.
----@param menu string
----@param parameterTable Parameter[]
-function saveParameters(menu, parameterTable)
-    for idx, tbl in ipairs(parameterTable) do
-        state.setValue(menu .. idx .. tbl.key, tbl.value)
-    end
+    return strToTable(str)
 end
 
 ---Simplifies the workflow to find and maintain snap colors.
@@ -1234,6 +1233,26 @@ end
 ---@return number
 function getProgress(starting, value, ending)
     return (value - starting) / (ending - starting)
+end
+
+---Saves parameters for a certain menu.
+---@param menu string
+---@param parameterTable Parameter[]
+function saveParameters(menu, parameterTable)
+    for idx, tbl in ipairs(parameterTable) do
+        state.setValue(menu .. idx .. tbl.key, tbl.value)
+    end
+end
+
+---Gets parameters for a certain menu.
+---@param menu string
+---@param parameterTable Parameter[]
+function retrieveParameters(menu, parameterTable)
+    for idx, tbl in ipairs(parameterTable) do
+        if (state.GetValue(menu .. idx .. tbl.key) ~= nil) then
+            parameterTable[idx].value = state.GetValue(menu .. idx .. tbl.key)
+        end
+    end
 end
 
 ---Outputs settings based on inputted parameters.
@@ -1596,17 +1615,6 @@ function bookmark(time, note)
     return utils.CreateBookmark(time, note)
 end
 
-function decryptAffineBookmark()
-    if (not map.Bookmarks[1]) then return {} end
-    local note = map.Bookmarks[1].note
-
-    if (not string.find(note, "AffineData: ")) then return {} end
-
-    local affineData = {}
-
-    return affineData
-end
-
 function Tooltip(text)
     imgui.SameLine(0, 4)
     imgui.TextDisabled("(?)")
@@ -1941,6 +1949,10 @@ function draw()
         menuID = DEFAULT_MENU_ID
     }
 
+    if (not loaded) then
+        onLoad()
+    end
+
     -- drawCapybara2(0)
     -- drawSpike(state.WindowSize[1] * 1.5 / 25)
 
@@ -2002,10 +2014,6 @@ STANDARD_MENU_FUNCTIONS = {
     end
 
     if imgui.BeginTabItem("Delete (Automatic)") then
-        if ((not loaded) or imgui.Button("Get")) then
-            data = getData({})
-        end
-
         for _, tbl in pairs(data) do
             local str = ""
 
@@ -2020,10 +2028,6 @@ STANDARD_MENU_FUNCTIONS = {
                 str = str .. " " .. valStr
             end
             imgui.Selectable(str)
-        end
-
-        if (imgui.Button("Save")) then
-            saveData(data)
         end
     end
     if imgui.BeginTabItem("Delete (Manual)") then
@@ -2048,20 +2052,7 @@ function addSeparator()
     addPadding()
 end
 
-function saveData(table)
-    if (map.Bookmarks[1]) then
-        if (map.Bookmarks[1].note:find("DATA: ")) then
-            actions.RemoveBookmark(map.Bookmarks[1])
-        end
-    end
-    actions.AddBookmark(0, "DATA: " .. tableToStr(table))
-end
-
-function getData(default)
-    if (not map.Bookmarks[1]) then return default end
-    if (not string.find(map.Bookmarks[1].note, "DATA: ")) then return default end
-
-    local str = map.Bookmarks[1].note:sub(7, map.Bookmarks[1].note:len())
-
-    return strToTable(str)
+function onLoad()
+    data = getMapState()
+    loaded = true
 end

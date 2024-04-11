@@ -4,7 +4,6 @@ function tableToStr(tbl, nestingIdx)
     local str = ""
     local nestingIdx = nestingIdx or 0
 
-
     for k, v in pairs(tbl) do
         local value
 
