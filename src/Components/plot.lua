@@ -31,18 +31,7 @@ function Plot(polynomialCoefficients, progressionExponent, title)
     end
 
     imgui.PlotLines("", tbl, #tbl, 0,
-        'Equation: y = ' ..
-        polynomialCoefficients[1] ..
-        't^' ..
-        string.sub(3 * progressionExponent, 1, 4) ..
-        ' ' .. sign1 .. ' ' ..
-        polynomialCoefficients[2] ..
-        't^' ..
-        string.sub(2 * progressionExponent, 1, 4) ..
-        ' ' .. sign2 .. ' ' ..
-        polynomialCoefficients[3] ..
-        't^' .. string.sub(progressionExponent, 1, 4) .. ' ' .. sign3 .. ' ' .. polynomialCoefficients[4], 0,
-        1,
+        polynomialString(polynomialCoefficients, progressionExponent)
         { 250, 150 })
 
     imgui.End()
