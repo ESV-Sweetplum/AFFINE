@@ -1,3 +1,4 @@
+---@diagnostic disable: duplicate-set-field
 DEFAULT_MENU_ID = 1                            -- integer
 
 DEFAULT_MSX_LIST = '69 420 727 1337'           -- integer[any]
@@ -59,66 +60,6 @@ STANDARD_MENU_LIST = {
     'At Notes (Preserve Snap)',
     "Rainbow"
 }
-
----@meta TimingPointInfo
-
----@class TimingPointInfo
----@field StartTime number
----@field Bpm number
----@field Signature number
----@field Hidden boolean
-
----@class TableStats
----@field mean number
----@field variance number
----@field stdDev number
-
----@meta SliderVelocityInfo
-
----@class SliderVelocityInfo
----@field StartTime number
----@field Multiplier number
-
----@meta Parameter
-
----@class Parameter
----@field key string
----@field value any
----@field inputType? string
----@field label? string
----@field sameLine? boolean
----@field tooltip? string
-
----@meta HitObjectInfo
-
----@class HitObjectInfo
----@field StartTime number
----@field Lane 1|2|3|4|5|6|7
----@field EndTime number
----@field HitSound any
----@field EditorLayer integer
-
----@class BookmarkInfo
----@field StartTime integer
----@field Note string
-
----@meta AffineSaveTable
-
----@class AffineSaveTable
----@field label string
----@field lower number
----@field upper number
----@field numLines number
----@field numSVs number
----@field lineOffsets number[]
----@field svOffsets number[]
-
----@meta AffineFrame
-
----@class AffineFrame
----@field lines TimingPointInfo[]
----@field svs SliderVelocityInfo[]
----@field time number
 
 function ManualDeleteTab()
     local settings = {
