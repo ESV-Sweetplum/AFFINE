@@ -1,4 +1,4 @@
-function ManualDeleteMenu()
+function ManualDeleteTab()
     local settings = {
         deletionType = DEFAULT_MENU_ID
     }

@@ -4,5 +4,6 @@ function saveMapState(table)
             actions.RemoveBookmark(map.Bookmarks[1])
         end
     end
-    bookmark(-69420, "DATA: " .. tableToStr(table))
+    local bm = bookmark(-69420, "DATA: " .. tableToStr(table))
+    actions.AddBookmarkBatch({ bm })
 end

@@ -4,7 +4,7 @@ function chooseMenu(tbl, menuID)
     end
 end
 
-local data = {}
+globalData = {} ---@type AffineSaveTable[]
 local loaded = false
 
 
@@ -46,24 +46,11 @@ function draw()
     end
 
     if imgui.BeginTabItem("Delete (Automatic)") then
-        for _, tbl in pairs(data) do
-            local str = ""
-
-            for k, v in pairs(tbl) do
-                local valStr
-                if (type(v) == "table") then
-                    valStr = "{" .. tableToStr(v) .. "}"
-                else
-                    valStr = v
-                end
-
-                str = str .. " " .. valStr
-            end
-            imgui.Selectable(str)
-        end
+        AutomaticDeleteTab()
+        imgui.EndTabItem()
     end
     if imgui.BeginTabItem("Delete (Manual)") then
-        ManualDeleteMenu()
+        ManualDeleteTab()
         imgui.EndTabItem()
     end
 
@@ -85,6 +72,6 @@ function addSeparator()
 end
 
 function onLoad()
-    data = getMapState()
+    globalData = getMapState()
     loaded = true
 end

@@ -1,7 +1,7 @@
 ---Creates a new window with a plot
 ---@param polynomialCoefficients number[]
 ---@param progressionExponent number
----@param title string
+---@param title? string
 function Plot(polynomialCoefficients, progressionExponent, title)
     imgui.Begin(title or "Boundary Height vs. Time", imgui_window_flags.AlwaysAutoResize)
 

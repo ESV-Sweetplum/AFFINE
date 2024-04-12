@@ -60,6 +60,8 @@ STANDARD_MENU_LIST = {
     "Rainbow"
 }
 
+---@meta TimingPointInfo
+
 ---@class TimingPointInfo
 ---@field StartTime number
 ---@field Bpm number
@@ -71,9 +73,13 @@ STANDARD_MENU_LIST = {
 ---@field variance number
 ---@field stdDev number
 
+---@meta SliderVelocityInfo
+
 ---@class SliderVelocityInfo
 ---@field StartTime number
 ---@field Multiplier number
+
+---@meta Parameter
 
 ---@class Parameter
 ---@field key string
@@ -82,6 +88,8 @@ STANDARD_MENU_LIST = {
 ---@field label? string
 ---@field sameLine? boolean
 ---@field tooltip? string
+
+---@meta HitObjectInfo
 
 ---@class HitObjectInfo
 ---@field StartTime number
@@ -94,12 +102,25 @@ STANDARD_MENU_LIST = {
 ---@field StartTime integer
 ---@field Note string
 
+---@meta AffineSaveTable
+
+---@class AffineSaveTable
+---@field label string
+---@field lower number
+---@field upper number
+---@field numLines number
+---@field numSVs number
+---@field lineOffsets number[]
+---@field svOffsets number[]
+
+---@meta AffineFrame
+
 ---@class AffineFrame
 ---@field lines TimingPointInfo[]
 ---@field svs SliderVelocityInfo[]
 ---@field time number
 
-function ManualDeleteMenu()
+function ManualDeleteTab()
     local settings = {
         deletionType = DEFAULT_MENU_ID
     }
@@ -156,6 +177,62 @@ function CreateMenu(menuName, typeText, list, functions)
     chooseMenu(functions, settings.menuID)
 
     saveStateVariables(menuName, settings)
+end
+
+function AutomaticDeleteTab()
+    local selectedID = state.GetValue("selectedID") or 1
+
+    for id, tbl in pairs(globalData) do
+        imgui.Selectable(
+            "Type: " ..
+            tbl.label ..
+            " // Lower/Upper Offset: " ..
+            tbl.lower .. ":" .. tbl.upper .. " // # Lines: " .. tbl.numLines .. " // # SVs: " .. tbl.numSVs,
+            selectedID == id)
+        if (imgui.IsItemClicked()) then
+            selectedID = id
+        end
+    end
+
+    if (imgui.Button("Delete selected item")) then
+        tbl = globalData[selectedID]
+
+        local EPSILON = 0.001
+
+        local linesToRemove = {}
+        local svsToRemove = {}
+        local bookmarksToRemove = {
+            findBookmark(tbl.lower + EPSILON, tbl.lower, tbl.upper),
+            findBookmark(tbl.upper + EPSILON, tbl.lower, tbl.upper),
+        }
+
+        for _, v in pairs(tbl.lineOffsets) do
+            local timingPoint = map.GetTimingPointAt(v + EPSILON)
+            ---@cast timingPoint TimingPointInfo
+            if (timingPoint.StartTime >= tbl.lower and timingPoint.StartTime <= tbl.upper) then
+                table.insert(linesToRemove, timingPoint)
+            end
+        end
+
+        for _, v in pairs(tbl.svOffsets) do
+            local scrollVelocity = map.GetScrollVelocityAt(v + EPSILON)
+            ---@cast scrollVelocity SliderVelocityInfo
+            if (scrollVelocity.StartTime >= tbl.lower and scrollVelocity.StartTime <= tbl.upper) then
+                table.insert(svsToRemove, scrollVelocity)
+            end
+        end
+
+        actions.PerformBatch({
+            utils.CreateEditorAction(action_type.RemoveTimingPointBatch, linesToRemove),
+            utils.CreateEditorAction(action_type.RemoveScrollVelocityBatch, svsToRemove),
+            utils.CreateEditorAction(action_type.RemoveBookmarkBatch, bookmarksToRemove)
+        })
+
+        table.remove(globalData, selectedID)
+        saveMapState(globalData)
+    end
+
+    state.SetValue("selectedID", selectedID)
 end
 
 function StandardSpreadMenu()
@@ -1129,7 +1206,8 @@ function saveMapState(table)
             actions.RemoveBookmark(map.Bookmarks[1])
         end
     end
-    bookmark(-69420, "DATA: " .. tableToStr(table))
+    local bm = bookmark(-69420, "DATA: " .. tableToStr(table))
+    actions.AddBookmarkBatch({ bm })
 end
 
 function retrieveStateVariables(menu, variables)
@@ -1599,11 +1677,51 @@ function generateAffines(lines, svs, lower, upper, affineType, debugData)
         utils.CreateBookmark(upper, affineType .. " End")
     }
 
+    local newGlobalTable = {
+        label = affineType:gsub(" ", ""),
+        lower = lower,
+        upper = upper,
+        numLines = #lines,
+        numSVs = #svs,
+        lineOffsets = {},
+        svOffsets = {}
+    } ---@type AffineSaveTable
+
+    for _, line in pairs(lines) do
+        table.insert(newGlobalTable.lineOffsets, line.StartTime)
+    end
+
+    for _, sv in pairs(svs) do
+        table.insert(newGlobalTable.svOffsets, sv.StartTime)
+    end
+
+    table.insert(globalData, newGlobalTable)
+
+    saveMapState(globalData)
+
     actions.PerformBatch({
         utils.CreateEditorAction(action_type.AddTimingPointBatch, lines),
         utils.CreateEditorAction(action_type.AddScrollVelocityBatch, svs),
         utils.CreateEditorAction(action_type.AddBookmarkBatch, bookmarks),
     })
+end
+
+function findBookmark(time, lower, upper)
+    local lower = lower or 0
+    local upper = upper or 1e69
+    local bookmarks = map.Bookmarks
+
+    if (not #bookmarks) then return end
+    if (#bookmarks == 1) then return bookmarks[1] end
+
+    for i = 1, #bookmarks do
+        if bookmarks[i].StartTime > time then
+            if (bookmarks[i].StartTime < lower or bookmarks[i].StartTime > upper) then return end
+            return bookmarks[i - 1]
+        end
+    end
+    if (bookmarks[#bookmarks].StartTime < lower or bookmarks[#bookmarks].StartTime > upper) then return end
+    return bookmarks[#bookmarks]
 end
 
 ---@diagnostic disable: return-type-mismatch
@@ -1615,6 +1733,8 @@ function bookmark(time, note)
     return utils.CreateBookmark(time, note)
 end
 
+---Creates a tooltip hoverable element.
+---@param text string
 function Tooltip(text)
     imgui.SameLine(0, 4)
     imgui.TextDisabled("(?)")
@@ -1626,6 +1746,12 @@ function Tooltip(text)
     imgui.EndTooltip()
 end
 
+---Creates two radio buttons, one for true and one for false.
+---@param labelFalse string
+---@param labelTrue string
+---@param v boolean
+---@param tooltip string
+---@return boolean
 function RadioBoolean(labelFalse, labelTrue, v, tooltip)
     if imgui.RadioButton(labelFalse, not v) then
         v = false
@@ -1640,6 +1766,10 @@ function RadioBoolean(labelFalse, labelTrue, v, tooltip)
     return v
 end
 
+---Creates a new window with a plot
+---@param polynomialCoefficients number[]
+---@param progressionExponent number
+---@param title? string
 function Plot(polynomialCoefficients, progressionExponent, title)
     imgui.Begin(title or "Boundary Height vs. Time", imgui_window_flags.AlwaysAutoResize)
 
@@ -1677,40 +1807,78 @@ function Plot(polynomialCoefficients, progressionExponent, title)
     imgui.End()
 end
 
+---@diagnostic disable: cast-local-type
+
+---Creates an `InputInt` element.
+---@param label string
+---@param v integer
+---@param tooltip string
+---@return integer
 function InputIntWrapper(label, v, tooltip)
     _, v = imgui.InputInt(label, v, 0, 0)
     Tooltip(tooltip)
+    ---@cast v integer
     return v
 end
 
+---Creates an `InputFloat` element.
+---@param label string
+---@param v number
+---@param tooltip string
+---@return number
 function InputFloatWrapper(label, v, tooltip)
     _, v = imgui.InputFloat(label, v, 0, 0, "%.2f")
     Tooltip(tooltip)
+    ---@cast v number
     return v
 end
 
+---Creates an `InputText` element.
+---@param label string
+---@param v string
+---@param tooltip string
+---@return string
 function InputTextWrapper(label, v, tooltip)
     _, v = imgui.InputText(label, v, 6942)
     Tooltip(tooltip)
+    ---@cast v string
     return v
 end
 
+---Creates an `InputInt2` element.
+---@param label string
+---@param v integer[]
+---@param tooltip string
+---@return integer[]
 function InputInt2Wrapper(label, v, tooltip)
     _, v = imgui.InputInt2(label, v)
     Tooltip(tooltip)
+    ---@cast v integer[]
     return v
 end
 
+---Creates an `InputFloat3` element.
+---@param label string
+---@param v number[]
+---@param tooltip string
+---@return number[]
 function InputFloat3Wrapper(label, v, tooltip)
     _, v = imgui.InputFloat3(label, v, "%.2f")
     Tooltip(tooltip)
+    ---@cast v number[]
     return v
 end
 
+---Creates an `Checkbox` element.
+---@param label string
+---@param v boolean
+---@param tooltip string
+---@return boolean
 function CheckboxWrapper(label, v, tooltip, sameLine)
     if (sameLine) then imgui.SameLine(0, 7.5) end
     _, v = imgui.Checkbox(label, v)
     Tooltip(tooltip)
+    ---@cast v boolean
     return v
 end
 
@@ -1939,7 +2107,7 @@ function chooseMenu(tbl, menuID)
     end
 end
 
-local data = {}
+globalData = {} ---@type AffineSaveTable[]
 local loaded = false
 
 function draw()
@@ -2014,24 +2182,11 @@ STANDARD_MENU_FUNCTIONS = {
     end
 
     if imgui.BeginTabItem("Delete (Automatic)") then
-        for _, tbl in pairs(data) do
-            local str = ""
-
-            for k, v in pairs(tbl) do
-                local valStr
-                if (type(v) == "table") then
-                    valStr = "{" .. tableToStr(v) .. "}"
-                else
-                    valStr = v
-                end
-
-                str = str .. " " .. valStr
-            end
-            imgui.Selectable(str)
-        end
+        AutomaticDeleteTab()
+        imgui.EndTabItem()
     end
     if imgui.BeginTabItem("Delete (Manual)") then
-        ManualDeleteMenu()
+        ManualDeleteTab()
         imgui.EndTabItem()
     end
 
@@ -2053,6 +2208,6 @@ function addSeparator()
 end
 
 function onLoad()
-    data = getMapState()
+    globalData = getMapState()
     loaded = true
 end
