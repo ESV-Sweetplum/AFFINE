@@ -3,7 +3,7 @@ function findBookmark(time, lower, upper)
     local upper = upper or 1e69
     local bookmarks = map.Bookmarks
 
-    if (not #bookmarks) then return end
+    if (#bookmarks == 0) then return end
     if (#bookmarks == 1) then return bookmarks[1] end
 
     for i = 1, #bookmarks do

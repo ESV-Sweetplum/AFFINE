@@ -46,7 +46,7 @@ function generateAffines(lines, svs, lower, upper, affineType, debugData)
 
     table.insert(globalData, newGlobalTable)
 
-    saveMapState(globalData)
+    table.insert(bookmarks, saveMapState(globalData, false))
 
     actions.PerformBatch({
         utils.CreateEditorAction(action_type.AddTimingPointBatch, lines),

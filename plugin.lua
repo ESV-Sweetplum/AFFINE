@@ -194,42 +194,46 @@ function AutomaticDeleteTab()
         end
     end
 
-    if (imgui.Button("Delete selected item")) then
-        tbl = globalData[selectedID]
+    if (#globalData == 0) then
+        imgui.Text("Create an animation or fixed lines to display them here.")
+    else
+        if (imgui.Button("Delete selected item")) then
+            tbl = globalData[selectedID]
 
-        local EPSILON = 0.001
+            local EPSILON = 0.001
 
-        local linesToRemove = {}
-        local svsToRemove = {}
-        local bookmarksToRemove = {
-            findBookmark(tbl.lower + EPSILON, tbl.lower, tbl.upper),
-            findBookmark(tbl.upper + EPSILON, tbl.lower, tbl.upper),
-        }
+            local linesToRemove = {}
+            local svsToRemove = {}
+            local bookmarksToRemove = {
+                findBookmark(tbl.lower + EPSILON, tbl.lower, tbl.upper),
+                findBookmark(tbl.upper + EPSILON, tbl.lower, tbl.upper),
+            }
 
-        for _, v in pairs(tbl.lineOffsets) do
-            local timingPoint = map.GetTimingPointAt(v + EPSILON)
-            ---@cast timingPoint TimingPointInfo
-            if (timingPoint.StartTime >= tbl.lower and timingPoint.StartTime <= tbl.upper) then
-                table.insert(linesToRemove, timingPoint)
+            for _, v in pairs(tbl.lineOffsets) do
+                local timingPoint = map.GetTimingPointAt(v + EPSILON)
+                ---@cast timingPoint TimingPointInfo
+                if (timingPoint.StartTime >= tbl.lower) and (timingPoint.StartTime <= tbl.upper) then
+                    table.insert(linesToRemove, timingPoint)
+                end
             end
-        end
 
-        for _, v in pairs(tbl.svOffsets) do
-            local scrollVelocity = map.GetScrollVelocityAt(v + EPSILON)
-            ---@cast scrollVelocity SliderVelocityInfo
-            if (scrollVelocity.StartTime >= tbl.lower and scrollVelocity.StartTime <= tbl.upper) then
-                table.insert(svsToRemove, scrollVelocity)
+            for _, v in pairs(tbl.svOffsets) do
+                local scrollVelocity = map.GetScrollVelocityAt(v + EPSILON)
+                ---@cast scrollVelocity SliderVelocityInfo
+                if (scrollVelocity.StartTime >= tbl.lower) and (scrollVelocity.StartTime <= tbl.upper) then
+                    table.insert(svsToRemove, scrollVelocity)
+                end
             end
+
+            actions.PerformBatch({
+                utils.CreateEditorAction(action_type.RemoveTimingPointBatch, linesToRemove),
+                utils.CreateEditorAction(action_type.RemoveScrollVelocityBatch, svsToRemove),
+                utils.CreateEditorAction(action_type.RemoveBookmarkBatch, bookmarksToRemove)
+            })
+
+            table.remove(globalData, selectedID)
+            saveMapState(globalData)
         end
-
-        actions.PerformBatch({
-            utils.CreateEditorAction(action_type.RemoveTimingPointBatch, linesToRemove),
-            utils.CreateEditorAction(action_type.RemoveScrollVelocityBatch, svsToRemove),
-            utils.CreateEditorAction(action_type.RemoveBookmarkBatch, bookmarksToRemove)
-        })
-
-        table.remove(globalData, selectedID)
-        saveMapState(globalData)
     end
 
     state.SetValue("selectedID", selectedID)
@@ -412,11 +416,16 @@ function placeAutomaticFrame(startTime, low, high, spacing, distance)
     return tableToLines(msxTable, startTime, 0, spacing)
 end
 
+---@diagnostic disable: need-check-nil, inject-field
 function CopyAndPasteMenu()
     local offsets = getStartAndEndNoteOffsets()
 
-    local storedLines = state.GetValue("storedLines") or {}
-    local storedSVs = state.GetValue("storedSVs") or {}
+    local tbl = {
+        storedLines = {},
+        storedSVs = {}
+    }
+
+    retrieveStateVariables("CopyAndPaste", tbl)
 
     if RangeActivated(offsets, "Copy") then
         if (type(offsets) == "integer") then return end
@@ -432,30 +441,27 @@ function CopyAndPasteMenu()
             table.insert(zeroOffsetLines,
                 line(givenLine.StartTime - offsets.startOffset, givenLine.Bpm, givenLine.Hidden))
         end
-        imgui.Text("hi 3")
 
         for _, givenSV in pairs(svs) do
             table.insert(zeroOffsetSVs, sv(givenSV.StartTime - offsets.startOffset, givenSV.Multiplier))
         end
-        imgui.Text("hi 4")
 
-        state.SetValue("storedLines", zeroOffsetLines)
-        state.SetValue("storedSVs", zeroOffsetSVs)
-        imgui.Text("hi 5")
+        tbl.storedLines = zeroOffsetLines
+        tbl.storedSVs = zeroOffsetSVs
     end
 
-    if (#storedLines or #storedSVs) then
+    if (#tbl.storedLines > 0 or #tbl.storedSVs > 0) then
         if NoteActivated(offsets, "Paste") then
             if (type(offsets) == "integer") then return end
 
             local linesToAdd = {}
             local svsToAdd = {}
 
-            for _, storedLine in pairs(storedLines) do
+            for _, storedLine in pairs(tbl.storedLines) do
                 table.insert(linesToAdd,
                     line(storedLine.StartTime + offsets.startOffset, storedLine.Bpm, storedLine.Hidden))
             end
-            for _, storedSV in pairs(storedSVs) do
+            for _, storedSV in pairs(tbl.storedSVs) do
                 table.insert(svsToAdd, sv(storedSV.StartTime + offsets.startOffset, storedSV.Multiplier))
             end
 
@@ -468,7 +474,8 @@ function CopyAndPasteMenu()
 
     addSeparator()
 
-    imgui.Text(#storedLines .. " Stored Lines // " .. #storedSVs .. " Stored SVs")
+    imgui.Text(#tbl.storedLines .. " Stored Lines // " .. #tbl.storedSVs .. " Stored SVs")
+    saveStateVariables("CopyAndPaste", tbl)
 end
 
 function SpectrumMenu()
@@ -1200,14 +1207,16 @@ function saveStateVariables(menu, variables)
     end
 end
 
-function saveMapState(table)
+function saveMapState(table, place)
     if (map.Bookmarks[1]) then
-        if (map.Bookmarks[1].note:find("DATA: ")) then
+        if (map.Bookmarks[1].note:find("DATA: ")) and (map.Bookmarks[1].StartTime == -69420) then
             actions.RemoveBookmark(map.Bookmarks[1])
         end
     end
     local bm = bookmark(-69420, "DATA: " .. tableToStr(table))
+    if (place == false) then return bm end
     actions.AddBookmarkBatch({ bm })
+    return bm
 end
 
 function retrieveStateVariables(menu, variables)
@@ -1697,7 +1706,7 @@ function generateAffines(lines, svs, lower, upper, affineType, debugData)
 
     table.insert(globalData, newGlobalTable)
 
-    saveMapState(globalData)
+    table.insert(bookmarks, saveMapState(globalData, false))
 
     actions.PerformBatch({
         utils.CreateEditorAction(action_type.AddTimingPointBatch, lines),
@@ -1711,7 +1720,7 @@ function findBookmark(time, lower, upper)
     local upper = upper or 1e69
     local bookmarks = map.Bookmarks
 
-    if (not #bookmarks) then return end
+    if (#bookmarks == 0) then return end
     if (#bookmarks == 1) then return bookmarks[1] end
 
     for i = 1, #bookmarks do
