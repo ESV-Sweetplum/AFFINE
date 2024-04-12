@@ -19,17 +19,15 @@ function AutomaticDeleteTab()
         if (imgui.Button("Delete selected item")) then
             tbl = globalData[selectedID]
 
-            local EPSILON = 0.001
-
             local linesToRemove = {}
             local svsToRemove = {}
             local bookmarksToRemove = {
-                findBookmark(tbl.lower + EPSILON, tbl.lower, tbl.upper),
-                findBookmark(tbl.upper + EPSILON, tbl.lower, tbl.upper),
+                findBookmark(tbl.lower, tbl.lower, tbl.upper),
+                findBookmark(tbl.upper, tbl.lower, tbl.upper),
             }
 
             for _, v in pairs(tbl.lineOffsets) do
-                local timingPoint = map.GetTimingPointAt(v + EPSILON)
+                local timingPoint = map.GetTimingPointAt(v)
                 ---@cast timingPoint TimingPointInfo
                 if (timingPoint.StartTime >= tbl.lower) and (timingPoint.StartTime <= tbl.upper) then
                     table.insert(linesToRemove, timingPoint)
@@ -37,7 +35,7 @@ function AutomaticDeleteTab()
             end
 
             for _, v in pairs(tbl.svOffsets) do
-                local scrollVelocity = map.GetScrollVelocityAt(v + EPSILON)
+                local scrollVelocity = map.GetScrollVelocityAt(v)
                 ---@cast scrollVelocity SliderVelocityInfo
                 if (scrollVelocity.StartTime >= tbl.lower) and (scrollVelocity.StartTime <= tbl.upper) then
                     table.insert(svsToRemove, scrollVelocity)
