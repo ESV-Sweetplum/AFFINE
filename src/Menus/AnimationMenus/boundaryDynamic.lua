@@ -26,7 +26,7 @@ function DynamicBoundaryMenu()
             local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset) ^
                 settings.progressionExponent
 
-            local polynomialHeight = (settings.polynomialCoefficients[1] * progress ^ 2 + settings.polynomialCoefficients[2] * progress + settings.polynomialCoefficients[3])
+            local polynomialHeight = evaluateCoefficients(settings.polynomialCoefficients, progress)
 
             local tbl = placeDynamicFrame(currentTime, settings.msxBounds[1], settings.msxBounds[2], settings.distance,
                 settings.spacing, polynomialHeight, settings.evalOver)

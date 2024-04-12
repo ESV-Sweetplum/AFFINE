@@ -48,13 +48,13 @@ function InputInt2Wrapper(label, v, tooltip)
     return v
 end
 
----Creates an `InputFloat3` element.
+---Creates an `InputFloat4` element.
 ---@param label string
 ---@param v number[]
 ---@param tooltip string
 ---@return number[]
-function InputFloat3Wrapper(label, v, tooltip)
-    _, v = imgui.InputFloat3(label, v, "%.2f")
+function InputFloat4Wrapper(label, v, tooltip)
+    _, v = imgui.InputFloat4(label, v, "%.2f")
     Tooltip(tooltip)
     ---@cast v number[]
     return v

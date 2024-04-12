@@ -63,7 +63,7 @@ INPUT_DICTIONARY = {
             "Maximum FPS of the animation. Note that if there are too many timing lines, the animation (not game) FPS will go down.")
     end,
     polynomialCoefficients = function (v)
-        return InputFloat3Wrapper("Coefficients", v,
+        return InputFloat4Wrapper("Coefficients", v,
             "The boundary follows a curve, described by these coefficients. You can see what the boundary height vs. time graph looks like on the plot.")
     end,
     colorList = function (v)

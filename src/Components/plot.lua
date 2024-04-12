@@ -11,11 +11,12 @@ function Plot(polynomialCoefficients, progressionExponent, title)
         local progress = (i / RESOLUTION) ^ (progressionExponent)
 
         table.insert(tbl,
-            (polynomialCoefficients[1] * progress ^ 2 + polynomialCoefficients[2] * progress + polynomialCoefficients[3]))
+            evaluateCoefficients(polynomialCoefficients, progress))
     end
 
     local sign1 = "+"
     local sign2 = "+"
+    local sign3 = "+"
 
     if (polynomialCoefficients[2] < 0) then
         sign1 = "-"
@@ -25,14 +26,22 @@ function Plot(polynomialCoefficients, progressionExponent, title)
         sign2 = "-"
     end
 
+    if (polynomialCoefficients[4] < 0) then
+        sign3 = "-"
+    end
+
     imgui.PlotLines("", tbl, #tbl, 0,
         'Equation: y = ' ..
         polynomialCoefficients[1] ..
         't^' ..
-        string.sub(2 * progressionExponent, 1, 4) ..
+        string.sub(3 * progressionExponent, 1, 4) ..
         ' ' .. sign1 .. ' ' ..
         polynomialCoefficients[2] ..
-        't^' .. string.sub(progressionExponent, 1, 4) .. ' ' .. sign2 .. ' ' .. polynomialCoefficients[3], 0,
+        't^' ..
+        string.sub(2 * progressionExponent, 1, 4) ..
+        ' ' .. sign2 .. ' ' ..
+        polynomialCoefficients[3] ..
+        't^' .. string.sub(progressionExponent, 1, 4) .. ' ' .. sign3 .. ' ' .. polynomialCoefficients[4], 0,
         1,
         { 250, 150 })
 

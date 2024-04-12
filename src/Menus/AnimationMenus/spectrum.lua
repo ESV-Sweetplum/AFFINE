@@ -28,7 +28,7 @@ function SpectrumMenu()
 
 
             local heightDifferential = settings.maxSpread *
-                (settings.polynomialCoefficients[1] * progress ^ 2 + settings.polynomialCoefficients[2] * progress + settings.polynomialCoefficients[3])
+                evaluateCoefficients(settings.polynomialCoefficients, progress)
 
             local tbl = placeSpectrumFrame(currentTime, settings.center, settings.maxSpread, settings.distance,
                 settings.spacing, heightDifferential, settings.inverse)
