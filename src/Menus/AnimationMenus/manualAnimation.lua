@@ -18,8 +18,8 @@ function BasicManualAnimationMenu()
         local frameLengths = {}
 
         while (currentTime < offsets.endOffset) and (iterations < MAX_ITERATIONS) do
-            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset) ^
-                settings.progressionExponent
+            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset,
+                settings.progressionExponent)
 
             local msxTable = {}
 

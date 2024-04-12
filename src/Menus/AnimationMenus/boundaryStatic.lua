@@ -23,8 +23,8 @@ function StaticBoundaryMenu()
 
 
         while ((currentTime + (2 / INCREMENT)) <= offsets.endOffset) and (iterations < MAX_ITERATIONS) do
-            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset) ^
-                settings.progressionExponent
+            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset,
+                settings.progressionExponent)
 
 
             local boundary = evaluateCoefficients(settings.polynomialCoefficients, progress)

@@ -16,8 +16,8 @@ function GlitchMenu()
         local frameLengths = {}
 
         while (currentTime <= offsets.endOffset) do
-            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset) ^
-                settings.progressionExponent
+            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset,
+                settings.progressionExponent)
 
 
             local lowerBound = mapProgress(settings.msxBounds1[1], progress, settings.msxBounds2[1])

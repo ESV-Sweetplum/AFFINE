@@ -1,5 +1,6 @@
 ---Takes a table of coefficients, and returns a string representing the equation.
 ---@param coefficients number[]
+---@param power number
 ---@return string
 function polynomialString(coefficients, power)
     local str = 'Equation: y = '

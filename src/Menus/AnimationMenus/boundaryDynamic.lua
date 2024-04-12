@@ -23,8 +23,8 @@ function DynamicBoundaryMenu()
         local frameLengths = {}
 
         while ((currentTime + (2 / INCREMENT)) <= offsets.endOffset) and (iterations < MAX_ITERATIONS) do
-            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset) ^
-                settings.progressionExponent
+            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset,
+                settings.progressionExponent)
 
             local polynomialHeight = evaluateCoefficients(settings.polynomialCoefficients, progress)
 
