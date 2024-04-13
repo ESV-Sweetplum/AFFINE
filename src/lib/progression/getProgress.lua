@@ -5,6 +5,7 @@
 ---@param progressionExponent? number
 ---@return number
 function getProgress(starting, value, ending, progressionExponent)
+    local progressionExponent = progressionExponent or 1
     local baseProgress = (value - starting) / (ending - starting)
     if (progressionExponent >= 1) then
         return baseProgress ^ progressionExponent

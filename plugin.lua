@@ -1,23 +1,23 @@
 ---@diagnostic disable: duplicate-set-field
-DEFAULT_MENU_ID = 1                            -- integer
+DEFAULT_MENU_ID = 1                               -- integer
 
-DEFAULT_MSX_LIST = '69 420 727 1337'           -- integer[any]
-DEFAULT_DELAY = 1                              -- integer
-DEFAULT_OFFSET = 0                             -- integer
-DEFAULT_SPACING = 1.1                          -- float
-DEFAULT_MSX_BOUNDS = { 0, 400 }                -- integer[2]
-DEFAULT_DISTANCE = { 15, 15 }                  -- integer[2]
-DEFAULT_LINE_COUNT = 10                        -- integer
-DEFAULT_FPS = 90                               -- float
-DEFAULT_CENTER = 200                           -- integer
-DEFAULT_MAX_SPREAD = 200                       -- integer
-DEFAULT_PROGRESSION_EXPONENT = 1               -- float
-DEFAULT_POLYNOMIAL_COEFFICIENTS = { -4, 4, 0 } -- integer[3]
-DEFAULT_COLOR_LIST = '1 8 4 16 2 12 3 6'       -- integer[any]
+DEFAULT_MSX_LIST = '69 420 727 1337'              -- integer[any]
+DEFAULT_DELAY = 1                                 -- integer
+DEFAULT_OFFSET = 0                                -- integer
+DEFAULT_SPACING = 1.1                             -- float
+DEFAULT_MSX_BOUNDS = { 0, 400 }                   -- integer[2]
+DEFAULT_DISTANCE = { 15, 15 }                     -- integer[2]
+DEFAULT_LINE_COUNT = 10                           -- integer
+DEFAULT_FPS = 90                                  -- float
+DEFAULT_CENTER = 200                              -- integer
+DEFAULT_MAX_SPREAD = 200                          -- integer
+DEFAULT_PROGRESSION_EXPONENT = 1                  -- float
+DEFAULT_POLYNOMIAL_COEFFICIENTS = { 0, -4, 4, 0 } -- integer[4]
+DEFAULT_COLOR_LIST = '1 8 4 16 2 12 3 6'          -- integer[any]
 
-INCREMENT = 64                                 -- integer
-MAX_ITERATIONS = 1000                          -- integer
-FRAME_SIZE = 500                               -- integer
+INCREMENT = 64                                    -- integer
+MAX_ITERATIONS = 1000                             -- integer
+FRAME_SIZE = 500                                  -- integer
 
 -- END DEFAULT SETTINGS (DONT DELETE THIS LINE)
 
@@ -442,11 +442,11 @@ function SpectrumMenu()
         local frameLengths = {}
 
         while ((currentTime + (2 / INCREMENT)) <= offsets.endOffset) and (iterations < MAX_ITERATIONS) do
-            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset) ^
-                settings.progressionExponent
+            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset,
+                settings.progressionExponent)
 
             local heightDifferential = settings.maxSpread *
-                (settings.polynomialCoefficients[1] * progress ^ 2 + settings.polynomialCoefficients[2] * progress + settings.polynomialCoefficients[3])
+                evaluateCoefficients(settings.polynomialCoefficients, progress)
 
             local tbl = placeSpectrumFrame(currentTime, settings.center, settings.maxSpread, settings.distance,
                 settings.spacing, heightDifferential, settings.inverse)
@@ -530,8 +530,8 @@ function BasicManualAnimationMenu()
         local frameLengths = {}
 
         while (currentTime < offsets.endOffset) and (iterations < MAX_ITERATIONS) do
-            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset) ^
-                settings.progressionExponent
+            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset,
+                settings.progressionExponent)
 
             local msxTable = {}
 
@@ -664,8 +664,8 @@ function GlitchMenu()
         local frameLengths = {}
 
         while (currentTime <= offsets.endOffset) do
-            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset) ^
-                settings.progressionExponent
+            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset,
+                settings.progressionExponent)
 
             local lowerBound = mapProgress(settings.msxBounds1[1], progress, settings.msxBounds2[1])
             local upperBound = mapProgress(settings.msxBounds1[2], progress, settings.msxBounds2[2])
@@ -721,8 +721,8 @@ function ExpansionContractionMenu()
         local frameLengths = {}
 
         while (currentTime <= offsets.endOffset) and (iterations < MAX_ITERATIONS) do
-            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset) ^
-                settings.progressionExponent
+            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset,
+                settings.progressionExponent)
 
             local distance = mapProgress(settings.distance[1], progress, settings.distance[2])
 
@@ -779,11 +779,10 @@ function StaticBoundaryMenu()
         local frameLengths = {}
 
         while ((currentTime + (2 / INCREMENT)) <= offsets.endOffset) and (iterations < MAX_ITERATIONS) do
-            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset) ^
-                settings.progressionExponent
+            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset,
+                settings.progressionExponent)
 
-            local boundary = settings.msxBounds[2] *
-                (settings.polynomialCoefficients[1] * progress ^ 2 + settings.polynomialCoefficients[2] * progress + settings.polynomialCoefficients[3])
+            local boundary = settings.msxBounds[2] * evaluateCoefficients(settings.polynomialCoefficients, progress)
 
             local tbl = placeStaticFrame(currentTime, settings.msxBounds[1], settings.msxBounds[2], settings.distance,
                 settings.spacing, boundary, settings.evalUnder)
@@ -860,13 +859,15 @@ function DynamicBoundaryMenu()
         local frameLengths = {}
 
         while ((currentTime + (2 / INCREMENT)) <= offsets.endOffset) and (iterations < MAX_ITERATIONS) do
-            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset) ^
-                settings.progressionExponent
+            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset,
+                settings.progressionExponent)
 
-            local polynomialHeight = (settings.polynomialCoefficients[1] * progress ^ 2 + settings.polynomialCoefficients[2] * progress + settings.polynomialCoefficients[3])
+            local polynomialHeight = evaluateCoefficients(settings.polynomialCoefficients, progress)
 
             local tbl = placeDynamicFrame(currentTime, settings.msxBounds[1], settings.msxBounds[2], settings.distance,
                 settings.spacing, polynomialHeight, settings.evalOver)
+
+            imgui.Text("hi")
 
             if (tbl.time > offsets.endOffset) then break end
 
@@ -1169,7 +1170,7 @@ end
 function getMapState(default)
     default = default or {}
     if (not map.Bookmarks[1]) then return default end
-    if (not string.find(map.Bookmarks[1].note, "DATA: ")) then return default end
+    if (not string.find(map.Bookmarks[1].note, "DATA: ") or not map.Bookmarks[1].StartTime == -69420) then return default end
 
     local str = map.Bookmarks[1].note:sub(7, map.Bookmarks[1].note:len())
 
@@ -1256,9 +1257,63 @@ end
 ---@param starting number
 ---@param value number
 ---@param ending number
+---@param progressionExponent? number
 ---@return number
-function getProgress(starting, value, ending)
-    return (value - starting) / (ending - starting)
+function getProgress(starting, value, ending, progressionExponent)
+    local progressionExponent = progressionExponent or 1
+    local baseProgress = (value - starting) / (ending - starting)
+    if (progressionExponent >= 1) then
+        return baseProgress ^ progressionExponent
+    else
+        return 1 - (1 - baseProgress) ^ (1 / progressionExponent)
+    end
+end
+
+---Takes a table of coefficients, and returns a string representing the equation.
+---@param coefficients number[]
+---@param power number
+---@return string
+function polynomialString(coefficients, power)
+    local str = 'Equation: y = '
+    local degree = #coefficients - 1
+    for idx, coefficient in pairs(coefficients) do
+        if (coefficient == 0) then goto continue end
+        effectiveDegree = (degree - idx + 1) * power
+        sign = "+"
+        if (coefficient < 0) then sign = "-" end
+        if (idx == 1) then
+            if (coefficient < 0) then signText = "-" else signText = "" end
+        else
+            signText = " " .. sign .. " "
+        end
+        coefficientText = math.abs(coefficient)
+        if (coefficientText == 1) then coefficientText = "" end
+        if (effectiveDegree == 0) then
+            str = str .. signText .. coefficientText
+        elseif (effectiveDegree == 1) then
+            str = str .. signText .. coefficientText .. "t"
+        else
+            str = str .. signText .. coefficientText .. "t^" .. effectiveDegree
+        end
+        ::continue::
+    end
+
+    return str
+end
+
+---Takes a table of coefficients, and returns a number corresponding to a y-value of a polynomial.
+---@param coefficients number[]
+---@param xVal number
+---@return number
+function evaluateCoefficients(coefficients, xVal)
+    local sum = 0
+    local degree = #coefficients - 1
+
+    for idx, coefficient in pairs(coefficients) do
+        sum = sum + (xVal) ^ (degree - idx + 1) * coefficient
+    end
+    
+    return sum
 end
 
 ---Saves parameters for a certain menu.
@@ -1359,7 +1414,7 @@ INPUT_DICTIONARY = {
             "Maximum FPS of the animation. Note that if there are too many timing lines, the animation (not game) FPS will go down.")
     end,
     polynomialCoefficients = function (v)
-        return InputFloat3Wrapper("Coefficients", v,
+        return InputFloat4Wrapper("Coefficients", v,
             "The boundary follows a curve, described by these coefficients. You can see what the boundary height vs. time graph looks like on the plot.")
     end,
     colorList = function (v)
@@ -1724,32 +1779,15 @@ function Plot(polynomialCoefficients, progressionExponent, title)
     local RESOLUTION = 50
     local tbl = {}
     for i = 0, RESOLUTION do
-        local progress = (i / RESOLUTION) ^ (progressionExponent)
+        local progress = getProgress(0, i, RESOLUTION, progressionExponent)
 
         table.insert(tbl,
-            (polynomialCoefficients[1] * progress ^ 2 + polynomialCoefficients[2] * progress + polynomialCoefficients[3]))
-    end
-
-    local sign1 = "+"
-    local sign2 = "+"
-
-    if (polynomialCoefficients[2] < 0) then
-        sign1 = "-"
-    end
-
-    if (polynomialCoefficients[3] < 0) then
-        sign2 = "-"
+            evaluateCoefficients(polynomialCoefficients, progress))
     end
 
     imgui.PlotLines("", tbl, #tbl, 0,
-        'Equation: y = ' ..
-        polynomialCoefficients[1] ..
-        't^' ..
-        string.sub(2 * progressionExponent, 1, 4) ..
-        ' ' .. sign1 .. ' ' ..
-        polynomialCoefficients[2] ..
-        't^' .. string.sub(progressionExponent, 1, 4) .. ' ' .. sign2 .. ' ' .. polynomialCoefficients[3], 0,
-        1,
+        polynomialString(polynomialCoefficients, progressionExponent),
+        0, 1,
         { 250, 150 })
 
     imgui.End()
@@ -1805,13 +1843,13 @@ function InputInt2Wrapper(label, v, tooltip)
     return v
 end
 
----Creates an `InputFloat3` element.
+---Creates an `InputFloat4` element.
 ---@param label string
 ---@param v number[]
 ---@param tooltip string
 ---@return number[]
-function InputFloat3Wrapper(label, v, tooltip)
-    _, v = imgui.InputFloat3(label, v, "%.2f")
+function InputFloat4Wrapper(label, v, tooltip)
+    _, v = imgui.InputFloat4(label, v, "%.2f")
     Tooltip(tooltip)
     ---@cast v number[]
     return v

@@ -26,8 +26,7 @@ function StaticBoundaryMenu()
             local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset,
                 settings.progressionExponent)
 
-
-            local boundary = evaluateCoefficients(settings.polynomialCoefficients, progress)
+            local boundary = settings.msxBounds[2] * evaluateCoefficients(settings.polynomialCoefficients, progress)
 
             local tbl = placeStaticFrame(currentTime, settings.msxBounds[1], settings.msxBounds[2], settings.distance,
                 settings.spacing, boundary, settings.evalUnder)
