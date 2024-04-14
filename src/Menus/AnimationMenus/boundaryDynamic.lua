@@ -7,7 +7,7 @@ function DynamicBoundaryMenu()
             value = true
         })
 
-    retrieveParameters("animation_polynomial", parameterTable)
+    retrieveParameters("animation_dynamic_polynomial", parameterTable)
 
     parameterInputs(parameterTable)
     local settings = parametersToSettings(parameterTable)
@@ -55,7 +55,7 @@ function DynamicBoundaryMenu()
     end
     Plot(settings.polynomialCoefficients, settings.progressionExponent)
 
-    saveParameters("animation_polynomial", parameterTable)
+    saveParameters("animation_dynamic_polynomial", parameterTable)
 end
 
 function placeDynamicFrame(startTime, min, max, lineDistance, spacing, polynomialHeight, evalOver)

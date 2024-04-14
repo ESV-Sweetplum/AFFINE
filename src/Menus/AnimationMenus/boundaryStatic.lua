@@ -7,7 +7,7 @@ function StaticBoundaryMenu()
             value = true
         })
 
-    retrieveParameters("animation_polynomial", parameterTable)
+    retrieveParameters("animation_static_polynomial", parameterTable)
 
     parameterInputs(parameterTable)
     local settings = parametersToSettings(parameterTable)
@@ -56,7 +56,7 @@ function StaticBoundaryMenu()
 
     Plot(settings.polynomialCoefficients, settings.progressionExponent)
 
-    saveParameters("animation_polynomial", parameterTable)
+    saveParameters("animation_static_polynomial", parameterTable)
 end
 
 function placeStaticFrame(startTime, min, max, lineDistance, spacing, boundary, evalUnder)
