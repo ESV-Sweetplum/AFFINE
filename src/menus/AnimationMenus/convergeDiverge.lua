@@ -11,6 +11,19 @@ function ConvergeDivergeMenu()
             label = "Render Above?",
             value = true,
             sameLine = true
+        }
+        , {
+            inputType = "Checkbox",
+            key = "prefill",
+            label = "Pre-Filled?",
+            value = false,
+        }
+        , {
+            inputType = "Checkbox",
+            key = "terminateEarly",
+            label = "Terminate Life Cycle?",
+            value = false,
+            sameLine = true
         })
 
     retrieveParameters("animation_convergeDiverge", parameterTable)
@@ -31,13 +44,21 @@ function ConvergeDivergeMenu()
         local timeToGenerateClone = settings.lineDuration / settings.lineCount
         local lastClonedProgress = -1 * timeToGenerateClone
 
+        if (settings.prefill) then
+            for i = 1, settings.lineCount do
+                table.insert(lineProgressionTable, -1 * i * timeToGenerateClone)
+            end
+        end
+
         while ((currentTime + (2 / INCREMENT)) <= offsets.endOffset) and (iterations < MAX_ITERATIONS) do
             local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset,
                 settings.progressionExponent)
 
-            if progress - lastClonedProgress > timeToGenerateClone then
-                lastClonedProgress = lastClonedProgress + timeToGenerateClone
-                table.insert(lineProgressionTable, progress)
+            if (not settings.terminateEarly) or (progress < 1 - timeToGenerateClone) then
+                if (progress - lastClonedProgress > timeToGenerateClone) then
+                    lastClonedProgress = lastClonedProgress + timeToGenerateClone
+                    table.insert(lineProgressionTable, progress)
+                end
             end
 
             local msxTable = {}
