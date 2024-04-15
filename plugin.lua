@@ -766,7 +766,18 @@ end
 
 function ConvergeDivergeMenu()
     local parameterTable = constructParameters("center", "maxSpread", "lineCount", "lineDuration", "progressionExponent",
-        "spacing", "pathCoefficients")
+        "spacing", "pathCoefficients", {
+            inputType = "Checkbox",
+            key = "renderBelow",
+            label = "Render Below?",
+            value = true,
+        }, {
+            inputType = "Checkbox",
+            key = "renderAbove",
+            label = "Render Above?",
+            value = true,
+            sameLine = true
+        })
 
     retrieveParameters("animation_convergeDiverge", parameterTable)
 
@@ -782,9 +793,53 @@ function ConvergeDivergeMenu()
         local lines = {}
         local svs = {}
         local frameLengths = {}
+        local lineProgressionTable = {}
+        local timeToGenerateClone = settings.lineDuration / settings.lineCount
+        local lastClonedProgress = -1 * timeToGenerateClone
 
         while ((currentTime + (2 / INCREMENT)) <= offsets.endOffset) and (iterations < MAX_ITERATIONS) do
-            -- do something
+            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset,
+                settings.progressionExponent)
+
+            if progress - lastClonedProgress > timeToGenerateClone then
+                lastClonedProgress = lastClonedProgress + timeToGenerateClone
+                table.insert(lineProgressionTable, progress)
+            end
+
+            local msxTable = {}
+            for idx, v in pairs(lineProgressionTable) do
+                local lineProgression = progress - v
+                if (lineProgression > settings.lineDuration) then
+                    table.remove(lineProgressionTable, idx)
+                else
+                    local lineProgress = lineProgression / settings.lineDuration
+                    local height = evaluateCoefficients(settings.pathCoefficients, lineProgress)
+                    if (settings.renderAbove) then
+                        table.insert(msxTable, mapProgress(settings.center, height, settings.center + settings.maxSpread))
+                    end
+                    if (settings.renderBelow) then
+                        table.insert(msxTable, mapProgress(settings.center, height, settings.center - settings.maxSpread))
+                    end
+                end
+            end
+
+            local tbl = tableToLines(msxTable, currentTime, 0, settings.spacing)
+
+            if (tbl.time > offsets.endOffset) then break end
+
+            timeDiff = tbl.time - currentTime
+
+            table.insert(frameLengths, timeDiff)
+
+            currentTime = currentTime + timeDiff
+
+            lines = combineTables(lines, tbl.lines)
+            svs = combineTables(svs, tbl.svs)
+
+            insertTeleport(svs, currentTime + 1 / INCREMENT, FRAME_SIZE)
+
+            currentTime = currentTime + 2
+
             iterations = iterations + 1
         end
 
@@ -794,7 +849,7 @@ function ConvergeDivergeMenu()
             constructDebugTable(lines, svs, stats))
         parameterTable[#parameterTable].value = "Line Count: " .. #lines .. " // SV Count: " .. #svs
     end
-    Plot(settings.pathCoefficients, settings.progressionExponent)
+    Plot(settings.pathCoefficients, settings.progressionExponent, "Line Path Over Duration of Life Cycle")
 
     saveParameters("animation_convergeDiverge", parameterTable)
 end
