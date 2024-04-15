@@ -10,8 +10,10 @@ DEFAULT_DICTIONARY = {
     delay = DEFAULT_DELAY,
     distance = DEFAULT_DISTANCE,
     lineCount = DEFAULT_LINE_COUNT,
+    lineDuration = DEFAULT_LINE_DURATION,
     progressionExponent = DEFAULT_PROGRESSION_EXPONENT,
-    polynomialCoefficients = DEFAULT_POLYNOMIAL_COEFFICIENTS,
+    boundCoefficients = DEFAULT_BOUND_COEFFICIENTS,
+    pathCoefficients = DEFAULT_PATH_COEFFICIENTS,
     fps = DEFAULT_FPS,
     center = DEFAULT_CENTER,
     maxSpread = DEFAULT_MAX_SPREAD,
@@ -48,4 +50,3 @@ function constructParameters(...)
 
     return parameterTable
 end
-

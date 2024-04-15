@@ -3,6 +3,8 @@
 ---@param power number
 ---@return string
 function polynomialString(coefficients, power)
+    local explanatoryVariable = "t"
+
     local str = 'Equation: y = '
     local degree = #coefficients - 1
     for idx, coefficient in pairs(coefficients) do
@@ -16,13 +18,13 @@ function polynomialString(coefficients, power)
             signText = " " .. sign .. " "
         end
         coefficientText = math.abs(coefficient)
-        if (coefficientText == 1) then coefficientText = "" end
+        if (coefficientText == 1 and effectiveDegree ~= 0) then coefficientText = "" end
         if (effectiveDegree == 0) then
             str = str .. signText .. coefficientText
         elseif (effectiveDegree == 1) then
-            str = str .. signText .. coefficientText .. "t"
+            str = str .. signText .. coefficientText .. explanatoryVariable
         else
-            str = str .. signText .. coefficientText .. "t^" .. effectiveDegree
+            str = str .. signText .. coefficientText .. explanatoryVariable .. "^" .. effectiveDegree
         end
         ::continue::
     end

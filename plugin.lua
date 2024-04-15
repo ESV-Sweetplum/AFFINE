@@ -1,23 +1,25 @@
 ---@diagnostic disable: duplicate-set-field
-DEFAULT_MENU_ID = 1                               -- integer
+DEFAULT_MENU_ID = 1                          -- integer
 
-DEFAULT_MSX_LIST = '69 420 727 1337'              -- integer[any]
-DEFAULT_DELAY = 1                                 -- integer
-DEFAULT_OFFSET = 0                                -- integer
-DEFAULT_SPACING = 1.1                             -- float
-DEFAULT_MSX_BOUNDS = { 0, 400 }                   -- integer[2]
-DEFAULT_DISTANCE = { 15, 15 }                     -- integer[2]
-DEFAULT_LINE_COUNT = 10                           -- integer
-DEFAULT_FPS = 90                                  -- float
-DEFAULT_CENTER = 200                              -- integer
-DEFAULT_MAX_SPREAD = 200                          -- integer
-DEFAULT_PROGRESSION_EXPONENT = 1                  -- float
-DEFAULT_POLYNOMIAL_COEFFICIENTS = { 0, -4, 4, 0 } -- integer[4]
-DEFAULT_COLOR_LIST = '1 8 4 16 2 12 3 6'          -- integer[any]
+DEFAULT_MSX_LIST = '69 420 727 1337'         -- integer[any]
+DEFAULT_DELAY = 1                            -- integer
+DEFAULT_OFFSET = 0                           -- integer
+DEFAULT_SPACING = 1.1                        -- float
+DEFAULT_MSX_BOUNDS = { 0, 400 }              -- integer[2]
+DEFAULT_DISTANCE = { 15, 15 }                -- integer[2]
+DEFAULT_LINE_COUNT = 10                      -- integer
+DEFAULT_LINE_DURATION = 0.5                  -- integer
+DEFAULT_FPS = 90                             -- float
+DEFAULT_CENTER = 200                         -- integer
+DEFAULT_MAX_SPREAD = 200                     -- integer
+DEFAULT_PROGRESSION_EXPONENT = 1             -- float
+DEFAULT_BOUND_COEFFICIENTS = { 0, -4, 4, 0 } -- integer[4]
+DEFAULT_PATH_COEFFICIENTS = { -1, 3, -3, 1 } -- integer[4]
+DEFAULT_COLOR_LIST = '1 8 4 16 2 12 3 6'     -- integer[any]
 
-INCREMENT = 64                                    -- integer
-MAX_ITERATIONS = 1000                             -- integer
-FRAME_SIZE = 500                                  -- integer
+INCREMENT = 64                               -- integer
+MAX_ITERATIONS = 1000                        -- integer
+FRAME_SIZE = 500                             -- integer
 
 -- END DEFAULT SETTINGS (DONT DELETE THIS LINE)
 
@@ -28,7 +30,8 @@ ANIMATION_MENU_LIST = {
     'Boundary (Dynamic)',
     'Glitch',
     'Spectrum',
-    'Expansion / Contraction'
+    'Expansion / Contraction',
+    'Converge / Diverge'
 }
 
 CREATE_TAB_LIST = {
@@ -143,10 +146,10 @@ function AutomaticDeleteTab()
 
             local linesToRemove = {}
             local svsToRemove = {}
-            local bookmarksToRemove = {
-                findBookmark(tbl.lower, tbl.lower, tbl.upper),
-                findBookmark(tbl.upper, tbl.lower, tbl.upper),
-            }
+            -- local bookmarksToRemove = {
+            --     findBookmark(tbl.lower, tbl.lower - 1, tbl.upper),
+            --     findBookmark(tbl.upper, tbl.lower, tbl.upper + 1),
+            -- }
 
             for _, v in pairs(tbl.lineOffsets) do
                 local timingPoint = map.GetTimingPointAt(v)
@@ -167,9 +170,14 @@ function AutomaticDeleteTab()
             actions.PerformBatch({
                 utils.CreateEditorAction(action_type.RemoveTimingPointBatch, linesToRemove),
                 utils.CreateEditorAction(action_type.RemoveScrollVelocityBatch, svsToRemove),
-                utils.CreateEditorAction(action_type.RemoveBookmarkBatch, bookmarksToRemove)
+                -- utils.CreateEditorAction(action_type.RemoveBookmarkBatch, bookmarksToRemove)
             })
 
+            table.remove(globalData, selectedID)
+            saveMapState(globalData)
+        end
+
+        if (imgui.Button("Delete faulty entry")) then
             table.remove(globalData, selectedID)
             saveMapState(globalData)
         end
@@ -419,7 +427,7 @@ end
 
 function SpectrumMenu()
     local parameterTable = constructParameters("center", "maxSpread", "distance", "progressionExponent", "spacing",
-        "polynomialCoefficients", {
+        "boundCoefficients", {
             inputType = "Checkbox",
             key = "inverse",
             label = "Inverse?",
@@ -446,7 +454,7 @@ function SpectrumMenu()
                 settings.progressionExponent)
 
             local heightDifferential = settings.maxSpread *
-                evaluateCoefficients(settings.polynomialCoefficients, progress)
+                evaluateCoefficients(settings.boundCoefficients, progress)
 
             local tbl = placeSpectrumFrame(currentTime, settings.center, settings.maxSpread, settings.distance,
                 settings.spacing, heightDifferential, settings.inverse)
@@ -473,7 +481,7 @@ function SpectrumMenu()
             constructDebugTable(lines, svs, stats))
         parameterTable[#parameterTable].value = "Line Count: " .. #lines .. " // SV Count: " .. #svs
     end
-    Plot(settings.polynomialCoefficients, settings.progressionExponent)
+    Plot(settings.boundCoefficients, settings.progressionExponent)
 
     saveParameters("animation_spectrum", parameterTable)
 end
@@ -555,6 +563,7 @@ function BasicManualAnimationMenu()
             insertTeleport(svs, currentTime + 1 / INCREMENT, FRAME_SIZE)
 
             currentTime = currentTime + 2
+            iterations = iterations + 1
         end
 
         local stats = getStatisticsFromTable(frameLengths)
@@ -755,16 +764,51 @@ function ExpansionContractionMenu()
     saveParameters("animation_expansion_contraction", parameterTable)
 end
 
+function ConvergeDivergeMenu()
+    local parameterTable = constructParameters("center", "maxSpread", "lineCount", "lineDuration", "progressionExponent",
+        "spacing", "pathCoefficients")
+
+    retrieveParameters("animation_convergeDiverge", parameterTable)
+
+    parameterInputs(parameterTable)
+
+    local settings = parametersToSettings(parameterTable)
+    local offsets = getStartAndEndNoteOffsets()
+
+    if RangeActivated(offsets) then
+        local currentTime = offsets.startOffset + 1
+
+        local iterations = 0
+        local lines = {}
+        local svs = {}
+        local frameLengths = {}
+
+        while ((currentTime + (2 / INCREMENT)) <= offsets.endOffset) and (iterations < MAX_ITERATIONS) do
+            -- do something
+            iterations = iterations + 1
+        end
+
+        local stats = getStatisticsFromTable(frameLengths)
+
+        generateAffines(lines, svs, offsets.startOffset, offsets.endOffset, "Converge/Diverge",
+            constructDebugTable(lines, svs, stats))
+        parameterTable[#parameterTable].value = "Line Count: " .. #lines .. " // SV Count: " .. #svs
+    end
+    Plot(settings.pathCoefficients, settings.progressionExponent)
+
+    saveParameters("animation_convergeDiverge", parameterTable)
+end
+
 function StaticBoundaryMenu()
     local parameterTable = constructParameters("msxBounds", "distance", "progressionExponent", "spacing",
-        "polynomialCoefficients", {
+        "boundCoefficients", {
             inputType = "RadioBoolean",
             key = "evalUnder",
             label = { "Render Over Boundary", "Render Under Boundary" },
             value = true
         })
 
-    retrieveParameters("animation_polynomial", parameterTable)
+    retrieveParameters("animation_static_polynomial", parameterTable)
 
     parameterInputs(parameterTable)
     local settings = parametersToSettings(parameterTable)
@@ -782,7 +826,7 @@ function StaticBoundaryMenu()
             local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset,
                 settings.progressionExponent)
 
-            local boundary = settings.msxBounds[2] * evaluateCoefficients(settings.polynomialCoefficients, progress)
+            local boundary = settings.msxBounds[2] * evaluateCoefficients(settings.boundCoefficients, progress)
 
             local tbl = placeStaticFrame(currentTime, settings.msxBounds[1], settings.msxBounds[2], settings.distance,
                 settings.spacing, boundary, settings.evalUnder)
@@ -810,9 +854,9 @@ function StaticBoundaryMenu()
         parameterTable[#parameterTable].value = "Line Count: " .. #lines .. " // SV Count: " .. #svs
     end
 
-    Plot(settings.polynomialCoefficients, settings.progressionExponent)
+    Plot(settings.boundCoefficients, settings.progressionExponent)
 
-    saveParameters("animation_polynomial", parameterTable)
+    saveParameters("animation_static_polynomial", parameterTable)
 end
 
 function placeStaticFrame(startTime, min, max, lineDistance, spacing, boundary, evalUnder)
@@ -836,14 +880,14 @@ end
 
 function DynamicBoundaryMenu()
     local parameterTable = constructParameters("msxBounds", 'distance', "progressionExponent", "spacing",
-        "polynomialCoefficients", {
+        "boundCoefficients", {
             inputType = "RadioBoolean",
             key = "evalOver",
             label = { "Change Bottom Bound", "Change Top Bound" },
             value = true
         })
 
-    retrieveParameters("animation_polynomial", parameterTable)
+    retrieveParameters("animation_dynamic_polynomial", parameterTable)
 
     parameterInputs(parameterTable)
     local settings = parametersToSettings(parameterTable)
@@ -862,12 +906,10 @@ function DynamicBoundaryMenu()
             local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset,
                 settings.progressionExponent)
 
-            local polynomialHeight = evaluateCoefficients(settings.polynomialCoefficients, progress)
+            local polynomialHeight = evaluateCoefficients(settings.boundCoefficients, progress)
 
             local tbl = placeDynamicFrame(currentTime, settings.msxBounds[1], settings.msxBounds[2], settings.distance,
                 settings.spacing, polynomialHeight, settings.evalOver)
-
-            imgui.Text("hi")
 
             if (tbl.time > offsets.endOffset) then break end
 
@@ -891,9 +933,9 @@ function DynamicBoundaryMenu()
             constructDebugTable(lines, svs, stats))
         parameterTable[#parameterTable].value = "Line Count: " .. #lines .. " // SV Count: " .. #svs
     end
-    Plot(settings.polynomialCoefficients, settings.progressionExponent)
+    Plot(settings.boundCoefficients, settings.progressionExponent)
 
-    saveParameters("animation_polynomial", parameterTable)
+    saveParameters("animation_dynamic_polynomial", parameterTable)
 end
 
 function placeDynamicFrame(startTime, min, max, lineDistance, spacing, polynomialHeight, evalOver)
@@ -1274,6 +1316,8 @@ end
 ---@param power number
 ---@return string
 function polynomialString(coefficients, power)
+    local explanatoryVariable = "t"
+
     local str = 'Equation: y = '
     local degree = #coefficients - 1
     for idx, coefficient in pairs(coefficients) do
@@ -1287,13 +1331,13 @@ function polynomialString(coefficients, power)
             signText = " " .. sign .. " "
         end
         coefficientText = math.abs(coefficient)
-        if (coefficientText == 1) then coefficientText = "" end
+        if (coefficientText == 1 and effectiveDegree ~= 0) then coefficientText = "" end
         if (effectiveDegree == 0) then
             str = str .. signText .. coefficientText
         elseif (effectiveDegree == 1) then
-            str = str .. signText .. coefficientText .. "t"
+            str = str .. signText .. coefficientText .. explanatoryVariable
         else
-            str = str .. signText .. coefficientText .. "t^" .. effectiveDegree
+            str = str .. signText .. coefficientText .. explanatoryVariable .. "^" .. effectiveDegree
         end
         ::continue::
     end
@@ -1404,7 +1448,14 @@ INPUT_DICTIONARY = {
         return InputInt2Wrapper('Distance Between Lines', v,
             "Represents the distance between two adjacent timing lines, measured in MSX. If in Expansion/Contraction, the two numbers represent the start and end distance of the animation. If not in Expansion/Contraction, the two numbers represent the start and end distance of the frame.")
     end,
-    lineCount = function (v) return InputIntWrapper("Line Count", v, "The number of timing lines to place on one frame.") end,
+    lineCount = function (v)
+        return InputIntWrapper("Line Count", v,
+            "The number of timing lines to display simultaneously.")
+    end,
+    lineDuration = function (v)
+        return InputFloatWrapper("Line Duration", v,
+            "Each line created possesses a cloned lifecycle. The value of this parameter is equal to the percentage of the animation in which the lifecycle occurs.")
+    end,
     progressionExponent = function (v)
         return InputFloatWrapper("Progression Exponent", v,
             "Adjust this to change how the animation progresses over time. The higher the number, the slower the animation takes to start, but it ramps up much faster. If you aren't familiar with exponential graphs, keep this at 1.")
@@ -1413,13 +1464,17 @@ INPUT_DICTIONARY = {
         return InputFloatWrapper("Animation FPS", v,
             "Maximum FPS of the animation. Note that if there are too many timing lines, the animation (not game) FPS will go down.")
     end,
-    polynomialCoefficients = function (v)
-        return InputFloat4Wrapper("Coefficients", v,
+    boundCoefficients = function (v)
+        return InputFloat4Wrapper("Bound Coefficients", v,
             "The boundary follows a curve, described by these coefficients. You can see what the boundary height vs. time graph looks like on the plot.")
+    end,
+    pathCoefficients = function (v)
+        return InputFloat4Wrapper("Path Coefficients", v,
+            "Lines generated follow this temporal curve before disappearing. You can see what the height vs. time graph looks like on the plot.")
     end,
     colorList = function (v)
         return InputTextWrapper("Snap Color List", v,
-            "These numbers are the denominator of the snaps. Here are the corresponding values:\n1 = Red\n2 = Blue\n3 = Purple\n4 = Yellow\n6 = Pink\n8 = Orange\n12 = Pink\n16 = Green")
+            "These numbers are the denominator of the snaps. Here are the corresponding values:\n1 = Red\n2 = Blue\n3 = Purple\n4 = Yellow\n5 = White\n6 = Pink\n8 = Orange\n12 = Pink\n16 = Green")
     end
 }
 
@@ -1455,8 +1510,10 @@ DEFAULT_DICTIONARY = {
     delay = DEFAULT_DELAY,
     distance = DEFAULT_DISTANCE,
     lineCount = DEFAULT_LINE_COUNT,
+    lineDuration = DEFAULT_LINE_DURATION,
     progressionExponent = DEFAULT_PROGRESSION_EXPONENT,
-    polynomialCoefficients = DEFAULT_POLYNOMIAL_COEFFICIENTS,
+    boundCoefficients = DEFAULT_BOUND_COEFFICIENTS,
+    pathCoefficients = DEFAULT_PATH_COEFFICIENTS,
     fps = DEFAULT_FPS,
     center = DEFAULT_CENTER,
     maxSpread = DEFAULT_MAX_SPREAD,
@@ -1709,21 +1766,26 @@ function generateAffines(lines, svs, lower, upper, affineType, debugData)
     })
 end
 
+---Finds closest bookmark with StartTime less than time.
+---@param time number
+---@param lower number
+---@param upper number
+---@return BookmarkInfo
 function findBookmark(time, lower, upper)
     local lower = lower or 0
     local upper = upper or 1e69
     local bookmarks = map.Bookmarks
 
-    if (#bookmarks == 0) then return end
+    if (#bookmarks == 0) then return {} end
     if (#bookmarks == 1) then return bookmarks[1] end
 
     for i = 1, #bookmarks do
         if bookmarks[i].StartTime > time then
-            if (bookmarks[i].StartTime < lower or bookmarks[i].StartTime > upper) then return end
+            if (bookmarks[i].StartTime < lower or bookmarks[i].StartTime > upper) then return {} end
             return bookmarks[i - 1]
         end
     end
-    if (bookmarks[#bookmarks].StartTime < lower or bookmarks[#bookmarks].StartTime > upper) then return end
+    if (bookmarks[#bookmarks].StartTime < lower or bookmarks[#bookmarks].StartTime > upper) then return {} end
     return bookmarks[#bookmarks]
 end
 
@@ -2120,7 +2182,8 @@ ANIMATION_MENU_FUNCTIONS = {
     DynamicBoundaryMenu,
     GlitchMenu,
     SpectrumMenu,
-    ExpansionContractionMenu
+    ExpansionContractionMenu,
+    ConvergeDivergeMenu
 }
 
 CREATE_TAB_FUNCTIONS = {

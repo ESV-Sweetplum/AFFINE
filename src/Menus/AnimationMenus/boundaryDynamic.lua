@@ -1,6 +1,6 @@
 function DynamicBoundaryMenu()
     local parameterTable = constructParameters("msxBounds", 'distance', "progressionExponent", "spacing",
-        "polynomialCoefficients", {
+        "boundCoefficients", {
             inputType = "RadioBoolean",
             key = "evalOver",
             label = { "Change Bottom Bound", "Change Top Bound" },
@@ -26,7 +26,7 @@ function DynamicBoundaryMenu()
             local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset,
                 settings.progressionExponent)
 
-            local polynomialHeight = evaluateCoefficients(settings.polynomialCoefficients, progress)
+            local polynomialHeight = evaluateCoefficients(settings.boundCoefficients, progress)
 
             local tbl = placeDynamicFrame(currentTime, settings.msxBounds[1], settings.msxBounds[2], settings.distance,
                 settings.spacing, polynomialHeight, settings.evalOver)
@@ -53,7 +53,7 @@ function DynamicBoundaryMenu()
             constructDebugTable(lines, svs, stats))
         parameterTable[#parameterTable].value = "Line Count: " .. #lines .. " // SV Count: " .. #svs
     end
-    Plot(settings.polynomialCoefficients, settings.progressionExponent)
+    Plot(settings.boundCoefficients, settings.progressionExponent)
 
     saveParameters("animation_dynamic_polynomial", parameterTable)
 end

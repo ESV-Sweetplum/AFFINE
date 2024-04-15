@@ -1,6 +1,6 @@
 function SpectrumMenu()
     local parameterTable = constructParameters("center", "maxSpread", "distance", "progressionExponent", "spacing",
-        "polynomialCoefficients", {
+        "boundCoefficients", {
             inputType = "Checkbox",
             key = "inverse",
             label = "Inverse?",
@@ -28,7 +28,7 @@ function SpectrumMenu()
 
 
             local heightDifferential = settings.maxSpread *
-                evaluateCoefficients(settings.polynomialCoefficients, progress)
+                evaluateCoefficients(settings.boundCoefficients, progress)
 
             local tbl = placeSpectrumFrame(currentTime, settings.center, settings.maxSpread, settings.distance,
                 settings.spacing, heightDifferential, settings.inverse)
@@ -55,7 +55,7 @@ function SpectrumMenu()
             constructDebugTable(lines, svs, stats))
         parameterTable[#parameterTable].value = "Line Count: " .. #lines .. " // SV Count: " .. #svs
     end
-    Plot(settings.polynomialCoefficients, settings.progressionExponent)
+    Plot(settings.boundCoefficients, settings.progressionExponent)
 
     saveParameters("animation_spectrum", parameterTable)
 end

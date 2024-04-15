@@ -43,6 +43,7 @@ function BasicManualAnimationMenu()
             insertTeleport(svs, currentTime + 1 / INCREMENT, FRAME_SIZE)
 
             currentTime = currentTime + 2
+            iterations = iterations + 1
         end
 
         local stats = getStatisticsFromTable(frameLengths)

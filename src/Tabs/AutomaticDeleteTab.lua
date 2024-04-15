@@ -21,10 +21,10 @@ function AutomaticDeleteTab()
 
             local linesToRemove = {}
             local svsToRemove = {}
-            local bookmarksToRemove = {
-                findBookmark(tbl.lower, tbl.lower, tbl.upper),
-                findBookmark(tbl.upper, tbl.lower, tbl.upper),
-            }
+            -- local bookmarksToRemove = {
+            --     findBookmark(tbl.lower, tbl.lower - 1, tbl.upper),
+            --     findBookmark(tbl.upper, tbl.lower, tbl.upper + 1),
+            -- }
 
             for _, v in pairs(tbl.lineOffsets) do
                 local timingPoint = map.GetTimingPointAt(v)
@@ -45,9 +45,14 @@ function AutomaticDeleteTab()
             actions.PerformBatch({
                 utils.CreateEditorAction(action_type.RemoveTimingPointBatch, linesToRemove),
                 utils.CreateEditorAction(action_type.RemoveScrollVelocityBatch, svsToRemove),
-                utils.CreateEditorAction(action_type.RemoveBookmarkBatch, bookmarksToRemove)
+                -- utils.CreateEditorAction(action_type.RemoveBookmarkBatch, bookmarksToRemove)
             })
 
+            table.remove(globalData, selectedID)
+            saveMapState(globalData)
+        end
+
+        if (imgui.Button("Delete faulty entry")) then
             table.remove(globalData, selectedID)
             saveMapState(globalData)
         end

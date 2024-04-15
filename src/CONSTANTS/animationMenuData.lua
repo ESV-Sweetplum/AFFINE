@@ -5,7 +5,8 @@ ANIMATION_MENU_LIST = {
     'Boundary (Dynamic)',
     'Glitch',
     'Spectrum',
-    'Expansion / Contraction'
+    'Expansion / Contraction',
+    'Converge / Diverge'
 }
 
 ANIMATION_MENU_FUNCTIONS = {
@@ -15,5 +16,6 @@ ANIMATION_MENU_FUNCTIONS = {
     DynamicBoundaryMenu,
     GlitchMenu,
     SpectrumMenu,
-    ExpansionContractionMenu
+    ExpansionContractionMenu,
+    ConvergeDivergeMenu
 }

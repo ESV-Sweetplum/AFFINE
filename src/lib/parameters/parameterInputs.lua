@@ -53,7 +53,14 @@ INPUT_DICTIONARY = {
         return InputInt2Wrapper('Distance Between Lines', v,
             "Represents the distance between two adjacent timing lines, measured in MSX. If in Expansion/Contraction, the two numbers represent the start and end distance of the animation. If not in Expansion/Contraction, the two numbers represent the start and end distance of the frame.")
     end,
-    lineCount = function (v) return InputIntWrapper("Line Count", v, "The number of timing lines to place on one frame.") end,
+    lineCount = function (v)
+        return InputIntWrapper("Line Count", v,
+            "The number of timing lines to display simultaneously.")
+    end,
+    lineDuration = function (v)
+        return InputFloatWrapper("Line Duration", v,
+            "Each line created possesses a cloned lifecycle. The value of this parameter is equal to the percentage of the animation in which the lifecycle occurs.")
+    end,
     progressionExponent = function (v)
         return InputFloatWrapper("Progression Exponent", v,
             "Adjust this to change how the animation progresses over time. The higher the number, the slower the animation takes to start, but it ramps up much faster. If you aren't familiar with exponential graphs, keep this at 1.")
@@ -62,13 +69,17 @@ INPUT_DICTIONARY = {
         return InputFloatWrapper("Animation FPS", v,
             "Maximum FPS of the animation. Note that if there are too many timing lines, the animation (not game) FPS will go down.")
     end,
-    polynomialCoefficients = function (v)
-        return InputFloat4Wrapper("Coefficients", v,
+    boundCoefficients = function (v)
+        return InputFloat4Wrapper("Bound Coefficients", v,
             "The boundary follows a curve, described by these coefficients. You can see what the boundary height vs. time graph looks like on the plot.")
+    end,
+    pathCoefficients = function (v)
+        return InputFloat4Wrapper("Path Coefficients", v,
+            "Lines generated follow this temporal curve before disappearing. You can see what the height vs. time graph looks like on the plot.")
     end,
     colorList = function (v)
         return InputTextWrapper("Snap Color List", v,
-            "These numbers are the denominator of the snaps. Here are the corresponding values:\n1 = Red\n2 = Blue\n3 = Purple\n4 = Yellow\n6 = Pink\n8 = Orange\n12 = Pink\n16 = Green")
+            "These numbers are the denominator of the snaps. Here are the corresponding values:\n1 = Red\n2 = Blue\n3 = Purple\n4 = Yellow\n5 = White\n6 = Pink\n8 = Orange\n12 = Pink\n16 = Green")
     end
 }
 

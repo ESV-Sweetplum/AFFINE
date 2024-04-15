@@ -1,6 +1,6 @@
 function StaticBoundaryMenu()
     local parameterTable = constructParameters("msxBounds", "distance", "progressionExponent", "spacing",
-        "polynomialCoefficients", {
+        "boundCoefficients", {
             inputType = "RadioBoolean",
             key = "evalUnder",
             label = { "Render Over Boundary", "Render Under Boundary" },
@@ -26,7 +26,7 @@ function StaticBoundaryMenu()
             local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset,
                 settings.progressionExponent)
 
-            local boundary = settings.msxBounds[2] * evaluateCoefficients(settings.polynomialCoefficients, progress)
+            local boundary = settings.msxBounds[2] * evaluateCoefficients(settings.boundCoefficients, progress)
 
             local tbl = placeStaticFrame(currentTime, settings.msxBounds[1], settings.msxBounds[2], settings.distance,
                 settings.spacing, boundary, settings.evalUnder)
@@ -54,7 +54,7 @@ function StaticBoundaryMenu()
         parameterTable[#parameterTable].value = "Line Count: " .. #lines .. " // SV Count: " .. #svs
     end
 
-    Plot(settings.polynomialCoefficients, settings.progressionExponent)
+    Plot(settings.boundCoefficients, settings.progressionExponent)
 
     saveParameters("animation_static_polynomial", parameterTable)
 end
