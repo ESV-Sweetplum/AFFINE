@@ -35,7 +35,7 @@ function SpectrumMenu()
 
             if (tbl.time > offsets.endOffset) then break end
 
-            table.insert(frameLengths, tbl.time - currentTime)
+            table.insert(frameLengths, tbl.time - currentTime + 2)
 
             currentTime = tbl.time
 

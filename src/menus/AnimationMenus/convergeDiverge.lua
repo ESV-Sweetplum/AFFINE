@@ -64,7 +64,7 @@ function ConvergeDivergeMenu()
 
             timeDiff = tbl.time - currentTime
 
-            table.insert(frameLengths, timeDiff)
+            table.insert(frameLengths, timeDiff + 2)
 
             currentTime = currentTime + timeDiff
 

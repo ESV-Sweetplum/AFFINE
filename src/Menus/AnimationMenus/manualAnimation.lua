@@ -33,7 +33,7 @@ function BasicManualAnimationMenu()
 
             timeDiff = math.max(1000 / settings.fps - 2, tbl.time - currentTime)
 
-            table.insert(frameLengths, timeDiff)
+            table.insert(frameLengths, timeDiff + 2)
 
             currentTime = currentTime + timeDiff
 
