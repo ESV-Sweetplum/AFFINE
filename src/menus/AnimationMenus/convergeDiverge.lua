@@ -28,8 +28,6 @@ function ConvergeDivergeMenu()
 
     retrieveParameters("animation_convergeDiverge", parameterTable)
 
-
-
     parameterInputs(parameterTable)
 
     local settings = parametersToSettings(parameterTable)
