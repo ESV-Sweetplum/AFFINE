@@ -461,7 +461,7 @@ function SpectrumMenu()
 
             if (tbl.time > offsets.endOffset) then break end
 
-            table.insert(frameLengths, tbl.time - currentTime)
+            table.insert(frameLengths, tbl.time - currentTime + 2)
 
             currentTime = tbl.time
 
@@ -553,7 +553,7 @@ function BasicManualAnimationMenu()
 
             timeDiff = math.max(1000 / settings.fps - 2, tbl.time - currentTime)
 
-            table.insert(frameLengths, timeDiff)
+            table.insert(frameLengths, timeDiff + 2)
 
             currentTime = currentTime + timeDiff
 
@@ -777,6 +777,19 @@ function ConvergeDivergeMenu()
             label = "Render Above?",
             value = true,
             sameLine = true
+        }
+        , {
+            inputType = "Checkbox",
+            key = "prefill",
+            label = "Pre-Filled?",
+            value = false,
+        }
+        , {
+            inputType = "Checkbox",
+            key = "terminateEarly",
+            label = "Terminate Life Cycle?",
+            value = false,
+            sameLine = true
         })
 
     retrieveParameters("animation_convergeDiverge", parameterTable)
@@ -797,13 +810,21 @@ function ConvergeDivergeMenu()
         local timeToGenerateClone = settings.lineDuration / settings.lineCount
         local lastClonedProgress = -1 * timeToGenerateClone
 
+        if (settings.prefill) then
+            for i = 1, settings.lineCount do
+                table.insert(lineProgressionTable, -1 * i * timeToGenerateClone)
+            end
+        end
+
         while ((currentTime + (2 / INCREMENT)) <= offsets.endOffset) and (iterations < MAX_ITERATIONS) do
             local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset,
                 settings.progressionExponent)
 
-            if progress - lastClonedProgress > timeToGenerateClone then
-                lastClonedProgress = lastClonedProgress + timeToGenerateClone
-                table.insert(lineProgressionTable, progress)
+            if (not settings.terminateEarly) or (progress < 1 - settings.lineDuration + timeToGenerateClone) then
+                if (progress - lastClonedProgress > timeToGenerateClone) then
+                    lastClonedProgress = lastClonedProgress + timeToGenerateClone
+                    table.insert(lineProgressionTable, progress)
+                end
             end
 
             local msxTable = {}
@@ -829,7 +850,7 @@ function ConvergeDivergeMenu()
 
             timeDiff = tbl.time - currentTime
 
-            table.insert(frameLengths, timeDiff)
+            table.insert(frameLengths, timeDiff + 1)
 
             currentTime = currentTime + timeDiff
 
@@ -838,7 +859,7 @@ function ConvergeDivergeMenu()
 
             insertTeleport(svs, currentTime + 1 / INCREMENT, FRAME_SIZE)
 
-            currentTime = currentTime + 2
+            currentTime = currentTime + 1
 
             iterations = iterations + 1
         end

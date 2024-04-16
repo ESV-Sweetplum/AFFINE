@@ -54,7 +54,7 @@ function ConvergeDivergeMenu()
             local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset,
                 settings.progressionExponent)
 
-            if (not settings.terminateEarly) or (progress < 1 - timeToGenerateClone) then
+            if (not settings.terminateEarly) or (progress < 1 - settings.lineDuration + timeToGenerateClone) then
                 if (progress - lastClonedProgress > timeToGenerateClone) then
                     lastClonedProgress = lastClonedProgress + timeToGenerateClone
                     table.insert(lineProgressionTable, progress)
@@ -85,7 +85,7 @@ function ConvergeDivergeMenu()
 
             timeDiff = tbl.time - currentTime
 
-            table.insert(frameLengths, timeDiff + 2)
+            table.insert(frameLengths, timeDiff + 1)
 
             currentTime = currentTime + timeDiff
 
@@ -94,7 +94,7 @@ function ConvergeDivergeMenu()
 
             insertTeleport(svs, currentTime + 1 / INCREMENT, FRAME_SIZE)
 
-            currentTime = currentTime + 2
+            currentTime = currentTime + 1
 
             iterations = iterations + 1
         end
