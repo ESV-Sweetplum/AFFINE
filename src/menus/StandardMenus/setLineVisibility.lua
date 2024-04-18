@@ -1,11 +1,10 @@
 function SetVisibilityMenu()
-    local parameterTable = constructParameters(
-        {
-            inputType = "RadioBoolean",
-            key = "enable",
-            label = { "Turn Lines Invisible", "Turn Lines Visible" },
-            value = false
-        })
+    local parameterTable = constructParameters({
+        inputType = "RadioBoolean",
+        key = "enable",
+        label = { "Turn Lines Invisible", "Turn Lines Visible" },
+        value = false
+    })
 
     retrieveParameters("set_visibility", parameterTable)
 

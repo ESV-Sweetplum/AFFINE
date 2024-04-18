@@ -1,10 +1,22 @@
 ---@diagnostic disable: need-check-nil, inject-field
 function CopyAndPasteMenu()
+    local parameterTable = constructParameters({
+        inputType = "Checkbox",
+        key = "includeBM",
+        label = "Include Bookmarks?",
+        value = true
+    })
+
+    retrieveParameters("copy_and_paste", parameterTable)
+    parameterInputs(parameterTable)
+
+    local settings = parametersToSettings(parameterTable)
     local offsets = getStartAndEndNoteOffsets()
 
     local tbl = {
         storedLines = {},
-        storedSVs = {}
+        storedSVs = {},
+        storedBookmarks = {}
     }
 
     retrieveStateVariables("CopyAndPaste", tbl)
@@ -16,8 +28,11 @@ function CopyAndPasteMenu()
 
         local svs = getSVsInRange(offsets.startOffset, offsets.endOffset)
 
+        local bookmarks = getBookmarksInRange(offsets.startOffset, offsets.endOffset)
+
         local zeroOffsetLines = {}
         local zeroOffsetSVs = {}
+        local zeroOffsetBookmarks = {}
 
         for _, givenLine in pairs(lines) do
             table.insert(zeroOffsetLines,
@@ -28,8 +43,13 @@ function CopyAndPasteMenu()
             table.insert(zeroOffsetSVs, sv(givenSV.StartTime - offsets.startOffset, givenSV.Multiplier))
         end
 
+        for _, givenBookmark in pairs(bookmarks) do
+            table.insert(zeroOffsetBookmarks, bookmark(givenBookmark.StartTime - offsets.startOffset, givenBookmark.Note))
+        end
+
         tbl.storedLines = zeroOffsetLines
         tbl.storedSVs = zeroOffsetSVs
+        if (settings.includeBM) then tbl.storedBookmarks = zeroOffsetBookmarks end
     end
 
     if (#tbl.storedLines > 0 or #tbl.storedSVs > 0) then
@@ -38,6 +58,7 @@ function CopyAndPasteMenu()
 
             local linesToAdd = {}
             local svsToAdd = {}
+            local bookmarksToAdd = {}
 
             for _, storedLine in pairs(tbl.storedLines) do
                 table.insert(linesToAdd,
@@ -46,16 +67,24 @@ function CopyAndPasteMenu()
             for _, storedSV in pairs(tbl.storedSVs) do
                 table.insert(svsToAdd, sv(storedSV.StartTime + offsets.startOffset, storedSV.Multiplier))
             end
+            for _, storedBookmark in pairs(tbl.storedBookmarks) do
+                table.insert(bookmarksToAdd,
+                    bookmark(storedBookmark.StartTime + offsets.startOffset, storedBookmark.Note))
+            end
 
             actions.PerformBatch({
                 utils.CreateEditorAction(action_type.AddTimingPointBatch, linesToAdd),
                 utils.CreateEditorAction(action_type.AddScrollVelocityBatch, svsToAdd),
+                utils.CreateEditorAction(action_type.AddBookmarkBatch, bookmarksToAdd),
             })
         end
     end
 
     addSeparator()
 
-    imgui.Text(#tbl.storedLines .. " Stored Lines // " .. #tbl.storedSVs .. " Stored SVs")
+    imgui.Text(#tbl.storedLines ..
+        " Stored Lines // " .. #tbl.storedSVs .. " Stored SVs // " .. #tbl.storedBookmarks .. " Stored Bookmarks")
+
     saveStateVariables("CopyAndPaste", tbl)
+    saveParameters("copy_and_paste", parameterTable)
 end
