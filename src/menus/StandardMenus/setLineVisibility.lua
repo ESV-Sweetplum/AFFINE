@@ -13,7 +13,7 @@ function SetVisibilityMenu()
     local settings = parametersToSettings(parameterTable)
     local offsets = getStartAndEndNoteOffsets()
 
-    if RangeActivated(offsets) then
+    if NoteActivated(offsets) then
         local linesToRemove = getLinesInRange(offsets.startOffset, offsets.endOffset)
 
         local linesToAdd = {}

@@ -244,7 +244,7 @@ function SetVisibilityMenu()
     local settings = parametersToSettings(parameterTable)
     local offsets = getStartAndEndNoteOffsets()
 
-    if RangeActivated(offsets) then
+    if NoteActivated(offsets) then
         local linesToRemove = getLinesInRange(offsets.startOffset, offsets.endOffset)
 
         local linesToAdd = {}
@@ -476,7 +476,7 @@ function SpectrumMenu()
     local offsets = getStartAndEndNoteOffsets()
 
     if RangeActivated(offsets) then
-        local currentTime = offsets.startOffset + 1
+        local currentTime = offsets.startOffset + settings.spacing
 
         local iterations = 0
         local lines = {}
@@ -565,7 +565,7 @@ function BasicManualAnimationMenu()
         startMsxTable = table.split(settings.msxList1, "%S+")
         endMsxTable = table.split(settings.msxList2, "%S+")
 
-        local currentTime = offsets.startOffset + 1
+        local currentTime = offsets.startOffset + settings.spacing
         local iterations = 0
         local lines = {}
         local svs = {}
@@ -755,7 +755,7 @@ function ExpansionContractionMenu()
     local offsets = getStartAndEndNoteOffsets()
 
     if RangeActivated(offsets) then
-        local currentTime = offsets.startOffset + 1
+        local currentTime = offsets.startOffset + settings.spacing
 
         local iterations = 0
 
@@ -834,7 +834,7 @@ function ConvergeDivergeMenu()
     local offsets = getStartAndEndNoteOffsets()
 
     if RangeActivated(offsets) then
-        local currentTime = offsets.startOffset + 1
+        local currentTime = offsets.startOffset + settings.spacing
 
         local iterations = 0
         local lines = {}
@@ -925,7 +925,7 @@ function StaticBoundaryMenu()
     local offsets = getStartAndEndNoteOffsets()
 
     if RangeActivated(offsets) then
-        local currentTime = offsets.startOffset + 1
+        local currentTime = offsets.startOffset + settings.spacing
 
         local iterations = 0
         local lines = {}
@@ -1004,7 +1004,7 @@ function DynamicBoundaryMenu()
     local offsets = getStartAndEndNoteOffsets()
 
     if RangeActivated(offsets) then
-        local currentTime = offsets.startOffset + 1
+        local currentTime = offsets.startOffset + settings.spacing
 
         local iterations = 0
 
