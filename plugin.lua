@@ -211,7 +211,7 @@ function StandardSpreadMenu()
             end
         end
 
-        lines = cleanLines(lines, offsets.startOffset, offsets.endOffset + 10)
+        lines = cleanLines(lines, offsets.startOffset, offsets.endOffset)
 
         setDebug("Line Count: " .. #lines) -- DEBUG TEXT
 
