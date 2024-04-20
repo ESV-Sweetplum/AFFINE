@@ -103,7 +103,7 @@ function ConvergeDivergeMenu()
 
         generateAffines(lines, svs, offsets.startOffset, offsets.endOffset, "Converge/Diverge",
             constructDebugTable(lines, svs, stats))
-        parameterTable[#parameterTable].value = "Line Count: " .. #lines .. " // SV Count: " .. #svs
+        setDebug("Line Count: " .. #lines .. " // SV Count: " .. #svs)
     end
     Plot(settings.pathCoefficients, settings.progressionExponent, "Line Path Over Duration of Life Cycle")
 

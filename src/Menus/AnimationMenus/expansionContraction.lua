@@ -45,7 +45,7 @@ function ExpansionContractionMenu()
 
         generateAffines(lines, svs, offsets.startOffset, offsets.endOffset, "Expansion/Contraction",
             constructDebugTable(lines, svs, stats))
-        parameterTable[#parameterTable].value = "Line Count: " .. #lines .. " // SV Count: " .. #svs
+        setDebug("Line Count: " .. #lines .. " // SV Count: " .. #svs)
     end
 
     saveParameters("animation_expansion_contraction", parameterTable)

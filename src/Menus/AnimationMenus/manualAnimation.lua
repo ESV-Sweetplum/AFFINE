@@ -50,7 +50,7 @@ function BasicManualAnimationMenu()
 
         generateAffines(lines, svs, offsets.startOffset, offsets.endOffset, "Manual Animation",
             constructDebugTable(lines, svs, stats))
-        parameterTable[#parameterTable].value = "Line Count: " .. #lines .. " // SV Count: " .. #svs
+        setDebug("Line Count: " .. #lines .. " // SV Count: " .. #svs)
     end
 
     saveParameters("animation_manual", parameterTable)

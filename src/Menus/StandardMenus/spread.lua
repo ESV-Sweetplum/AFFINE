@@ -32,7 +32,7 @@ function StandardSpreadMenu()
 
         lines = cleanLines(lines, offsets.startOffset, offsets.endOffset + 10)
 
-        parameterTable[#parameterTable].value = "Line Count: " .. #lines -- DEBUG TEXT
+        setDebug("Line Count: " .. #lines) -- DEBUG TEXT
 
         actions.PlaceTimingPointBatch(lines)
     end

@@ -51,7 +51,7 @@ function StaticBoundaryMenu()
 
         generateAffines(lines, svs, offsets.startOffset, offsets.endOffset, "Static Boundary",
             constructDebugTable(lines, svs, stats))
-        parameterTable[#parameterTable].value = "Line Count: " .. #lines .. " // SV Count: " .. #svs
+        setDebug("Line Count: " .. #lines .. " // SV Count: " .. #svs)
     end
 
     Plot(settings.boundCoefficients, settings.progressionExponent)

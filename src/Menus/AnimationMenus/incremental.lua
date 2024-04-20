@@ -71,7 +71,7 @@ function IncrementalAnimationMenu()
 
         generateAffines(lines, svs, offsets.startOffset, offsets.endOffset, "Incremental",
             constructDebugTable(lines, svs))
-        parameterTable[#parameterTable].value = "Line Count: " .. #lines .. " // SV Count: " .. #svs
+        setDebug("Line Count: " .. #lines .. " // SV Count: " .. #svs)
     end
 
     saveParameters("animation_incremental", parameterTable)

@@ -12,7 +12,7 @@ function FixedManualMenu()
         local tbl = tableToLines(msxTable, offsets.startOffset + settings.delay, settings.offset, settings.spacing)
         generateAffines(tbl.lines, tbl.svs, offsets.startOffset, offsets.endOffset, "Manual Fixed")
 
-        parameterTable[#parameterTable].value = "Line Count: " .. #tbl.lines .. " // SV Count: " .. #tbl.svs
+        setDebug("Line Count: " .. #tbl.lines .. " // SV Count: " .. #tbl.svs)
     end
 
     saveParameters("fixed_manual", parameterTable)

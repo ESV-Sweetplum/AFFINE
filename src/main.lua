@@ -5,6 +5,7 @@ function chooseMenu(tbl, menuID)
 end
 
 globalData = {} ---@type AffineSaveTable[]
+debugText = ""
 local loaded = false
 
 
@@ -56,9 +57,17 @@ function draw()
 
     imgui.EndTabBar()
 
+    if (debugText:len()) then
+        imgui.Text(debugText)
+    end
+
     saveStateVariables("main", settings)
 
     imgui.End()
+end
+
+function setDebug(text)
+    debugText = text
 end
 
 function addPadding()

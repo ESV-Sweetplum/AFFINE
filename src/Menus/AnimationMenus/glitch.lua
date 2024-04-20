@@ -49,7 +49,7 @@ function GlitchMenu()
 
         generateAffines(lines, svs, offsets.startOffset, offsets.endOffset, "Glitch",
             constructDebugTable(lines, svs, stats))
-        parameterTable[#parameterTable].value = "Line Count: " .. #lines .. " // SV Count: " .. #svs
+        setDebug("Line Count: " .. #lines .. " // SV Count: " .. #svs)
     end
 
 
