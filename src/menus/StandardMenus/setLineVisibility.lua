@@ -6,7 +6,7 @@ function SetVisibilityMenu()
         value = false
     })
 
-    if NoteActivated(offsets) then
+    if NoteActivated() then
         local linesToRemove = getLinesInRange(offsets.startOffset, offsets.endOffset)
 
         local linesToAdd = {}

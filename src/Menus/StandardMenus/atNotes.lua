@@ -1,7 +1,7 @@
 function StandardAtNotesMenu(preservationType)
     local times = getSelectedOffsets()
 
-    if NoteActivated(times) then
+    if NoteActivated() then
         local lines = {}
 
         if (type(times) == "integer") then return end

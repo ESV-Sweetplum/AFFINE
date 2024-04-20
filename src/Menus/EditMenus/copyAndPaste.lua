@@ -15,7 +15,7 @@ function CopyAndPasteMenu()
 
     retrieveStateVariables("CopyAndPaste", tbl)
 
-    if RangeActivated(offsets, "Copy") then
+    if RangeActivated("Copy") then
         if (type(offsets) == "integer") then return end
 
         local lines = getLinesInRange(offsets.startOffset, offsets.endOffset)
@@ -47,7 +47,7 @@ function CopyAndPasteMenu()
     end
 
     if (#tbl.storedLines > 0 or #tbl.storedSVs > 0) then
-        if NoteActivated(offsets, "Paste") then
+        if NoteActivated("Paste") then
             if (type(offsets) == "integer") then return end
 
             local linesToAdd = {}

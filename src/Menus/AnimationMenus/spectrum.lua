@@ -8,7 +8,7 @@ function SpectrumMenu()
             value = false
         })
 
-    if RangeActivated(offsets) then
+    if RangeActivated() then
         local currentTime = offsets.startOffset + settings.spacing
 
         local iterations = 0

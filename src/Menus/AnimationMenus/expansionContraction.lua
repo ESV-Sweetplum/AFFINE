@@ -2,7 +2,7 @@ function ExpansionContractionMenu()
     local settings = parameterWorkflow("animation_expansion_contraction", 'msxBounds', 'distance', 'progressionExponent',
         'spacing')
 
-    if RangeActivated(offsets) then
+    if RangeActivated() then
         local currentTime = offsets.startOffset + settings.spacing
 
         local iterations = 0

@@ -12,7 +12,7 @@ function IncrementalAnimationMenu()
         sameLine = true
     })
 
-    if RangeActivated(offsets) then
+    if RangeActivated() then
         local times = getSelectedOffsets()
 
         local currentIndex = 1

@@ -2,7 +2,7 @@ function BasicManualAnimationMenu()
     local settings = parameterWorkflow("animation_manual", 'msxList1', 'msxList2', 'progressionExponent', 'fps',
         'spacing')
 
-    if RangeActivated(offsets) then
+    if RangeActivated() then
         startMsxTable = table.split(settings.msxList1, "%S+")
         endMsxTable = table.split(settings.msxList2, "%S+")
 

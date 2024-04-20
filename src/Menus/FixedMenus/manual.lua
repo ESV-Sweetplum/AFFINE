@@ -1,7 +1,7 @@
 function FixedManualMenu()
     local settings = parameterWorkflow("fixed_manual", 'msxList', 'offset', 'delay', 'spacing')
 
-    if NoteActivated(offsets) then
+    if NoteActivated() then
         msxTable = table.split(settings.msxList, "%S+")
         local tbl = tableToLines(msxTable, offsets.startOffset + settings.delay, settings.offset, settings.spacing)
         generateAffines(tbl.lines, tbl.svs, offsets.startOffset, offsets.endOffset, "Manual Fixed")

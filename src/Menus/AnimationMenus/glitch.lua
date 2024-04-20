@@ -2,7 +2,7 @@ function GlitchMenu()
     local settings = parameterWorkflow("glitch", 'msxBounds1', 'msxBounds2', 'lineCount', 'progressionExponent', 'fps',
         'spacing')
 
-    if RangeActivated(offsets) then
+    if RangeActivated() then
         local currentTime = offsets.startOffset
         local lines = {}
         local svs = {}

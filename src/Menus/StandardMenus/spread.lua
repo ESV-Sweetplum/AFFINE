@@ -1,7 +1,7 @@
 function StandardSpreadMenu()
     local settings = parameterWorkflow("standard_spread", 'distance')
 
-    if RangeActivated(offsets) then
+    if RangeActivated() then
         local lines = {}
         local msx = offsets.startOffset
 

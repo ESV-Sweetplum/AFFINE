@@ -78,7 +78,7 @@ function ManualDeleteTab()
     addSeparator()
     settings.deletionType = deletionTypeIndex + 1
 
-    if (RangeActivated(offsets, "Remove")) then
+    if (RangeActivated("Remove")) then
         svs = getSVsInRange(offsets.startOffset, offsets.endOffset)
         lines = getLinesInRange(offsets.startOffset, offsets.endOffset)
 
@@ -188,7 +188,7 @@ end
 function StandardSpreadMenu()
     local settings = parameterWorkflow("standard_spread", 'distance')
 
-    if RangeActivated(offsets) then
+    if RangeActivated() then
         local lines = {}
         local msx = offsets.startOffset
 
@@ -227,7 +227,7 @@ function SetVisibilityMenu()
         value = false
     })
 
-    if NoteActivated(offsets) then
+    if NoteActivated() then
         local linesToRemove = getLinesInRange(offsets.startOffset, offsets.endOffset)
 
         local linesToAdd = {}
@@ -247,7 +247,7 @@ function StandardRainbowMenu()
     local settings = parameterWorkflow("rainbow", "colorList")
 
     local times = getSelectedOffsets()
-    if NoteActivated(times) then
+    if NoteActivated() then
         local lines = {}
         local rainbowTable = table.split(settings.colorList, "%S+")
         local rainbowIndex = 1
@@ -274,7 +274,7 @@ end
 function StandardAtNotesMenu(preservationType)
     local times = getSelectedOffsets()
 
-    if NoteActivated(times) then
+    if NoteActivated() then
         local lines = {}
 
         if (type(times) == "integer") then return end
@@ -297,7 +297,7 @@ end
 function FixedRandomMenu()
     local settings = parameterWorkflow("fixed_random", 'msxBounds', 'lineCount', 'delay', 'spacing')
 
-    if NoteActivated(offsets) then
+    if NoteActivated() then
         msxTable = {}
         for _ = 1, settings.lineCount do
             table.insert(msxTable, math.random(settings.msxBounds[1], settings.msxBounds[2]))
@@ -312,7 +312,7 @@ end
 function FixedManualMenu()
     local settings = parameterWorkflow("fixed_manual", 'msxList', 'offset', 'delay', 'spacing')
 
-    if NoteActivated(offsets) then
+    if NoteActivated() then
         msxTable = table.split(settings.msxList, "%S+")
         local tbl = tableToLines(msxTable, offsets.startOffset + settings.delay, settings.offset, settings.spacing)
         generateAffines(tbl.lines, tbl.svs, offsets.startOffset, offsets.endOffset, "Manual Fixed")
@@ -324,7 +324,7 @@ end
 function FixedAutomaticMenu()
     local settings = parameterWorkflow("fixed_automatic", 'msxBounds', 'distance', 'delay', 'spacing')
 
-    if NoteActivated(offsets) then
+    if NoteActivated() then
         local tbl = placeAutomaticFrame(offsets.startOffset + settings.delay, settings.msxBounds[1],
             settings.msxBounds[2],
             settings.spacing, settings.distance)
@@ -364,7 +364,7 @@ function CopyAndPasteMenu()
 
     retrieveStateVariables("CopyAndPaste", tbl)
 
-    if RangeActivated(offsets, "Copy") then
+    if RangeActivated("Copy") then
         if (type(offsets) == "integer") then return end
 
         local lines = getLinesInRange(offsets.startOffset, offsets.endOffset)
@@ -396,7 +396,7 @@ function CopyAndPasteMenu()
     end
 
     if (#tbl.storedLines > 0 or #tbl.storedSVs > 0) then
-        if NoteActivated(offsets, "Paste") then
+        if NoteActivated("Paste") then
             if (type(offsets) == "integer") then return end
 
             local linesToAdd = {}
@@ -441,7 +441,7 @@ function SpectrumMenu()
             value = false
         })
 
-    if RangeActivated(offsets) then
+    if RangeActivated() then
         local currentTime = offsets.startOffset + settings.spacing
 
         local iterations = 0
@@ -520,7 +520,7 @@ function BasicManualAnimationMenu()
     local settings = parameterWorkflow("animation_manual", 'msxList1', 'msxList2', 'progressionExponent', 'fps',
         'spacing')
 
-    if RangeActivated(offsets) then
+    if RangeActivated() then
         startMsxTable = table.split(settings.msxList1, "%S+")
         endMsxTable = table.split(settings.msxList2, "%S+")
 
@@ -581,7 +581,7 @@ function IncrementalAnimationMenu()
         sameLine = true
     })
 
-    if RangeActivated(offsets) then
+    if RangeActivated() then
         local times = getSelectedOffsets()
 
         local currentIndex = 1
@@ -641,7 +641,7 @@ function GlitchMenu()
     local settings = parameterWorkflow("glitch", 'msxBounds1', 'msxBounds2', 'lineCount', 'progressionExponent', 'fps',
         'spacing')
 
-    if RangeActivated(offsets) then
+    if RangeActivated() then
         local currentTime = offsets.startOffset
         local lines = {}
         local svs = {}
@@ -688,7 +688,7 @@ function ExpansionContractionMenu()
     local settings = parameterWorkflow("animation_expansion_contraction", 'msxBounds', 'distance', 'progressionExponent',
         'spacing')
 
-    if RangeActivated(offsets) then
+    if RangeActivated() then
         local currentTime = offsets.startOffset + settings.spacing
 
         local iterations = 0
@@ -759,7 +759,7 @@ function ConvergeDivergeMenu()
             sameLine = true
         })
 
-    if RangeActivated(offsets) then
+    if RangeActivated() then
         local currentTime = offsets.startOffset + settings.spacing
 
         local iterations = 0
@@ -843,7 +843,7 @@ function StaticBoundaryMenu()
             value = true
         })
 
-    if RangeActivated(offsets) then
+    if RangeActivated() then
         local currentTime = offsets.startOffset + settings.spacing
 
         local iterations = 0
@@ -915,7 +915,7 @@ function DynamicBoundaryMenu()
             value = true
         })
 
-    if RangeActivated(offsets) then
+    if RangeActivated() then
         local currentTime = offsets.startOffset + settings.spacing
 
         local iterations = 0
@@ -1293,17 +1293,15 @@ function applyColorToTime(color, time, hidden)
 end
 
 ---Returns true if a note is selected.
----@param offsets any
 ---@return boolean
-function noteSelected(offsets)
+function noteSelected()
     return offsets ~= -1
 end
 
 ---Returns true if two or more notes are selected, with differing offsets.
----@param offsets any
 ---@return boolean
-function rangeSelected(offsets)
-    return (offsets ~= -1) and (offsets.startOffset ~= offsets.endOffset) 
+function rangeSelected()
+    return (offsets ~= -1) and (offsets.startOffset ~= offsets.endOffset)
 end
 
 ---When given a progression value (0-1), returns the numerical distance along the progress line.
@@ -2183,18 +2181,18 @@ function activationButton(text)
     return imgui.Button(text .. " Lines")
 end
 
-function RangeActivated(offsets, text)
+function RangeActivated(text)
     text = text or "Place"
-    if rangeSelected(offsets) then
+    if rangeSelected() then
         return activationButton(text) or (utils.IsKeyPressed(keys.A) and not utils.IsKeyDown(keys.LeftControl))
     else
         return imgui.Text("Select a Region to " .. text .. " Lines.")
     end
 end
 
-function NoteActivated(offsets, text)
+function NoteActivated(text)
     text = text or "Place"
-    if noteSelected(offsets) then
+    if noteSelected() then
         return activationButton(text) or (utils.IsKeyPressed(keys.A) and not utils.IsKeyDown(keys.LeftControl))
     else
         return imgui.Text("Select a Note to " .. text .. " Lines.")

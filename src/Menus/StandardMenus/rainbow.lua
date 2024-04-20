@@ -2,7 +2,7 @@ function StandardRainbowMenu()
     local settings = parameterWorkflow("rainbow", "colorList")
 
     local times = getSelectedOffsets()
-    if NoteActivated(times) then
+    if NoteActivated() then
         local lines = {}
         local rainbowTable = table.split(settings.colorList, "%S+")
         local rainbowIndex = 1

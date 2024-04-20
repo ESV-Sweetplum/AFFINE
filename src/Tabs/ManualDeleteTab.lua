@@ -11,7 +11,7 @@ function ManualDeleteTab()
     addSeparator()
     settings.deletionType = deletionTypeIndex + 1
 
-    if (RangeActivated(offsets, "Remove")) then
+    if (RangeActivated("Remove")) then
         svs = getSVsInRange(offsets.startOffset, offsets.endOffset)
         lines = getLinesInRange(offsets.startOffset, offsets.endOffset)
 
