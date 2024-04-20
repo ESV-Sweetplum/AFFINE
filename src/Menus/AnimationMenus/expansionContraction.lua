@@ -1,5 +1,5 @@
 function ExpansionContractionMenu()
-    local settings = parameterWorkflow("animation_expansion_contraction", 'msxBounds', 'distance', 'progressionExponent',
+    local settings = parameterWorkflow("animation_expansionContraction", 'msxBounds', 'distance', 'progressionExponent',
         'spacing')
 
     if RangeActivated() then

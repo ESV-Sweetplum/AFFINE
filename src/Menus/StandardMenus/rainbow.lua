@@ -1,5 +1,5 @@
 function StandardRainbowMenu()
-    local settings = parameterWorkflow("rainbow", "colorList")
+    local settings = parameterWorkflow("standard_rainbow", "colorList")
 
     local times = getSelectedOffsets()
     if NoteActivated() then

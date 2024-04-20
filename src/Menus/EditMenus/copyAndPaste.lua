@@ -1,6 +1,6 @@
 ---@diagnostic disable: need-check-nil, inject-field
 function CopyAndPasteMenu()
-    local settings = parameterWorkflow("copy_and_paste", {
+    local settings = parameterWorkflow("edit_copyAndPaste", {
         inputType = "Checkbox",
         key = "includeBM",
         label = "Include Bookmarks?",

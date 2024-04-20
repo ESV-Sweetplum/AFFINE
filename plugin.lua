@@ -220,7 +220,7 @@ function StandardSpreadMenu()
 end
 
 function SetVisibilityMenu()
-    local settings = parameterWorkflow("set_visibility", {
+    local settings = parameterWorkflow("standard_setVisibility", {
         inputType = "RadioBoolean",
         key = "enable",
         label = { "Turn Lines Invisible", "Turn Lines Visible" },
@@ -244,7 +244,7 @@ function SetVisibilityMenu()
 end
 
 function StandardRainbowMenu()
-    local settings = parameterWorkflow("rainbow", "colorList")
+    local settings = parameterWorkflow("standard_rainbow", "colorList")
 
     local times = getSelectedOffsets()
     if NoteActivated() then
@@ -349,7 +349,7 @@ end
 
 ---@diagnostic disable: need-check-nil, inject-field
 function CopyAndPasteMenu()
-    local settings = parameterWorkflow("copy_and_paste", {
+    local settings = parameterWorkflow("edit_copyAndPaste", {
         inputType = "Checkbox",
         key = "includeBM",
         label = "Include Bookmarks?",
@@ -638,7 +638,8 @@ function IncrementalAnimationMenu()
 end
 
 function GlitchMenu()
-    local settings = parameterWorkflow("glitch", 'msxBounds1', 'msxBounds2', 'lineCount', 'progressionExponent', 'fps',
+    local settings = parameterWorkflow("animation_glitch", 'msxBounds1', 'msxBounds2', 'lineCount', 'progressionExponent',
+        'fps',
         'spacing')
 
     if RangeActivated() then
@@ -685,7 +686,7 @@ function GlitchMenu()
 end
 
 function ExpansionContractionMenu()
-    local settings = parameterWorkflow("animation_expansion_contraction", 'msxBounds', 'distance', 'progressionExponent',
+    local settings = parameterWorkflow("animation_expansionContraction", 'msxBounds', 'distance', 'progressionExponent',
         'spacing')
 
     if RangeActivated() then
@@ -834,7 +835,7 @@ function ConvergeDivergeMenu()
 end
 
 function StaticBoundaryMenu()
-    local settings = parameterWorkflow("animation_static_polynomial", "msxBounds", "distance", "progressionExponent",
+    local settings = parameterWorkflow("animation_boundaryStatic", "msxBounds", "distance", "progressionExponent",
         "spacing",
         "boundCoefficients", {
             inputType = "RadioBoolean",
@@ -906,7 +907,7 @@ function placeStaticFrame(startTime, min, max, lineDistance, spacing, boundary, 
 end
 
 function DynamicBoundaryMenu()
-    local settings = parameterWorkflow("animation_dynamic_polynomial", "msxBounds", 'distance', "progressionExponent",
+    local settings = parameterWorkflow("animation_boundaryDynamic", "msxBounds", 'distance', "progressionExponent",
         "spacing",
         "boundCoefficients", {
             inputType = "RadioBoolean",

@@ -1,5 +1,5 @@
 function DynamicBoundaryMenu()
-    local settings = parameterWorkflow("animation_dynamic_polynomial", "msxBounds", 'distance', "progressionExponent",
+    local settings = parameterWorkflow("animation_boundaryDynamic", "msxBounds", 'distance', "progressionExponent",
         "spacing",
         "boundCoefficients", {
             inputType = "RadioBoolean",

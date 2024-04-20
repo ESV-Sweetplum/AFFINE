@@ -1,5 +1,5 @@
 function StaticBoundaryMenu()
-    local settings = parameterWorkflow("animation_static_polynomial", "msxBounds", "distance", "progressionExponent",
+    local settings = parameterWorkflow("animation_boundaryStatic", "msxBounds", "distance", "progressionExponent",
         "spacing",
         "boundCoefficients", {
             inputType = "RadioBoolean",

@@ -1,5 +1,6 @@
 function GlitchMenu()
-    local settings = parameterWorkflow("glitch", 'msxBounds1', 'msxBounds2', 'lineCount', 'progressionExponent', 'fps',
+    local settings = parameterWorkflow("animation_glitch", 'msxBounds1', 'msxBounds2', 'lineCount', 'progressionExponent',
+        'fps',
         'spacing')
 
     if RangeActivated() then
