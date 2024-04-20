@@ -1,7 +1,6 @@
 function FixedAutomaticMenu()
     local settings = parameterWorkflow("fixed_automatic", 'msxBounds', 'distance', 'delay', 'spacing')
 
-
     if NoteActivated(offsets) then
         local tbl = placeAutomaticFrame(offsets.startOffset + settings.delay, settings.msxBounds[1],
             settings.msxBounds[2],

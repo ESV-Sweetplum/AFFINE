@@ -8,7 +8,6 @@ function SpectrumMenu()
             value = false
         })
 
-
     if RangeActivated(offsets) then
         local currentTime = offsets.startOffset + settings.spacing
 
@@ -20,7 +19,6 @@ function SpectrumMenu()
         while ((currentTime + (2 / INCREMENT)) <= offsets.endOffset) and (iterations < MAX_ITERATIONS) do
             local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset,
                 settings.progressionExponent)
-
 
             local heightDifferential = settings.maxSpread *
                 evaluateCoefficients(settings.boundCoefficients, progress)

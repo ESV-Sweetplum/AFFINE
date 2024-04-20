@@ -27,7 +27,6 @@ function ConvergeDivergeMenu()
             sameLine = true
         })
 
-
     if RangeActivated(offsets) then
         local currentTime = offsets.startOffset + settings.spacing
 
@@ -72,7 +71,6 @@ function ConvergeDivergeMenu()
                     end
                 end
             end
-
 
             local tbl = tableToLines(msxTable, currentTime, 0, settings.spacing)
 

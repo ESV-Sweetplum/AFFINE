@@ -2,7 +2,6 @@
 function drawSpike(xPos)
     local spikeSize = 25
 
-
     local color = rgbaToUint(255, 255, 255, 255)
     local o = imgui.GetOverlayDrawList()
     local sz = state.WindowSize

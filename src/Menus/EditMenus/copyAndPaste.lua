@@ -7,7 +7,6 @@ function CopyAndPasteMenu()
         value = true
     })
 
-
     local tbl = {
         storedLines = {},
         storedSVs = {},

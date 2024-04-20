@@ -20,7 +20,6 @@ DEFAULT_DICTIONARY = {
     colorList = DEFAULT_COLOR_LIST
 }
 
-
 ---Given a set of input names, creates an ordered table of key value pairs (normal table isn't used to preserve order).
 ---@param ... string | table
 ---@return Parameter[]

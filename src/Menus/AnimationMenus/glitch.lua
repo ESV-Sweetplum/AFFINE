@@ -2,7 +2,6 @@ function GlitchMenu()
     local settings = parameterWorkflow("glitch", 'msxBounds1', 'msxBounds2', 'lineCount', 'progressionExponent', 'fps',
         'spacing')
 
-
     if RangeActivated(offsets) then
         local currentTime = offsets.startOffset
         local lines = {}
@@ -12,7 +11,6 @@ function GlitchMenu()
         while (currentTime <= offsets.endOffset) do
             local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset,
                 settings.progressionExponent)
-
 
             local lowerBound = mapProgress(settings.msxBounds1[1], progress, settings.msxBounds2[1])
             local upperBound = mapProgress(settings.msxBounds1[2], progress, settings.msxBounds2[2])
