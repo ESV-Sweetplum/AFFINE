@@ -221,7 +221,7 @@ function StandardSpreadMenu()
 
         lines = cleanLines(lines, offsets.startOffset, offsets.endOffset + 10)
 
-        parameterTable[#parameterTable].value = "Line Count: " .. #lines -- DEBUG TEXT
+        setDebug("Line Count: " .. #lines) -- DEBUG TEXT
 
         actions.PlaceTimingPointBatch(lines)
     end
@@ -336,7 +336,7 @@ function FixedRandomMenu()
         local tbl = tableToLines(msxTable, offsets.startOffset + settings.delay, 0, settings.spacing)
 
         generateAffines(tbl.lines, tbl.svs, offsets.startOffset, offsets.endOffset, "Random Fixed")
-        parameterTable[#parameterTable].value = "Line Count: " .. #tbl.lines .. " // SV Count: " .. #tbl.svs
+        setDebug("Line Count: " .. #tbl.lines .. " // SV Count: " .. #tbl.svs)
     end
 
     saveParameters("fixed_random", parameterTable)
@@ -356,7 +356,7 @@ function FixedManualMenu()
         local tbl = tableToLines(msxTable, offsets.startOffset + settings.delay, settings.offset, settings.spacing)
         generateAffines(tbl.lines, tbl.svs, offsets.startOffset, offsets.endOffset, "Manual Fixed")
 
-        parameterTable[#parameterTable].value = "Line Count: " .. #tbl.lines .. " // SV Count: " .. #tbl.svs
+        setDebug("Line Count: " .. #tbl.lines .. " // SV Count: " .. #tbl.svs)
     end
 
     saveParameters("fixed_manual", parameterTable)
@@ -377,7 +377,7 @@ function FixedAutomaticMenu()
             settings.spacing, settings.distance)
 
         generateAffines(tbl.lines, tbl.svs, offsets.startOffset, offsets.endOffset, "Automatic Fixed")
-        parameterTable[#parameterTable].value = "Line Count: " .. #tbl.lines .. " // SV Count: " .. #tbl.svs
+        setDebug("Line Count: " .. #tbl.lines .. " // SV Count: " .. #tbl.svs)
     end
 
     saveParameters("fixed_automatic", parameterTable)
@@ -541,7 +541,7 @@ function SpectrumMenu()
 
         generateAffines(lines, svs, offsets.startOffset, offsets.endOffset, "Spectrum",
             constructDebugTable(lines, svs, stats))
-        parameterTable[#parameterTable].value = "Line Count: " .. #lines .. " // SV Count: " .. #svs
+        setDebug("Line Count: " .. #lines .. " // SV Count: " .. #svs)
     end
     Plot(settings.boundCoefficients, settings.progressionExponent)
 
@@ -632,7 +632,7 @@ function BasicManualAnimationMenu()
 
         generateAffines(lines, svs, offsets.startOffset, offsets.endOffset, "Manual Animation",
             constructDebugTable(lines, svs, stats))
-        parameterTable[#parameterTable].value = "Line Count: " .. #lines .. " // SV Count: " .. #svs
+        setDebug("Line Count: " .. #lines .. " // SV Count: " .. #svs)
     end
 
     saveParameters("animation_manual", parameterTable)
@@ -711,7 +711,7 @@ function IncrementalAnimationMenu()
 
         generateAffines(lines, svs, offsets.startOffset, offsets.endOffset, "Incremental",
             constructDebugTable(lines, svs))
-        parameterTable[#parameterTable].value = "Line Count: " .. #lines .. " // SV Count: " .. #svs
+        setDebug("Line Count: " .. #lines .. " // SV Count: " .. #svs)
     end
 
     saveParameters("animation_incremental", parameterTable)
@@ -767,7 +767,7 @@ function GlitchMenu()
 
         generateAffines(lines, svs, offsets.startOffset, offsets.endOffset, "Glitch",
             constructDebugTable(lines, svs, stats))
-        parameterTable[#parameterTable].value = "Line Count: " .. #lines .. " // SV Count: " .. #svs
+        setDebug("Line Count: " .. #lines .. " // SV Count: " .. #svs)
     end
 
     saveParameters("glitch", parameterTable)
@@ -820,7 +820,7 @@ function ExpansionContractionMenu()
 
         generateAffines(lines, svs, offsets.startOffset, offsets.endOffset, "Expansion/Contraction",
             constructDebugTable(lines, svs, stats))
-        parameterTable[#parameterTable].value = "Line Count: " .. #lines .. " // SV Count: " .. #svs
+        setDebug("Line Count: " .. #lines .. " // SV Count: " .. #svs)
     end
 
     saveParameters("animation_expansion_contraction", parameterTable)
@@ -930,7 +930,7 @@ function ConvergeDivergeMenu()
 
         generateAffines(lines, svs, offsets.startOffset, offsets.endOffset, "Converge/Diverge",
             constructDebugTable(lines, svs, stats))
-        parameterTable[#parameterTable].value = "Line Count: " .. #lines .. " // SV Count: " .. #svs
+        setDebug("Line Count: " .. #lines .. " // SV Count: " .. #svs)
     end
     Plot(settings.pathCoefficients, settings.progressionExponent, "Line Path Over Duration of Life Cycle")
 
@@ -989,7 +989,7 @@ function StaticBoundaryMenu()
 
         generateAffines(lines, svs, offsets.startOffset, offsets.endOffset, "Static Boundary",
             constructDebugTable(lines, svs, stats))
-        parameterTable[#parameterTable].value = "Line Count: " .. #lines .. " // SV Count: " .. #svs
+        setDebug("Line Count: " .. #lines .. " // SV Count: " .. #svs)
     end
 
     Plot(settings.boundCoefficients, settings.progressionExponent)
@@ -1069,7 +1069,7 @@ function DynamicBoundaryMenu()
 
         generateAffines(lines, svs, offsets.startOffset, offsets.endOffset, "Dynamic Boundary",
             constructDebugTable(lines, svs, stats))
-        parameterTable[#parameterTable].value = "Line Count: " .. #lines .. " // SV Count: " .. #svs
+        setDebug("Line Count: " .. #lines .. " // SV Count: " .. #svs)
     end
     Plot(settings.boundCoefficients, settings.progressionExponent)
 
@@ -1682,8 +1682,6 @@ function constructParameters(...)
         })
         ::continue::
     end
-
-    table.insert(parameterTable, { key = "debug", value = "" })
 
     return parameterTable
 end
@@ -2312,6 +2310,7 @@ function chooseMenu(tbl, menuID)
 end
 
 globalData = {} ---@type AffineSaveTable[]
+debugText = ""
 local loaded = false
 
 function draw()
@@ -2398,9 +2397,17 @@ STANDARD_MENU_FUNCTIONS = {
 
     imgui.EndTabBar()
 
+    if (debugText:len() > 0) then
+        imgui.Text(debugText)
+    end
+
     saveStateVariables("main", settings)
 
     imgui.End()
+end
+
+function setDebug(text)
+    debugText = text
 end
 
 function addPadding()

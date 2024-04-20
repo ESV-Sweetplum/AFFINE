@@ -46,7 +46,5 @@ function constructParameters(...)
         ::continue::
     end
 
-    table.insert(parameterTable, { key = "debug", value = "" })
-
     return parameterTable
 end

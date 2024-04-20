@@ -57,7 +57,7 @@ function draw()
 
     imgui.EndTabBar()
 
-    if (debugText:len()) then
+    if (debugText:len() > 0) then
         imgui.Text(debugText)
     end
 
