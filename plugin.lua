@@ -78,8 +78,6 @@ function ManualDeleteTab()
     addSeparator()
     settings.deletionType = deletionTypeIndex + 1
 
-    local offsets = getStartAndEndNoteOffsets()
-
     if (RangeActivated(offsets, "Remove")) then
         svs = getSVsInRange(offsets.startOffset, offsets.endOffset)
         lines = getLinesInRange(offsets.startOffset, offsets.endOffset)
@@ -190,8 +188,6 @@ end
 function StandardSpreadMenu()
     local settings = parameterWorkflow("standard_spread", 'distance')
 
-    local offsets = getStartAndEndNoteOffsets()
-
     if RangeActivated(offsets) then
         local lines = {}
         local msx = offsets.startOffset
@@ -230,8 +226,6 @@ function SetVisibilityMenu()
         label = { "Turn Lines Invisible", "Turn Lines Visible" },
         value = false
     })
-
-    local offsets = getStartAndEndNoteOffsets()
 
     if NoteActivated(offsets) then
         local linesToRemove = getLinesInRange(offsets.startOffset, offsets.endOffset)
@@ -303,8 +297,6 @@ end
 function FixedRandomMenu()
     local settings = parameterWorkflow("fixed_random", 'msxBounds', 'lineCount', 'delay', 'spacing')
 
-    local offsets = getStartAndEndNoteOffsets()
-
     if NoteActivated(offsets) then
         msxTable = {}
         for _ = 1, settings.lineCount do
@@ -320,8 +312,6 @@ end
 function FixedManualMenu()
     local settings = parameterWorkflow("fixed_manual", 'msxList', 'offset', 'delay', 'spacing')
 
-    local offsets = getStartAndEndNoteOffsets()
-
     if NoteActivated(offsets) then
         msxTable = table.split(settings.msxList, "%S+")
         local tbl = tableToLines(msxTable, offsets.startOffset + settings.delay, settings.offset, settings.spacing)
@@ -333,8 +323,6 @@ end
 
 function FixedAutomaticMenu()
     local settings = parameterWorkflow("fixed_automatic", 'msxBounds', 'distance', 'delay', 'spacing')
-
-    local offsets = getStartAndEndNoteOffsets()
 
     if NoteActivated(offsets) then
         local tbl = placeAutomaticFrame(offsets.startOffset + settings.delay, settings.msxBounds[1],
@@ -367,8 +355,6 @@ function CopyAndPasteMenu()
         label = "Include Bookmarks?",
         value = true
     })
-
-    local offsets = getStartAndEndNoteOffsets()
 
     local tbl = {
         storedLines = {},
@@ -455,8 +441,6 @@ function SpectrumMenu()
             value = false
         })
 
-    local offsets = getStartAndEndNoteOffsets()
-
     if RangeActivated(offsets) then
         local currentTime = offsets.startOffset + settings.spacing
 
@@ -536,8 +520,6 @@ function BasicManualAnimationMenu()
     local settings = parameterWorkflow("animation_manual", 'msxList1', 'msxList2', 'progressionExponent', 'fps',
         'spacing')
 
-    local offsets = getStartAndEndNoteOffsets()
-
     if RangeActivated(offsets) then
         startMsxTable = table.split(settings.msxList1, "%S+")
         endMsxTable = table.split(settings.msxList2, "%S+")
@@ -599,8 +581,6 @@ function IncrementalAnimationMenu()
         sameLine = true
     })
 
-    local offsets = getStartAndEndNoteOffsets()
-
     if RangeActivated(offsets) then
         local times = getSelectedOffsets()
 
@@ -661,8 +641,6 @@ function GlitchMenu()
     local settings = parameterWorkflow("glitch", 'msxBounds1', 'msxBounds2', 'lineCount', 'progressionExponent', 'fps',
         'spacing')
 
-    local offsets = getStartAndEndNoteOffsets()
-
     if RangeActivated(offsets) then
         local currentTime = offsets.startOffset
         local lines = {}
@@ -709,8 +687,6 @@ end
 function ExpansionContractionMenu()
     local settings = parameterWorkflow("animation_expansion_contraction", 'msxBounds', 'distance', 'progressionExponent',
         'spacing')
-
-    local offsets = getStartAndEndNoteOffsets()
 
     if RangeActivated(offsets) then
         local currentTime = offsets.startOffset + settings.spacing
@@ -782,8 +758,6 @@ function ConvergeDivergeMenu()
             value = false,
             sameLine = true
         })
-
-    local offsets = getStartAndEndNoteOffsets()
 
     if RangeActivated(offsets) then
         local currentTime = offsets.startOffset + settings.spacing
@@ -868,8 +842,6 @@ function StaticBoundaryMenu()
             label = { "Render Over Boundary", "Render Under Boundary" },
             value = true
         })
-
-    local offsets = getStartAndEndNoteOffsets()
 
     if RangeActivated(offsets) then
         local currentTime = offsets.startOffset + settings.spacing
