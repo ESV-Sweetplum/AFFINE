@@ -4,6 +4,8 @@
 ---@param hidden boolean
 ---@return TimingPointInfo[]
 function applyColorToTime(color, time, hidden)
+    local EPSILON = 0.3
+
     local lines = {}
 
     ---@diagnostic disable-next-line: undefined-field
@@ -11,7 +13,7 @@ function applyColorToTime(color, time, hidden)
 
     local timingDist = 4
 
-    if (color == 1) then
+    if (math.abs(color - 1) <= EPSILON) then
         table.insert(lines, line(time, bpm, hidden))
     else
         table.insert(lines, line(time - timingDist / 2, 60000 / (timingDist * color / 2), hidden))
