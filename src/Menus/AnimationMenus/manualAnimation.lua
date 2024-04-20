@@ -11,7 +11,7 @@ function BasicManualAnimationMenu()
         startMsxTable = table.split(settings.msxList1, "%S+")
         endMsxTable = table.split(settings.msxList2, "%S+")
 
-        local currentTime = offsets.startOffset + 1
+        local currentTime = offsets.startOffset + settings.spacing
         local iterations = 0
         local lines = {}
         local svs = {}

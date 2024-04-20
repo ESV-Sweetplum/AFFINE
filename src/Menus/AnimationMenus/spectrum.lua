@@ -15,7 +15,7 @@ function SpectrumMenu()
     local offsets = getStartAndEndNoteOffsets()
 
     if RangeActivated(offsets) then
-        local currentTime = offsets.startOffset + 1
+        local currentTime = offsets.startOffset + settings.spacing
 
         local iterations = 0
         local lines = {}

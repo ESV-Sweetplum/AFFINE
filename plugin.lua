@@ -61,7 +61,8 @@ STANDARD_MENU_LIST = {
     'Spread',
     'At Notes (Preserve Location)',
     'At Notes (Preserve Snap)',
-    "Rainbow"
+    "Rainbow",
+    "Set Line Visibility"
 }
 
 function ManualDeleteTab()
@@ -228,6 +229,38 @@ function StandardSpreadMenu()
     saveParameters('standard_spread', parameterTable)
 end
 
+function SetVisibilityMenu()
+    local parameterTable = constructParameters({
+        inputType = "RadioBoolean",
+        key = "enable",
+        label = { "Turn Lines Invisible", "Turn Lines Visible" },
+        value = false
+    })
+
+    retrieveParameters("set_visibility", parameterTable)
+
+    parameterInputs(parameterTable)
+    local settings = parametersToSettings(parameterTable)
+    local offsets = getStartAndEndNoteOffsets()
+
+    if NoteActivated(offsets) then
+        local linesToRemove = getLinesInRange(offsets.startOffset, offsets.endOffset)
+
+        local linesToAdd = {}
+
+        for _, currentLine in pairs(linesToRemove) do
+            table.insert(linesToAdd, line(currentLine.StartTime, currentLine.Bpm, not settings.enable))
+        end
+
+        actions.PerformBatch({
+            utils.CreateEditorAction(action_type.RemoveTimingPointBatch, linesToRemove),
+            utils.CreateEditorAction(action_type.AddTimingPointBatch, linesToAdd)
+        })
+    end
+
+    saveParameters("set_visibility", parameterTable)
+end
+
 function StandardRainbowMenu()
     local parameterTable = constructParameters("colorList")
 
@@ -365,11 +398,23 @@ end
 
 ---@diagnostic disable: need-check-nil, inject-field
 function CopyAndPasteMenu()
+    local parameterTable = constructParameters({
+        inputType = "Checkbox",
+        key = "includeBM",
+        label = "Include Bookmarks?",
+        value = true
+    })
+
+    retrieveParameters("copy_and_paste", parameterTable)
+    parameterInputs(parameterTable)
+
+    local settings = parametersToSettings(parameterTable)
     local offsets = getStartAndEndNoteOffsets()
 
     local tbl = {
         storedLines = {},
-        storedSVs = {}
+        storedSVs = {},
+        storedBookmarks = {}
     }
 
     retrieveStateVariables("CopyAndPaste", tbl)
@@ -381,8 +426,11 @@ function CopyAndPasteMenu()
 
         local svs = getSVsInRange(offsets.startOffset, offsets.endOffset)
 
+        local bookmarks = getBookmarksInRange(offsets.startOffset, offsets.endOffset)
+
         local zeroOffsetLines = {}
         local zeroOffsetSVs = {}
+        local zeroOffsetBookmarks = {}
 
         for _, givenLine in pairs(lines) do
             table.insert(zeroOffsetLines,
@@ -393,8 +441,13 @@ function CopyAndPasteMenu()
             table.insert(zeroOffsetSVs, sv(givenSV.StartTime - offsets.startOffset, givenSV.Multiplier))
         end
 
+        for _, givenBookmark in pairs(bookmarks) do
+            table.insert(zeroOffsetBookmarks, bookmark(givenBookmark.StartTime - offsets.startOffset, givenBookmark.Note))
+        end
+
         tbl.storedLines = zeroOffsetLines
         tbl.storedSVs = zeroOffsetSVs
+        if (settings.includeBM) then tbl.storedBookmarks = zeroOffsetBookmarks end
     end
 
     if (#tbl.storedLines > 0 or #tbl.storedSVs > 0) then
@@ -403,6 +456,7 @@ function CopyAndPasteMenu()
 
             local linesToAdd = {}
             local svsToAdd = {}
+            local bookmarksToAdd = {}
 
             for _, storedLine in pairs(tbl.storedLines) do
                 table.insert(linesToAdd,
@@ -411,18 +465,26 @@ function CopyAndPasteMenu()
             for _, storedSV in pairs(tbl.storedSVs) do
                 table.insert(svsToAdd, sv(storedSV.StartTime + offsets.startOffset, storedSV.Multiplier))
             end
+            for _, storedBookmark in pairs(tbl.storedBookmarks) do
+                table.insert(bookmarksToAdd,
+                    bookmark(storedBookmark.StartTime + offsets.startOffset, storedBookmark.Note))
+            end
 
             actions.PerformBatch({
                 utils.CreateEditorAction(action_type.AddTimingPointBatch, linesToAdd),
                 utils.CreateEditorAction(action_type.AddScrollVelocityBatch, svsToAdd),
+                utils.CreateEditorAction(action_type.AddBookmarkBatch, bookmarksToAdd),
             })
         end
     end
 
     addSeparator()
 
-    imgui.Text(#tbl.storedLines .. " Stored Lines // " .. #tbl.storedSVs .. " Stored SVs")
+    imgui.Text(#tbl.storedLines ..
+        " Stored Lines // " .. #tbl.storedSVs .. " Stored SVs // " .. #tbl.storedBookmarks .. " Stored Bookmarks")
+
     saveStateVariables("CopyAndPaste", tbl)
+    saveParameters("copy_and_paste", parameterTable)
 end
 
 function SpectrumMenu()
@@ -442,7 +504,7 @@ function SpectrumMenu()
     local offsets = getStartAndEndNoteOffsets()
 
     if RangeActivated(offsets) then
-        local currentTime = offsets.startOffset + 1
+        local currentTime = offsets.startOffset + settings.spacing
 
         local iterations = 0
         local lines = {}
@@ -531,7 +593,7 @@ function BasicManualAnimationMenu()
         startMsxTable = table.split(settings.msxList1, "%S+")
         endMsxTable = table.split(settings.msxList2, "%S+")
 
-        local currentTime = offsets.startOffset + 1
+        local currentTime = offsets.startOffset + settings.spacing
         local iterations = 0
         local lines = {}
         local svs = {}
@@ -721,7 +783,7 @@ function ExpansionContractionMenu()
     local offsets = getStartAndEndNoteOffsets()
 
     if RangeActivated(offsets) then
-        local currentTime = offsets.startOffset + 1
+        local currentTime = offsets.startOffset + settings.spacing
 
         local iterations = 0
 
@@ -800,7 +862,7 @@ function ConvergeDivergeMenu()
     local offsets = getStartAndEndNoteOffsets()
 
     if RangeActivated(offsets) then
-        local currentTime = offsets.startOffset + 1
+        local currentTime = offsets.startOffset + settings.spacing
 
         local iterations = 0
         local lines = {}
@@ -891,7 +953,7 @@ function StaticBoundaryMenu()
     local offsets = getStartAndEndNoteOffsets()
 
     if RangeActivated(offsets) then
-        local currentTime = offsets.startOffset + 1
+        local currentTime = offsets.startOffset + settings.spacing
 
         local iterations = 0
         local lines = {}
@@ -970,7 +1032,7 @@ function DynamicBoundaryMenu()
     local offsets = getStartAndEndNoteOffsets()
 
     if RangeActivated(offsets) then
-        local currentTime = offsets.startOffset + 1
+        local currentTime = offsets.startOffset + settings.spacing
 
         local iterations = 0
 
@@ -1842,6 +1904,24 @@ function generateAffines(lines, svs, lower, upper, affineType, debugData)
     })
 end
 
+---Returns all bookmarks within a temporal boundary.
+---@param lower number
+---@param upper number
+---@return BookmarkInfo[]
+function getBookmarksInRange(lower, upper)
+    local base = map.Bookmarks
+
+    local tbl = {}
+
+    for _, v in pairs(base) do
+        if (v.StartTime >= lower) and (v.StartTime <= upper) then
+            table.insert(tbl, v)
+        end
+    end
+
+    return tbl
+end
+
 ---Finds closest bookmark with StartTime less than time.
 ---@param time number
 ---@param lower number
@@ -2283,7 +2363,8 @@ STANDARD_MENU_FUNCTIONS = {
     StandardSpreadMenu,
     function () StandardAtNotesMenu(2) end,
     function () StandardAtNotesMenu(1) end,
-    StandardRainbowMenu
+    StandardRainbowMenu,
+    SetVisibilityMenu
 }
 
     retrieveStateVariables("main", settings)
@@ -2306,7 +2387,7 @@ STANDARD_MENU_FUNCTIONS = {
         imgui.EndTabItem()
     end
 
-    if imgui.BeginTabItem("Delete (Automatic)") then
+    if imgui.BeginTabItem("Delete (Automatic) [BETA]") then
         AutomaticDeleteTab()
         imgui.EndTabItem()
     end
