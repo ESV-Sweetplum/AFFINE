@@ -1,7 +1,6 @@
 function StandardSpreadMenu()
     local settings = parameterWorkflow("standard_spread", 'distance')
 
-    local offsets = getStartAndEndNoteOffsets()
 
     if RangeActivated(offsets) then
         local lines = {}

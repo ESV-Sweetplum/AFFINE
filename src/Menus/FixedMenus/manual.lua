@@ -1,7 +1,6 @@
 function FixedManualMenu()
     local settings = parameterWorkflow("fixed_manual", 'msxList', 'offset', 'delay', 'spacing')
 
-    local offsets = getStartAndEndNoteOffsets()
 
     if NoteActivated(offsets) then
         msxTable = table.split(settings.msxList, "%S+")

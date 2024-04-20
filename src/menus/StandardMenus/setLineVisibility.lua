@@ -6,7 +6,6 @@ function SetVisibilityMenu()
         value = false
     })
 
-    local offsets = getStartAndEndNoteOffsets()
 
     if NoteActivated(offsets) then
         local linesToRemove = getLinesInRange(offsets.startOffset, offsets.endOffset)

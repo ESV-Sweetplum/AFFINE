@@ -1,19 +1,19 @@
 function StandardRainbowMenu()
     local settings = parameterWorkflow("rainbow", "colorList")
 
-    local offsets = getSelectedOffsets()
-    if NoteActivated(offsets) then
+    local times = getSelectedOffsets()
+    if NoteActivated(times) then
         local lines = {}
         local rainbowTable = table.split(settings.colorList, "%S+")
         local rainbowIndex = 1
 
-        if (type(offsets) == "integer") then return end
+        if (type(times) == "integer") then return end
 
         local hidden = false
 
-        for _, offset in pairs(offsets) do
+        for _, time in pairs(times) do
             if (rainbowIndex == 1) then hidden = false else hidden = true end
-            lines = combineTables(lines, applyColorToTime(rainbowTable[rainbowIndex], offset, hidden))
+            lines = combineTables(lines, applyColorToTime(rainbowTable[rainbowIndex], time, hidden))
             rainbowIndex = rainbowIndex + 1
             if (rainbowIndex > #rainbowTable) then
                 rainbowIndex = 1

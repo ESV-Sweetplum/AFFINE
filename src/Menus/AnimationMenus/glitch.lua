@@ -2,7 +2,6 @@ function GlitchMenu()
     local settings = parameterWorkflow("glitch", 'msxBounds1', 'msxBounds2', 'lineCount', 'progressionExponent', 'fps',
         'spacing')
 
-    local offsets = getStartAndEndNoteOffsets()
 
     if RangeActivated(offsets) then
         local currentTime = offsets.startOffset

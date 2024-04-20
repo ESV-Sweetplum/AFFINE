@@ -8,7 +8,6 @@ function SpectrumMenu()
             value = false
         })
 
-    local offsets = getStartAndEndNoteOffsets()
 
     if RangeActivated(offsets) then
         local currentTime = offsets.startOffset + settings.spacing

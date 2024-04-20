@@ -1,7 +1,6 @@
 function FixedRandomMenu()
     local settings = parameterWorkflow("fixed_random", 'msxBounds', 'lineCount', 'delay', 'spacing')
 
-    local offsets = getStartAndEndNoteOffsets()
 
     if NoteActivated(offsets) then
         msxTable = {}

@@ -2,7 +2,6 @@ function ExpansionContractionMenu()
     local settings = parameterWorkflow("animation_expansion_contraction", 'msxBounds', 'distance', 'progressionExponent',
         'spacing')
 
-    local offsets = getStartAndEndNoteOffsets()
 
     if RangeActivated(offsets) then
         local currentTime = offsets.startOffset + settings.spacing

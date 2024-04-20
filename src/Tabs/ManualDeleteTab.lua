@@ -11,7 +11,6 @@ function ManualDeleteTab()
     addSeparator()
     settings.deletionType = deletionTypeIndex + 1
 
-    local offsets = getStartAndEndNoteOffsets()
 
     if (RangeActivated(offsets, "Remove")) then
         svs = getSVsInRange(offsets.startOffset, offsets.endOffset)

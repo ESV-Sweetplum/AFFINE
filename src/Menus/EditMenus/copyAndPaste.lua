@@ -7,7 +7,6 @@ function CopyAndPasteMenu()
         value = true
     })
 
-    local offsets = getStartAndEndNoteOffsets()
 
     local tbl = {
         storedLines = {},

@@ -2,7 +2,6 @@ function BasicManualAnimationMenu()
     local settings = parameterWorkflow("animation_manual", 'msxList1', 'msxList2', 'progressionExponent', 'fps',
         'spacing')
 
-    local offsets = getStartAndEndNoteOffsets()
 
     if RangeActivated(offsets) then
         startMsxTable = table.split(settings.msxList1, "%S+")

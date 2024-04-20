@@ -1,21 +1,21 @@
 function StandardAtNotesMenu(preservationType)
-    local offsets = getSelectedOffsets()
+    local times = getSelectedOffsets()
 
-    if NoteActivated(offsets) then
+    if NoteActivated(times) then
         local lines = {}
 
-        if (type(offsets) == "integer") then return end
+        if (type(times) == "integer") then return end
 
         if (preservationType == 1) then -- PRESERVE SNAP
-            for _, offset in pairs(offsets) do
-                lines = combineTables(lines, keepColorLine(offset))
+            for _, time in pairs(times) do
+                lines = combineTables(lines, keepColorLine(time))
             end
         else -- PRESERVE LOCATION
-            for _, offset in pairs(offsets) do
-                table.insert(lines, line(offset))
+            for _, time in pairs(times) do
+                table.insert(lines, line(time))
             end
         end
-        lines = cleanLines(lines, offsets[1], offsets[#offsets] + 10)
+        lines = cleanLines(lines, times[1], times[#times] + 10)
 
         actions.PlaceTimingPointBatch(lines)
     end

@@ -27,7 +27,6 @@ function ConvergeDivergeMenu()
             sameLine = true
         })
 
-    local offsets = getStartAndEndNoteOffsets()
 
     if RangeActivated(offsets) then
         local currentTime = offsets.startOffset + settings.spacing

@@ -252,19 +252,19 @@ end
 function StandardRainbowMenu()
     local settings = parameterWorkflow("rainbow", "colorList")
 
-    local offsets = getSelectedOffsets()
-    if NoteActivated(offsets) then
+    local times = getSelectedOffsets()
+    if NoteActivated(times) then
         local lines = {}
         local rainbowTable = table.split(settings.colorList, "%S+")
         local rainbowIndex = 1
 
-        if (type(offsets) == "integer") then return end
+        if (type(times) == "integer") then return end
 
         local hidden = false
 
-        for _, offset in pairs(offsets) do
+        for _, time in pairs(times) do
             if (rainbowIndex == 1) then hidden = false else hidden = true end
-            lines = combineTables(lines, applyColorToTime(rainbowTable[rainbowIndex], offset, hidden))
+            lines = combineTables(lines, applyColorToTime(rainbowTable[rainbowIndex], time, hidden))
             rainbowIndex = rainbowIndex + 1
             if (rainbowIndex > #rainbowTable) then
                 rainbowIndex = 1
@@ -278,23 +278,23 @@ function StandardRainbowMenu()
 end
 
 function StandardAtNotesMenu(preservationType)
-    local offsets = getSelectedOffsets()
+    local times = getSelectedOffsets()
 
-    if NoteActivated(offsets) then
+    if NoteActivated(times) then
         local lines = {}
 
-        if (type(offsets) == "integer") then return end
+        if (type(times) == "integer") then return end
 
         if (preservationType == 1) then -- PRESERVE SNAP
-            for _, offset in pairs(offsets) do
-                lines = combineTables(lines, keepColorLine(offset))
+            for _, time in pairs(times) do
+                lines = combineTables(lines, keepColorLine(time))
             end
         else -- PRESERVE LOCATION
-            for _, offset in pairs(offsets) do
-                table.insert(lines, line(offset))
+            for _, time in pairs(times) do
+                table.insert(lines, line(time))
             end
         end
-        lines = cleanLines(lines, offsets[1], offsets[#offsets] + 10)
+        lines = cleanLines(lines, times[1], times[#times] + 10)
 
         actions.PlaceTimingPointBatch(lines)
     end
@@ -942,8 +942,6 @@ function DynamicBoundaryMenu()
             label = { "Change Bottom Bound", "Change Top Bound" },
             value = true
         })
-
-    local offsets = getStartAndEndNoteOffsets()
 
     if RangeActivated(offsets) then
         local currentTime = offsets.startOffset + settings.spacing
@@ -2240,6 +2238,7 @@ end
 globalData = {} ---@type AffineSaveTable[]
 debugText = ""
 local loaded = false
+offsets = { startTime = -1, endTime = -1 }
 
 function draw()
     imgui.Begin("AFFINE", imgui_window_flags.AlwaysAutoResize)
@@ -2328,6 +2327,8 @@ STANDARD_MENU_FUNCTIONS = {
     if (debugText:len() > 0) then
         imgui.Text(debugText)
     end
+
+    offsets = getStartAndEndNoteOffsets()
 
     saveStateVariables("main", settings)
 
