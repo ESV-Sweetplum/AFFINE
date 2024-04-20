@@ -53,6 +53,60 @@ STANDARD_MENU_LIST = {
     "Rainbow"
 }
 
+function DeleteMenu()
+    local settings = {
+        deletionType = DEFAULT_MENU_ID
+    }
+
+    retrieveStateVariables("deletion", settings)
+
+    local deletionTypeIndex = settings.deletionType - 1
+    local _, deletionTypeIndex = imgui.Combo("Deletion Type", deletionTypeIndex, DELETION_TYPE_LIST,
+        #DELETION_TYPE_LIST)
+    addSeparator()
+    settings.deletionType = deletionTypeIndex + 1
+
+    local offsets = getStartAndEndNoteOffsets()
+
+    if (RangeActivated(offsets, "Remove")) then
+        svs = getSVsInRange(offsets.startOffset, offsets.endOffset)
+        lines = getLinesInRange(offsets.startOffset, offsets.endOffset)
+
+        local actionTable = {}
+
+        if (settings.deletionType % 2 ~= 0) then
+            table.insert(actionTable,
+                utils.CreateEditorAction(action_type.RemoveScrollVelocityBatch, svs))
+        end
+
+        if (settings.deletionType <= 2) then
+            table.insert(actionTable, utils.CreateEditorAction(action_type.RemoveTimingPointBatch, lines))
+        end
+
+        actions.PerformBatch(actionTable)
+    end
+
+    saveStateVariables("deletion", settings)
+end
+
+function CreateMenu(menuName, typeText, functions, list)
+    local settings = {
+        menuID = DEFAULT_MENU_ID
+    }
+
+    retrieveStateVariables(menuName, settings)
+
+    local createMenuIndex = settings.menuID - 1
+    local _, createMenuIndex = imgui.Combo(typeText .. " Type", createMenuIndex, list,
+        #list)
+    addSeparator()
+    settings.menuID = createMenuIndex + 1
+
+    chooseMenu(functions, settings.menuID)
+
+    saveStateVariables(menuName, settings)
+end
+
 function StandardSpreadMenu()
     local parameterTable = constructParameters('distance')
 
@@ -1465,9 +1519,9 @@ ANIMATION_MENU_FUNCTIONS = {
 }
 
 CREATE_MENU_FUNCTIONS = {
-    function () CreateMenu("Standard", "Standard Placement", STANDARD_MENU_FUNCTIONS) end,
-    function () CreateMenu("Fixed", "Fixed Placement", FIXED_MENU_FUNCTIONS) end,
-    function () CreateMenu("Animation", "Animation", ANIMATION_MENU_FUNCTIONS) end
+    function () CreateMenu("Standard", "Standard Placement", STANDARD_MENU_FUNCTIONS, STANDARD_MENU_LIST) end,
+    function () CreateMenu("Fixed", "Fixed Placement", FIXED_MENU_FUNCTIONS, FIXED_MENU_LIST) end,
+    function () CreateMenu("Animation", "Animation", ANIMATION_MENU_FUNCTIONS, ANIMATION_MENU_LIST) end
 }
 
 FIXED_MENU_FUNCTIONS = {
@@ -1495,7 +1549,7 @@ STANDARD_MENU_FUNCTIONS = {
     end
 
     if imgui.BeginTabItem("Delete") then
-        DeletionMenu()
+        DeleteMenu()
         imgui.EndTabItem()
     end
 
@@ -1504,114 +1558,6 @@ STANDARD_MENU_FUNCTIONS = {
     saveStateVariables("main", settings)
 
     imgui.End()
-end
-
-function CreateMenu(menuName, typeText, functions)
-    local settings = {
-        menuID = DEFAULT_MENU_ID
-    }
-
-    retrieveStateVariables(menuName, settings)
-
-    local createMenuIndex = settings.menuID - 1
-    local _, createMenuIndex = imgui.Combo(typeText .. " Type", createMenuIndex, ANIMATION_MENU_LIST,
-        #ANIMATION_MENU_LIST)
-    addSeparator()
-    settings.menuID = createMenuIndex + 1
-
-    chooseMenu(functions, settings.menuID)
-
-    saveStateVariables(menuName, settings)
-end
-
-function AnimationMenu()
-    CreateMenu("Animation", "Animation", ANIMATION_MENU_FUNCTIONS)
-    -- local settings = {
-    --     menuID = DEFAULT_MENU_ID
-    -- }
-
-    -- retrieveStateVariables("animation", settings)
-
-    -- local animationMenuIndex = settings.menuID - 1
-    -- local _, animationMenuIndex = imgui.Combo("Animation Type", animationMenuIndex, ANIMATION_MENU_LIST,
-    --     #ANIMATION_MENU_LIST)
-    -- addSeparator()
-    -- settings.menuID = animationMenuIndex + 1
-
-    -- chooseMenu(ANIMATION_MENU_FUNCTIONS, settings.menuID)
-
-    -- saveStateVariables("animation", settings)
-end
-
-function StandardMenu()
-    local settings = {
-        menuID = DEFAULT_MENU_ID
-    }
-
-    retrieveStateVariables("standard", settings)
-
-    local standardMenuIndex = settings.menuID - 1
-    local _, standardMenuIndex = imgui.Combo("Standard Placement Type", standardMenuIndex, STANDARD_MENU_LIST,
-        #STANDARD_MENU_LIST)
-    addSeparator()
-    settings.menuID = standardMenuIndex + 1
-
-    chooseMenu(STANDARD_MENU_FUNCTIONS, settings.menuID)
-
-    saveStateVariables("standard", settings)
-end
-
-function FixedMenu()
-    local settings = {
-        menuID = DEFAULT_MENU_ID
-    }
-
-    retrieveStateVariables("fixed", settings)
-
-    local fixedMenuIndex = settings.menuID - 1
-    local _, fixedMenuIndex = imgui.Combo("Fixed Placement Type", fixedMenuIndex, FIXED_MENU_LIST, #FIXED_MENU_LIST)
-    addSeparator()
-    settings.menuID = fixedMenuIndex + 1
-
-    chooseMenu(FIXED_MENU_FUNCTIONS, settings.menuID)
-
-    saveStateVariables("fixed", settings)
-end
-
-function DeletionMenu()
-    local settings = {
-        deletionType = DEFAULT_MENU_ID
-    }
-
-    retrieveStateVariables("deletion", settings)
-
-    local deletionTypeIndex = settings.deletionType - 1
-    local _, deletionTypeIndex = imgui.Combo("Deletion Type", deletionTypeIndex, DELETION_TYPE_LIST,
-        #DELETION_TYPE_LIST)
-    addSeparator()
-    settings.deletionType = deletionTypeIndex + 1
-
-    local offsets = getStartAndEndNoteOffsets()
-
-    if (RangeActivated(offsets, "Remove")) then
-        svs = getSVsInRange(offsets.startOffset, offsets.endOffset)
-        lines = getLinesInRange(offsets.startOffset, offsets.endOffset)
-
-        local actionTable = {}
-
-        if (settings.deletionType % 2 ~= 0) then
-            table.insert(actionTable,
-                utils.CreateEditorAction(action_type.RemoveScrollVelocityBatch, svs))
-        end
-
-        if (settings.deletionType <= 2) then
-            table.insert(actionTable, utils.CreateEditorAction(action_type.RemoveTimingPointBatch, lines))
-        end
-
-        actions.PerformBatch(actionTable)
-    end
-
-    saveStateVariables("deletion", settings)
 end
 
 function addPadding()
