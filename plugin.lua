@@ -1296,13 +1296,13 @@ end
 ---Returns true if a note is selected.
 ---@return boolean
 function noteSelected()
-    return offsets ~= -1
+    return offsets.startOffset ~= -1
 end
 
 ---Returns true if two or more notes are selected, with differing offsets.
 ---@return boolean
 function rangeSelected()
-    return (offsets ~= -1) and (offsets.startOffset ~= offsets.endOffset)
+    return offsets.endOffset ~= -1
 end
 
 ---When given a progression value (0-1), returns the numerical distance along the progress line.
@@ -1584,28 +1584,34 @@ function constructParameters(...)
 end
 
 ---Gets the first and last note offsets.
----@return -1 | {startOffset: integer, endOffset: integer}
+---@return {startOffset: integer, endOffset: integer}
 function getStartAndEndNoteOffsets()
     local offsets = {}
 
     if (#state.SelectedHitObjects == 0) then
-        return -1
+        return { startOffset = -1, endOffset = -1 }
     end
 
-    for i, hitObject in pairs(state.SelectedHitObjects) do
-        offsets[i] = hitObject.StartTime
+    for _, hitObject in pairs(state.SelectedHitObjects) do
+        if (table.contains(offsets, hitObject.StartTime)) then goto continue end
+        table.insert(offsets, hitObject.StartTime)
+        ::continue::
+    end
+
+    if (#offsets == 1) then
+        return { startOffset = offsets[1], endOffset = -1 }
     end
 
     return { startOffset = math.min(table.unpack(offsets)), endOffset = math.max(table.unpack(offsets)) }
 end
 
 ---Gets all selected note offsets, with no duplicate values.
----@return -1 | integer[]
+---@return integer[]
 function getSelectedOffsets()
     local offsets = {}
 
     if (#state.SelectedHitObjects == 0) then
-        return -1
+        return {}
     end
 
     for _, hitObject in pairs(state.SelectedHitObjects) do
@@ -2209,7 +2215,7 @@ end
 globalData = {} ---@type AffineSaveTable[]
 debugText = ""
 local loaded = false
-offsets = { startTime = -1, endTime = -1 }
+offsets = { startOffset = -1, endOffset = -1 }
 
 function draw()
     imgui.Begin("AFFINE", imgui_window_flags.AlwaysAutoResize)

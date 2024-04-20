@@ -7,7 +7,7 @@ end
 globalData = {} ---@type AffineSaveTable[]
 debugText = ""
 local loaded = false
-offsets = { startTime = -1, endTime = -1 }
+offsets = { startOffset = -1, endOffset = -1 }
 
 function draw()
     imgui.Begin("AFFINE", imgui_window_flags.AlwaysAutoResize)

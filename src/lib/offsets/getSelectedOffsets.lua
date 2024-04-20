@@ -1,10 +1,10 @@
 ---Gets all selected note offsets, with no duplicate values.
----@return -1 | integer[]
+---@return integer[]
 function getSelectedOffsets()
     local offsets = {}
 
     if (#state.SelectedHitObjects == 0) then
-        return -1
+        return {}
     end
 
     for _, hitObject in pairs(state.SelectedHitObjects) do
