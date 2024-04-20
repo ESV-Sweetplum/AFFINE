@@ -1,5 +1,6 @@
 function StaticBoundaryMenu()
-    local parameterTable = constructParameters("msxBounds", "distance", "progressionExponent", "spacing",
+    local settings = parameterWorkflow("animation_static_polynomial", "msxBounds", "distance", "progressionExponent",
+        "spacing",
         "boundCoefficients", {
             inputType = "RadioBoolean",
             key = "evalUnder",
@@ -7,10 +8,6 @@ function StaticBoundaryMenu()
             value = true
         })
 
-    retrieveParameters("animation_static_polynomial", parameterTable)
-
-    parameterInputs(parameterTable)
-    local settings = parametersToSettings(parameterTable)
     local offsets = getStartAndEndNoteOffsets()
 
     if RangeActivated(offsets) then
@@ -55,8 +52,6 @@ function StaticBoundaryMenu()
     end
 
     Plot(settings.boundCoefficients, settings.progressionExponent)
-
-    saveParameters("animation_static_polynomial", parameterTable)
 end
 
 function placeStaticFrame(startTime, min, max, lineDistance, spacing, boundary, evalUnder)

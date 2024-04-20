@@ -1,5 +1,6 @@
 function DynamicBoundaryMenu()
-    local parameterTable = constructParameters("msxBounds", 'distance', "progressionExponent", "spacing",
+    local settings = parameterWorkflow("animation_dynamic_polynomial", "msxBounds", 'distance', "progressionExponent",
+        "spacing",
         "boundCoefficients", {
             inputType = "RadioBoolean",
             key = "evalOver",
@@ -7,10 +8,6 @@ function DynamicBoundaryMenu()
             value = true
         })
 
-    retrieveParameters("animation_dynamic_polynomial", parameterTable)
-
-    parameterInputs(parameterTable)
-    local settings = parametersToSettings(parameterTable)
     local offsets = getStartAndEndNoteOffsets()
 
     if RangeActivated(offsets) then
@@ -54,8 +51,6 @@ function DynamicBoundaryMenu()
         setDebug("Line Count: " .. #lines .. " // SV Count: " .. #svs)
     end
     Plot(settings.boundCoefficients, settings.progressionExponent)
-
-    saveParameters("animation_dynamic_polynomial", parameterTable)
 end
 
 function placeDynamicFrame(startTime, min, max, lineDistance, spacing, polynomialHeight, evalOver)

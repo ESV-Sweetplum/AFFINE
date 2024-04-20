@@ -1,10 +1,7 @@
 function ExpansionContractionMenu()
-    local parameterTable = constructParameters('msxBounds', 'distance', 'progressionExponent', 'spacing')
+    local settings = parameterWorkflow("animation_expansion_contraction", 'msxBounds', 'distance', 'progressionExponent',
+        'spacing')
 
-    retrieveParameters("animation_expansion_contraction", parameterTable)
-
-    parameterInputs(parameterTable)
-    local settings = parametersToSettings(parameterTable)
     local offsets = getStartAndEndNoteOffsets()
 
     if RangeActivated(offsets) then
@@ -47,6 +44,4 @@ function ExpansionContractionMenu()
             constructDebugTable(lines, svs, stats))
         setDebug("Line Count: " .. #lines .. " // SV Count: " .. #svs)
     end
-
-    saveParameters("animation_expansion_contraction", parameterTable)
 end

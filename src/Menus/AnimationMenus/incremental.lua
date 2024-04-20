@@ -1,5 +1,5 @@
 function IncrementalAnimationMenu()
-    local parameterTable = constructParameters('msxList', 'spacing', {
+    local settings = parameterWorkflow("animation_incremental", 'msxList', 'spacing', {
         inputType = "RadioBoolean",
         key = "bounce",
         label = { "12341234", "1234321" },
@@ -11,11 +11,6 @@ function IncrementalAnimationMenu()
         value = true,
         sameLine = true
     })
-
-    retrieveParameters("animation_incremental", parameterTable)
-
-    parameterInputs(parameterTable)
-    local settings = parametersToSettings(parameterTable)
 
     local offsets = getStartAndEndNoteOffsets()
 
@@ -73,6 +68,4 @@ function IncrementalAnimationMenu()
             constructDebugTable(lines, svs))
         setDebug("Line Count: " .. #lines .. " // SV Count: " .. #svs)
     end
-
-    saveParameters("animation_incremental", parameterTable)
 end

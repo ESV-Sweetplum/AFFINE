@@ -1,12 +1,7 @@
 function GlitchMenu()
-    local parameterTable = constructParameters('msxBounds1', 'msxBounds2', 'lineCount', 'progressionExponent', 'fps',
+    local settings = parameterWorkflow("glitch", 'msxBounds1', 'msxBounds2', 'lineCount', 'progressionExponent', 'fps',
         'spacing')
 
-    retrieveParameters("glitch", parameterTable)
-
-    parameterInputs(parameterTable)
-
-    local settings = parametersToSettings(parameterTable)
     local offsets = getStartAndEndNoteOffsets()
 
     if RangeActivated(offsets) then
@@ -51,8 +46,4 @@ function GlitchMenu()
             constructDebugTable(lines, svs, stats))
         setDebug("Line Count: " .. #lines .. " // SV Count: " .. #svs)
     end
-
-
-
-    saveParameters("glitch", parameterTable)
 end

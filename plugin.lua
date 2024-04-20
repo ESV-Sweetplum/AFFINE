@@ -188,12 +188,8 @@ function AutomaticDeleteTab()
 end
 
 function StandardSpreadMenu()
-    local parameterTable = constructParameters('distance')
+    local settings = parameterWorkflow("standard_spread", 'distance')
 
-    retrieveParameters('standard_spread', parameterTable)
-
-    parameterInputs(parameterTable)
-    local settings = parametersToSettings(parameterTable)
     local offsets = getStartAndEndNoteOffsets()
 
     if RangeActivated(offsets) then
@@ -225,22 +221,16 @@ function StandardSpreadMenu()
 
         actions.PlaceTimingPointBatch(lines)
     end
-
-    saveParameters('standard_spread', parameterTable)
 end
 
 function SetVisibilityMenu()
-    local parameterTable = constructParameters({
+    local settings = parameterWorkflow("set_visibility", {
         inputType = "RadioBoolean",
         key = "enable",
         label = { "Turn Lines Invisible", "Turn Lines Visible" },
         value = false
     })
 
-    retrieveParameters("set_visibility", parameterTable)
-
-    parameterInputs(parameterTable)
-    local settings = parametersToSettings(parameterTable)
     local offsets = getStartAndEndNoteOffsets()
 
     if NoteActivated(offsets) then
@@ -257,17 +247,11 @@ function SetVisibilityMenu()
             utils.CreateEditorAction(action_type.AddTimingPointBatch, linesToAdd)
         })
     end
-
-    saveParameters("set_visibility", parameterTable)
 end
 
 function StandardRainbowMenu()
-    local parameterTable = constructParameters("colorList")
+    local settings = parameterWorkflow("rainbow", "colorList")
 
-    retrieveParameters("rainbow", parameterTable)
-
-    parameterInputs(parameterTable)
-    local settings = parametersToSettings(parameterTable)
     local offsets = getSelectedOffsets()
     if NoteActivated(offsets) then
         local lines = {}
@@ -291,8 +275,6 @@ function StandardRainbowMenu()
 
         actions.PlaceTimingPointBatch(lines)
     end
-
-    saveParameters("rainbow", parameterTable)
 end
 
 function StandardAtNotesMenu(preservationType)
@@ -319,12 +301,7 @@ function StandardAtNotesMenu(preservationType)
 end
 
 function FixedRandomMenu()
-    local parameterTable = constructParameters('msxBounds', 'lineCount', 'delay', 'spacing')
-
-    retrieveParameters("fixed_random", parameterTable)
-
-    parameterInputs(parameterTable)
-    local settings = parametersToSettings(parameterTable)
+    local settings = parameterWorkflow("fixed_random", 'msxBounds', 'lineCount', 'delay', 'spacing')
 
     local offsets = getStartAndEndNoteOffsets()
 
@@ -338,17 +315,11 @@ function FixedRandomMenu()
         generateAffines(tbl.lines, tbl.svs, offsets.startOffset, offsets.endOffset, "Random Fixed")
         setDebug("Line Count: " .. #tbl.lines .. " // SV Count: " .. #tbl.svs)
     end
-
-    saveParameters("fixed_random", parameterTable)
 end
 
 function FixedManualMenu()
-    local parameterTable = constructParameters('msxList', 'offset', 'delay', 'spacing')
+    local settings = parameterWorkflow("fixed_manual", 'msxList', 'offset', 'delay', 'spacing')
 
-    retrieveParameters("fixed_manual", parameterTable)
-
-    parameterInputs(parameterTable)
-    local settings = parametersToSettings(parameterTable)
     local offsets = getStartAndEndNoteOffsets()
 
     if NoteActivated(offsets) then
@@ -358,17 +329,11 @@ function FixedManualMenu()
 
         setDebug("Line Count: " .. #tbl.lines .. " // SV Count: " .. #tbl.svs)
     end
-
-    saveParameters("fixed_manual", parameterTable)
 end
 
 function FixedAutomaticMenu()
-    local parameterTable = constructParameters('msxBounds', 'distance', 'delay', 'spacing')
+    local settings = parameterWorkflow("fixed_automatic", 'msxBounds', 'distance', 'delay', 'spacing')
 
-    retrieveParameters("fixed_automatic", parameterTable)
-
-    parameterInputs(parameterTable)
-    local settings = parametersToSettings(parameterTable)
     local offsets = getStartAndEndNoteOffsets()
 
     if NoteActivated(offsets) then
@@ -379,8 +344,6 @@ function FixedAutomaticMenu()
         generateAffines(tbl.lines, tbl.svs, offsets.startOffset, offsets.endOffset, "Automatic Fixed")
         setDebug("Line Count: " .. #tbl.lines .. " // SV Count: " .. #tbl.svs)
     end
-
-    saveParameters("fixed_automatic", parameterTable)
 end
 
 function placeAutomaticFrame(startTime, low, high, spacing, distance)
@@ -398,17 +361,13 @@ end
 
 ---@diagnostic disable: need-check-nil, inject-field
 function CopyAndPasteMenu()
-    local parameterTable = constructParameters({
+    local settings = parameterWorkflow("copy_and_paste", {
         inputType = "Checkbox",
         key = "includeBM",
         label = "Include Bookmarks?",
         value = true
     })
 
-    retrieveParameters("copy_and_paste", parameterTable)
-    parameterInputs(parameterTable)
-
-    local settings = parametersToSettings(parameterTable)
     local offsets = getStartAndEndNoteOffsets()
 
     local tbl = {
@@ -484,11 +443,11 @@ function CopyAndPasteMenu()
         " Stored Lines // " .. #tbl.storedSVs .. " Stored SVs // " .. #tbl.storedBookmarks .. " Stored Bookmarks")
 
     saveStateVariables("CopyAndPaste", tbl)
-    saveParameters("copy_and_paste", parameterTable)
 end
 
 function SpectrumMenu()
-    local parameterTable = constructParameters("center", "maxSpread", "distance", "progressionExponent", "spacing",
+    local settings = parameterWorkflow("animation_spectrum", "center", "maxSpread", "distance", "progressionExponent",
+        "spacing",
         "boundCoefficients", {
             inputType = "Checkbox",
             key = "inverse",
@@ -496,11 +455,6 @@ function SpectrumMenu()
             value = false
         })
 
-    retrieveParameters("animation_spectrum", parameterTable)
-
-    parameterInputs(parameterTable)
-
-    local settings = parametersToSettings(parameterTable)
     local offsets = getStartAndEndNoteOffsets()
 
     if RangeActivated(offsets) then
@@ -544,8 +498,6 @@ function SpectrumMenu()
         setDebug("Line Count: " .. #lines .. " // SV Count: " .. #svs)
     end
     Plot(settings.boundCoefficients, settings.progressionExponent)
-
-    saveParameters("animation_spectrum", parameterTable)
 end
 
 function placeSpectrumFrame(startTime, center, maxSpread, lineDistance, spacing, boundary, inverse)
@@ -581,12 +533,9 @@ function placeSpectrumFrame(startTime, center, maxSpread, lineDistance, spacing,
 end
 
 function BasicManualAnimationMenu()
-    local parameterTable = constructParameters('msxList1', 'msxList2', 'progressionExponent', 'fps', 'spacing')
+    local settings = parameterWorkflow("animation_manual", 'msxList1', 'msxList2', 'progressionExponent', 'fps',
+        'spacing')
 
-    retrieveParameters("animation_manual", parameterTable)
-    parameterInputs(parameterTable)
-
-    local settings = parametersToSettings(parameterTable)
     local offsets = getStartAndEndNoteOffsets()
 
     if RangeActivated(offsets) then
@@ -634,12 +583,10 @@ function BasicManualAnimationMenu()
             constructDebugTable(lines, svs, stats))
         setDebug("Line Count: " .. #lines .. " // SV Count: " .. #svs)
     end
-
-    saveParameters("animation_manual", parameterTable)
 end
 
 function IncrementalAnimationMenu()
-    local parameterTable = constructParameters('msxList', 'spacing', {
+    local settings = parameterWorkflow("animation_incremental", 'msxList', 'spacing', {
         inputType = "RadioBoolean",
         key = "bounce",
         label = { "12341234", "1234321" },
@@ -651,11 +598,6 @@ function IncrementalAnimationMenu()
         value = true,
         sameLine = true
     })
-
-    retrieveParameters("animation_incremental", parameterTable)
-
-    parameterInputs(parameterTable)
-    local settings = parametersToSettings(parameterTable)
 
     local offsets = getStartAndEndNoteOffsets()
 
@@ -713,19 +655,12 @@ function IncrementalAnimationMenu()
             constructDebugTable(lines, svs))
         setDebug("Line Count: " .. #lines .. " // SV Count: " .. #svs)
     end
-
-    saveParameters("animation_incremental", parameterTable)
 end
 
 function GlitchMenu()
-    local parameterTable = constructParameters('msxBounds1', 'msxBounds2', 'lineCount', 'progressionExponent', 'fps',
+    local settings = parameterWorkflow("glitch", 'msxBounds1', 'msxBounds2', 'lineCount', 'progressionExponent', 'fps',
         'spacing')
 
-    retrieveParameters("glitch", parameterTable)
-
-    parameterInputs(parameterTable)
-
-    local settings = parametersToSettings(parameterTable)
     local offsets = getStartAndEndNoteOffsets()
 
     if RangeActivated(offsets) then
@@ -769,17 +704,12 @@ function GlitchMenu()
             constructDebugTable(lines, svs, stats))
         setDebug("Line Count: " .. #lines .. " // SV Count: " .. #svs)
     end
-
-    saveParameters("glitch", parameterTable)
 end
 
 function ExpansionContractionMenu()
-    local parameterTable = constructParameters('msxBounds', 'distance', 'progressionExponent', 'spacing')
+    local settings = parameterWorkflow("animation_expansion_contraction", 'msxBounds', 'distance', 'progressionExponent',
+        'spacing')
 
-    retrieveParameters("animation_expansion_contraction", parameterTable)
-
-    parameterInputs(parameterTable)
-    local settings = parametersToSettings(parameterTable)
     local offsets = getStartAndEndNoteOffsets()
 
     if RangeActivated(offsets) then
@@ -822,12 +752,11 @@ function ExpansionContractionMenu()
             constructDebugTable(lines, svs, stats))
         setDebug("Line Count: " .. #lines .. " // SV Count: " .. #svs)
     end
-
-    saveParameters("animation_expansion_contraction", parameterTable)
 end
 
 function ConvergeDivergeMenu()
-    local parameterTable = constructParameters("center", "maxSpread", "lineCount", "lineDuration", "progressionExponent",
+    local settings = parameterWorkflow("animation_convergeDiverge", "center", "maxSpread", "lineCount", "lineDuration",
+        "progressionExponent",
         "spacing", "pathCoefficients", {
             inputType = "Checkbox",
             key = "renderBelow",
@@ -854,11 +783,6 @@ function ConvergeDivergeMenu()
             sameLine = true
         })
 
-    retrieveParameters("animation_convergeDiverge", parameterTable)
-
-    parameterInputs(parameterTable)
-
-    local settings = parametersToSettings(parameterTable)
     local offsets = getStartAndEndNoteOffsets()
 
     if RangeActivated(offsets) then
@@ -933,12 +857,11 @@ function ConvergeDivergeMenu()
         setDebug("Line Count: " .. #lines .. " // SV Count: " .. #svs)
     end
     Plot(settings.pathCoefficients, settings.progressionExponent, "Line Path Over Duration of Life Cycle")
-
-    saveParameters("animation_convergeDiverge", parameterTable)
 end
 
 function StaticBoundaryMenu()
-    local parameterTable = constructParameters("msxBounds", "distance", "progressionExponent", "spacing",
+    local settings = parameterWorkflow("animation_static_polynomial", "msxBounds", "distance", "progressionExponent",
+        "spacing",
         "boundCoefficients", {
             inputType = "RadioBoolean",
             key = "evalUnder",
@@ -946,10 +869,6 @@ function StaticBoundaryMenu()
             value = true
         })
 
-    retrieveParameters("animation_static_polynomial", parameterTable)
-
-    parameterInputs(parameterTable)
-    local settings = parametersToSettings(parameterTable)
     local offsets = getStartAndEndNoteOffsets()
 
     if RangeActivated(offsets) then
@@ -993,8 +912,6 @@ function StaticBoundaryMenu()
     end
 
     Plot(settings.boundCoefficients, settings.progressionExponent)
-
-    saveParameters("animation_static_polynomial", parameterTable)
 end
 
 function placeStaticFrame(startTime, min, max, lineDistance, spacing, boundary, evalUnder)
@@ -1017,7 +934,8 @@ function placeStaticFrame(startTime, min, max, lineDistance, spacing, boundary, 
 end
 
 function DynamicBoundaryMenu()
-    local parameterTable = constructParameters("msxBounds", 'distance', "progressionExponent", "spacing",
+    local settings = parameterWorkflow("animation_dynamic_polynomial", "msxBounds", 'distance', "progressionExponent",
+        "spacing",
         "boundCoefficients", {
             inputType = "RadioBoolean",
             key = "evalOver",
@@ -1025,10 +943,6 @@ function DynamicBoundaryMenu()
             value = true
         })
 
-    retrieveParameters("animation_dynamic_polynomial", parameterTable)
-
-    parameterInputs(parameterTable)
-    local settings = parametersToSettings(parameterTable)
     local offsets = getStartAndEndNoteOffsets()
 
     if RangeActivated(offsets) then
@@ -1072,8 +986,6 @@ function DynamicBoundaryMenu()
         setDebug("Line Count: " .. #lines .. " // SV Count: " .. #svs)
     end
     Plot(settings.boundCoefficients, settings.progressionExponent)
-
-    saveParameters("animation_dynamic_polynomial", parameterTable)
 end
 
 function placeDynamicFrame(startTime, min, max, lineDistance, spacing, polynomialHeight, evalOver)
@@ -1516,6 +1428,22 @@ function retrieveParameters(menu, parameterTable)
             parameterTable[idx].value = state.GetValue(menu .. idx .. tbl.key)
         end
     end
+end
+
+---Provide a window name and parameter options, and this workflow will automatically manage state, generate input fields, and handle setting conversion.
+---@param windowName string
+---@param ... string | table
+function parameterWorkflow(windowName, ...)
+    local parameterTable = constructParameters(...)
+
+    retrieveParameters(windowName, parameterTable)
+
+    parameterInputs(parameterTable)
+    local settings = parametersToSettings(parameterTable)
+
+    saveParameters(windowName, parameterTable)
+
+    return settings
 end
 
 ---Outputs settings based on inputted parameters.

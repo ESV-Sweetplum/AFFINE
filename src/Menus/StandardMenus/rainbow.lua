@@ -1,10 +1,6 @@
 function StandardRainbowMenu()
-    local parameterTable = constructParameters("colorList")
+    local settings = parameterWorkflow("rainbow", "colorList")
 
-    retrieveParameters("rainbow", parameterTable)
-
-    parameterInputs(parameterTable)
-    local settings = parametersToSettings(parameterTable)
     local offsets = getSelectedOffsets()
     if NoteActivated(offsets) then
         local lines = {}
@@ -28,6 +24,4 @@ function StandardRainbowMenu()
 
         actions.PlaceTimingPointBatch(lines)
     end
-
-    saveParameters("rainbow", parameterTable)
 end

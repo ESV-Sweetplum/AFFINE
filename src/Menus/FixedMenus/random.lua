@@ -1,10 +1,5 @@
 function FixedRandomMenu()
-    local parameterTable = constructParameters('msxBounds', 'lineCount', 'delay', 'spacing')
-
-    retrieveParameters("fixed_random", parameterTable)
-
-    parameterInputs(parameterTable)
-    local settings = parametersToSettings(parameterTable)
+    local settings = parameterWorkflow("fixed_random", 'msxBounds', 'lineCount', 'delay', 'spacing')
 
     local offsets = getStartAndEndNoteOffsets()
 
@@ -18,7 +13,4 @@ function FixedRandomMenu()
         generateAffines(tbl.lines, tbl.svs, offsets.startOffset, offsets.endOffset, "Random Fixed")
         setDebug("Line Count: " .. #tbl.lines .. " // SV Count: " .. #tbl.svs)
     end
-
-
-    saveParameters("fixed_random", parameterTable)
 end

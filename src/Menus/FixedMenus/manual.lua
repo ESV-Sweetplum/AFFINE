@@ -1,10 +1,6 @@
 function FixedManualMenu()
-    local parameterTable = constructParameters('msxList', 'offset', 'delay', 'spacing')
+    local settings = parameterWorkflow("fixed_manual", 'msxList', 'offset', 'delay', 'spacing')
 
-    retrieveParameters("fixed_manual", parameterTable)
-
-    parameterInputs(parameterTable)
-    local settings = parametersToSettings(parameterTable)
     local offsets = getStartAndEndNoteOffsets()
 
     if NoteActivated(offsets) then
@@ -14,6 +10,4 @@ function FixedManualMenu()
 
         setDebug("Line Count: " .. #tbl.lines .. " // SV Count: " .. #tbl.svs)
     end
-
-    saveParameters("fixed_manual", parameterTable)
 end

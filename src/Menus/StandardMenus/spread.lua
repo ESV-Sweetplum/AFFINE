@@ -1,10 +1,6 @@
 function StandardSpreadMenu()
-    local parameterTable = constructParameters('distance')
+    local settings = parameterWorkflow("standard_spread", 'distance')
 
-    retrieveParameters('standard_spread', parameterTable)
-
-    parameterInputs(parameterTable)
-    local settings = parametersToSettings(parameterTable)
     local offsets = getStartAndEndNoteOffsets()
 
     if RangeActivated(offsets) then
@@ -36,6 +32,4 @@ function StandardSpreadMenu()
 
         actions.PlaceTimingPointBatch(lines)
     end
-
-    saveParameters('standard_spread', parameterTable)
 end

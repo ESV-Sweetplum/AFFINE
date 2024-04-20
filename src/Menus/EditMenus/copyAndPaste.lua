@@ -1,16 +1,12 @@
 ---@diagnostic disable: need-check-nil, inject-field
 function CopyAndPasteMenu()
-    local parameterTable = constructParameters({
+    local settings = parameterWorkflow("copy_and_paste", {
         inputType = "Checkbox",
         key = "includeBM",
         label = "Include Bookmarks?",
         value = true
     })
 
-    retrieveParameters("copy_and_paste", parameterTable)
-    parameterInputs(parameterTable)
-
-    local settings = parametersToSettings(parameterTable)
     local offsets = getStartAndEndNoteOffsets()
 
     local tbl = {
@@ -86,5 +82,4 @@ function CopyAndPasteMenu()
         " Stored Lines // " .. #tbl.storedSVs .. " Stored SVs // " .. #tbl.storedBookmarks .. " Stored Bookmarks")
 
     saveStateVariables("CopyAndPaste", tbl)
-    saveParameters("copy_and_paste", parameterTable)
 end

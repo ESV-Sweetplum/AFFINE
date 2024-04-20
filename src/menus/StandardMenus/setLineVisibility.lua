@@ -1,15 +1,11 @@
 function SetVisibilityMenu()
-    local parameterTable = constructParameters({
+    local settings = parameterWorkflow("set_visibility", {
         inputType = "RadioBoolean",
         key = "enable",
         label = { "Turn Lines Invisible", "Turn Lines Visible" },
         value = false
     })
 
-    retrieveParameters("set_visibility", parameterTable)
-
-    parameterInputs(parameterTable)
-    local settings = parametersToSettings(parameterTable)
     local offsets = getStartAndEndNoteOffsets()
 
     if NoteActivated(offsets) then
@@ -26,6 +22,4 @@ function SetVisibilityMenu()
             utils.CreateEditorAction(action_type.AddTimingPointBatch, linesToAdd)
         })
     end
-
-    saveParameters("set_visibility", parameterTable)
 end

@@ -1,5 +1,6 @@
 function ConvergeDivergeMenu()
-    local parameterTable = constructParameters("center", "maxSpread", "lineCount", "lineDuration", "progressionExponent",
+    local settings = parameterWorkflow("animation_convergeDiverge", "center", "maxSpread", "lineCount", "lineDuration",
+        "progressionExponent",
         "spacing", "pathCoefficients", {
             inputType = "Checkbox",
             key = "renderBelow",
@@ -26,11 +27,6 @@ function ConvergeDivergeMenu()
             sameLine = true
         })
 
-    retrieveParameters("animation_convergeDiverge", parameterTable)
-
-    parameterInputs(parameterTable)
-
-    local settings = parametersToSettings(parameterTable)
     local offsets = getStartAndEndNoteOffsets()
 
     if RangeActivated(offsets) then
@@ -106,6 +102,4 @@ function ConvergeDivergeMenu()
         setDebug("Line Count: " .. #lines .. " // SV Count: " .. #svs)
     end
     Plot(settings.pathCoefficients, settings.progressionExponent, "Line Path Over Duration of Life Cycle")
-
-    saveParameters("animation_convergeDiverge", parameterTable)
 end

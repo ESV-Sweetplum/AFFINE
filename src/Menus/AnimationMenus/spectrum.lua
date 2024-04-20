@@ -1,5 +1,6 @@
 function SpectrumMenu()
-    local parameterTable = constructParameters("center", "maxSpread", "distance", "progressionExponent", "spacing",
+    local settings = parameterWorkflow("animation_spectrum", "center", "maxSpread", "distance", "progressionExponent",
+        "spacing",
         "boundCoefficients", {
             inputType = "Checkbox",
             key = "inverse",
@@ -7,11 +8,6 @@ function SpectrumMenu()
             value = false
         })
 
-    retrieveParameters("animation_spectrum", parameterTable)
-
-    parameterInputs(parameterTable)
-
-    local settings = parametersToSettings(parameterTable)
     local offsets = getStartAndEndNoteOffsets()
 
     if RangeActivated(offsets) then
@@ -56,8 +52,6 @@ function SpectrumMenu()
         setDebug("Line Count: " .. #lines .. " // SV Count: " .. #svs)
     end
     Plot(settings.boundCoefficients, settings.progressionExponent)
-
-    saveParameters("animation_spectrum", parameterTable)
 end
 
 function placeSpectrumFrame(startTime, center, maxSpread, lineDistance, spacing, boundary, inverse)

@@ -1,10 +1,6 @@
 function FixedAutomaticMenu()
-    local parameterTable = constructParameters('msxBounds', 'distance', 'delay', 'spacing')
+    local settings = parameterWorkflow("fixed_automatic", 'msxBounds', 'distance', 'delay', 'spacing')
 
-    retrieveParameters("fixed_automatic", parameterTable)
-
-    parameterInputs(parameterTable)
-    local settings = parametersToSettings(parameterTable)
     local offsets = getStartAndEndNoteOffsets()
 
     if NoteActivated(offsets) then
@@ -15,8 +11,6 @@ function FixedAutomaticMenu()
         generateAffines(tbl.lines, tbl.svs, offsets.startOffset, offsets.endOffset, "Automatic Fixed")
         setDebug("Line Count: " .. #tbl.lines .. " // SV Count: " .. #tbl.svs)
     end
-
-    saveParameters("fixed_automatic", parameterTable)
 end
 
 function placeAutomaticFrame(startTime, low, high, spacing, distance)

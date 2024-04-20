@@ -1,10 +1,7 @@
 function BasicManualAnimationMenu()
-    local parameterTable = constructParameters('msxList1', 'msxList2', 'progressionExponent', 'fps', 'spacing')
+    local settings = parameterWorkflow("animation_manual", 'msxList1', 'msxList2', 'progressionExponent', 'fps',
+        'spacing')
 
-    retrieveParameters("animation_manual", parameterTable)
-    parameterInputs(parameterTable)
-
-    local settings = parametersToSettings(parameterTable)
     local offsets = getStartAndEndNoteOffsets()
 
     if RangeActivated(offsets) then
@@ -52,6 +49,4 @@ function BasicManualAnimationMenu()
             constructDebugTable(lines, svs, stats))
         setDebug("Line Count: " .. #lines .. " // SV Count: " .. #svs)
     end
-
-    saveParameters("animation_manual", parameterTable)
 end
