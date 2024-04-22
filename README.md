@@ -1,5 +1,9 @@
 # AFFINE v1.1.2
 
+![GitHub commit activity](https://img.shields.io/github/commit-activity/w/ESV-Sweetplum/AFFINE)
+![GitHub commits since latest release](https://img.shields.io/github/commits-since/ESV-Sweetplum/AFFINE/latest)
+![GitHub License](https://img.shields.io/github/license/ESV-Sweetplum/AFFINE)
+
 AFFINE (pronounced aff-een) is a [Quaver](https://www.quavergame.com) plugin designed to simplify map making. In particular, AFFINE assists with the creation of static and dynamic timing lines.
 
 ## Features:
