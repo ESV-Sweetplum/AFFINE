@@ -6,5 +6,3 @@
 ---@field upper number
 ---@field numLines number
 ---@field numSVs number
----@field lineOffsets number[]
----@field svOffsets number[]

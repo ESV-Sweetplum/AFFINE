@@ -32,17 +32,7 @@ function generateAffines(lines, svs, lower, upper, affineType, debugData)
         upper = upper,
         numLines = #lines,
         numSVs = #svs,
-        lineOffsets = {},
-        svOffsets = {}
     } ---@type AffineSaveTable
-
-    for _, line in pairs(lines) do
-        table.insert(newGlobalTable.lineOffsets, line.StartTime)
-    end
-
-    for _, sv in pairs(svs) do
-        table.insert(newGlobalTable.svOffsets, sv.StartTime)
-    end
 
     table.insert(globalData, newGlobalTable)
 
