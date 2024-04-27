@@ -15,7 +15,7 @@ DEFAULT_MAX_SPREAD = 200                     -- integer
 DEFAULT_PROGRESSION_EXPONENT = 1             -- float
 DEFAULT_BOUND_COEFFICIENTS = { 0, -4, 4, 0 } -- integer[4]
 DEFAULT_PATH_COEFFICIENTS = { -1, 3, -3, 1 } -- integer[4]
-DEFAULT_COLOR_LIST = '1 8 4 16 2 12 3 6'     -- integer[any]
+DEFAULT_COLOR_LIST = '1 8 4 16 12 2 3 6'     -- integer[any]
 
 INCREMENT = 64                               -- integer
 MAX_ITERATIONS = 1000                        -- integer
@@ -143,28 +143,8 @@ function AutomaticDeleteTab()
         if (imgui.Button("Delete selected item")) then
             tbl = globalData[selectedID]
 
-            local linesToRemove = {}
-            local svsToRemove = {}
-            -- local bookmarksToRemove = {
-            --     findBookmark(tbl.lower, tbl.lower - 1, tbl.upper),
-            --     findBookmark(tbl.upper, tbl.lower, tbl.upper + 1),
-            -- }
-
-            for _, v in pairs(tbl.lineOffsets) do
-                local timingPoint = map.GetTimingPointAt(v)
-                ---@cast timingPoint TimingPointInfo
-                if (timingPoint.StartTime >= tbl.lower) and (timingPoint.StartTime <= tbl.upper) then
-                    table.insert(linesToRemove, timingPoint)
-                end
-            end
-
-            for _, v in pairs(tbl.svOffsets) do
-                local scrollVelocity = map.GetScrollVelocityAt(v)
-                ---@cast scrollVelocity SliderVelocityInfo
-                if (scrollVelocity.StartTime >= tbl.lower) and (scrollVelocity.StartTime <= tbl.upper) then
-                    table.insert(svsToRemove, scrollVelocity)
-                end
-            end
+            local linesToRemove = getLinesInRange(tbl.lower, tbl.upper)
+            local svsToRemove = getSVsInRange(tbl.lower, tbl.upper)
 
             actions.PerformBatch({
                 utils.CreateEditorAction(action_type.RemoveTimingPointBatch, linesToRemove),
@@ -1729,7 +1709,10 @@ end
 ---@param upper number
 ---@return TimingPointInfo[]
 function cleanLines(lines, lower, upper)
-    local lastLineTime = math.max(lines[#lines].StartTime, upper)
+    local lastLineTime = upper
+    if (#lines > 0) then
+        lastLineTime = math.max(lines[#lines].StartTime, upper)
+    end
 
     local tbl = {}
 
@@ -1784,17 +1767,7 @@ function generateAffines(lines, svs, lower, upper, affineType, debugData)
         upper = upper,
         numLines = #lines,
         numSVs = #svs,
-        lineOffsets = {},
-        svOffsets = {}
     } ---@type AffineSaveTable
-
-    for _, line in pairs(lines) do
-        table.insert(newGlobalTable.lineOffsets, line.StartTime)
-    end
-
-    for _, sv in pairs(svs) do
-        table.insert(newGlobalTable.svOffsets, sv.StartTime)
-    end
 
     table.insert(globalData, newGlobalTable)
 
