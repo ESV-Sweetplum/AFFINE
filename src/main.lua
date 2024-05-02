@@ -30,7 +30,7 @@ function draw()
 
     imgui.BeginTabBar("Main Tabs")
 
-    if imgui.BeginTabItem("Create") then
+    if imgui.BeginTabItem("Create Lines") then
         local mainMenuIndex = settings.menuID - 1
         local _, mainMenuIndex = imgui.Combo("Line Placement Type", mainMenuIndex, CREATE_TAB_LIST, #CREATE_TAB_LIST)
         settings.menuID = mainMenuIndex + 1
