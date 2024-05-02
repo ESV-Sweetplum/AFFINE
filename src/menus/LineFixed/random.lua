@@ -6,7 +6,7 @@ function FixedRandomMenu()
         for _ = 1, settings.lineCount do
             table.insert(msxTable, math.random(settings.msxBounds[1], settings.msxBounds[2]))
         end
-        local tbl = tableToLines(msxTable, offsets.startOffset + settings.delay, 0, settings.spacing)
+        local tbl = tableToAffineFrame(msxTable, offsets.startOffset + settings.delay, 0, settings.spacing)
 
         generateAffines(tbl.lines, tbl.svs, offsets.startOffset, offsets.endOffset, "Random Fixed")
         setDebug("Line Count: " .. #tbl.lines .. " // SV Count: " .. #tbl.svs)

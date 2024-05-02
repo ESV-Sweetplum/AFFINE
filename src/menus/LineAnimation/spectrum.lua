@@ -67,7 +67,7 @@ function placeSpectrumFrame(startTime, center, maxSpread, lineDistance, spacing,
             iterations = iterations + 1
         end
 
-        return tableToLines(msxTable, startTime, 0, spacing)
+        return tableToAffineFrame(msxTable, startTime, 0, spacing)
     else
         local msx = center
 
@@ -79,6 +79,6 @@ function placeSpectrumFrame(startTime, center, maxSpread, lineDistance, spacing,
             iterations = iterations + 1
         end
 
-        return tableToLines(msxTable, startTime, 0, spacing)
+        return tableToAffineFrame(msxTable, startTime, 0, spacing)
     end
 end

@@ -23,22 +23,26 @@ FRAME_SIZE = 500                             -- integer
 
 -- END DEFAULT SETTINGS (DONT DELETE THIS LINE)
 
-ANIMATION_MENU_LIST = {
-    'Manual (Basic)',
-    'Incremental',
-    'Boundary (Static)',
-    'Boundary (Dynamic)',
-    'Glitch',
-    'Spectrum',
-    'Expansion / Contraction',
-    'Converge / Diverge'
+LINE_STANDARD_MENU_LIST = {
+    'Spread',
+    'At Notes (Preserve Location)',
+    'At Notes (Preserve Snap)',
+    "Rainbow",
+    "Set Line Visibility"
 }
 
-CREATE_TAB_LIST = {
+CREATE_LINE_TAB_LIST = {
     'Standard',
     'Fixed',
     'Animation (LAGGY)'
 }
+
+SV_VIBRO_MENU_LIST = {
+    "Linear"
+}
+
+CREATE_SV_TAB_LIST = {
+    "Still Vibro"
 
 DELETION_TYPE_LIST = {
     'Timing Lines + Scroll Velocities',
@@ -51,118 +55,54 @@ EDIT_TAB_LIST = {
     -- "Offset"
 }
 
-FIXED_MENU_LIST = {
-    'Manual',
-    'Automatic',
-    'Random'
-}
+function linearVibroMenu()
+    local settings = parameterWorkflow("linearVibro", "msxBounds", "fps", "progressionExponent", {
+        inputType = "Checkbox",
+        key = "oneSided",
+        label = "One-Sided Vibro?",
+        value = false
+    })
 
-STANDARD_MENU_LIST = {
-    'Spread',
-    'At Notes (Preserve Location)',
-    'At Notes (Preserve Snap)',
-    "Rainbow",
-    "Set Line Visibility"
-}
+    if RangeActivated() then
+        local currentTime = offsets.startOffset
+        local svs = {}
+        local iterations = 1
 
-function ManualDeleteTab()
-    local settings = {
-        deletionType = DEFAULT_MENU_ID
-    }
+        while (currentTime <= offsets.endOffset) and (iterations <= MAX_ITERATIONS) do
+            local vibroHeight = mapProgress(settings.msxBounds[1],
+                getProgress(offsets.startOffset, currentTime, offsets.endOffset), settings.msxBounds[2])
 
-    retrieveStateVariables("deletion", settings)
+            if (settings.oneSided) then
+                local tempSVTbl = insertTeleport({}, currentTime, vibroHeight)
+                currentTime = currentTime + 1000 / settings.fps
+                tempSVTbl = insertTeleport(tempSVTbl, currentTime, vibroHeight)
+                currentTime = currentTime + 1000 / settings.fps
 
-    local deletionTypeIndex = settings.deletionType - 1
-    local _, deletionTypeIndex = imgui.Combo("Deletion Type", deletionTypeIndex, DELETION_TYPE_LIST,
-        #DELETION_TYPE_LIST)
-    addSeparator()
-    settings.deletionType = deletionTypeIndex + 1
+                if (currentTime < offsets.endOffset) then
+                    svs = combineTables(svs, tempSVTbl)
+                end
+            else
+                if (iterations == 1) then
+                    svs = insertTeleport({}, currentTime, vibroHeight)
+                else
+                    local tempSVTbl = insertTeleport({}, currentTime, vibroHeight * -2)
+                    currentTime = currentTime + 1000 / settings.fps
+                    tempSVTbl = insertTeleport(tempSVTbl, currentTime, vibroHeight * 2)
+                    currentTime = currentTime + 1000 / settings.fps
 
-    if (RangeActivated("Remove")) then
-        svs = getSVsInRange(offsets.startOffset, offsets.endOffset)
-        lines = getLinesInRange(offsets.startOffset, offsets.endOffset)
-
-        local actionTable = {}
-
-        if (settings.deletionType % 2 ~= 0) then
-            table.insert(actionTable,
-                utils.CreateEditorAction(action_type.RemoveScrollVelocityBatch, svs))
+                    if (currentTime < offsets.endOffset - 2) then
+                        svs = combineTables(svs, tempSVTbl)
+                    end
+                end
+                currentTime = currentTime + 1
+                svs = insertTeleport(svs, currentTime, vibroHeight * -1)
+            end
         end
 
-        if (settings.deletionType <= 2) then
-            table.insert(actionTable, utils.CreateEditorAction(action_type.RemoveTimingPointBatch, lines))
-        end
+        actions.PlaceScrollVelocityBatch(cleanSVs(svs, offsets.startOffset, offsets.endOffset))
 
-        actions.PerformBatch(actionTable)
+        setDebug("SV Count: " .. #svs)
     end
-
-    saveStateVariables("deletion", settings)
-end
-
----Create Menu
----@param menuName string
----@param typeText string
----@param list string[]
----@param functions fun()[]
-function CreateMenu(menuName, typeText, list, functions)
-    local settings = {
-        menuID = DEFAULT_MENU_ID
-    }
-
-    retrieveStateVariables(menuName, settings)
-
-    local createMenuIndex = settings.menuID - 1
-    local _, createMenuIndex = imgui.Combo(typeText .. " Type", createMenuIndex, list,
-        #list)
-    addSeparator()
-    settings.menuID = createMenuIndex + 1
-
-    chooseMenu(functions, settings.menuID)
-
-    saveStateVariables(menuName, settings)
-end
-
-function AutomaticDeleteTab()
-    local selectedID = state.GetValue("selectedID") or 1
-
-    for id, tbl in pairs(globalData) do
-        imgui.Selectable(
-            "Type: " ..
-            tbl.label ..
-            " // Lower/Upper Offset: " ..
-            tbl.lower .. ":" .. tbl.upper .. " // # Lines: " .. tbl.numLines .. " // # SVs: " .. tbl.numSVs,
-            selectedID == id)
-        if (imgui.IsItemClicked()) then
-            selectedID = id
-        end
-    end
-
-    if (#globalData == 0) then
-        imgui.Text("Create an animation or fixed lines to display them here.")
-    else
-        if (imgui.Button("Delete selected item")) then
-            tbl = globalData[selectedID]
-
-            local linesToRemove = getLinesInRange(tbl.lower, tbl.upper)
-            local svsToRemove = getSVsInRange(tbl.lower, tbl.upper)
-
-            actions.PerformBatch({
-                utils.CreateEditorAction(action_type.RemoveTimingPointBatch, linesToRemove),
-                utils.CreateEditorAction(action_type.RemoveScrollVelocityBatch, svsToRemove),
-                -- utils.CreateEditorAction(action_type.RemoveBookmarkBatch, bookmarksToRemove)
-            })
-
-            table.remove(globalData, selectedID)
-            saveMapState(globalData)
-        end
-
-        if (imgui.Button("Delete faulty entry")) then
-            table.remove(globalData, selectedID)
-            saveMapState(globalData)
-        end
-    end
-
-    state.SetValue("selectedID", selectedID)
 end
 
 function StandardSpreadMenu()
@@ -282,7 +222,7 @@ function FixedRandomMenu()
         for _ = 1, settings.lineCount do
             table.insert(msxTable, math.random(settings.msxBounds[1], settings.msxBounds[2]))
         end
-        local tbl = tableToLines(msxTable, offsets.startOffset + settings.delay, 0, settings.spacing)
+        local tbl = tableToAffineFrame(msxTable, offsets.startOffset + settings.delay, 0, settings.spacing)
 
         generateAffines(tbl.lines, tbl.svs, offsets.startOffset, offsets.endOffset, "Random Fixed")
         setDebug("Line Count: " .. #tbl.lines .. " // SV Count: " .. #tbl.svs)
@@ -294,7 +234,7 @@ function FixedManualMenu()
 
     if NoteActivated() then
         msxTable = table.split(settings.msxList, "%S+")
-        local tbl = tableToLines(msxTable, offsets.startOffset + settings.delay, settings.offset, settings.spacing)
+        local tbl = tableToAffineFrame(msxTable, offsets.startOffset + settings.delay, settings.offset, settings.spacing)
         generateAffines(tbl.lines, tbl.svs, offsets.startOffset, offsets.endOffset, "Manual Fixed")
 
         setDebug("Line Count: " .. #tbl.lines .. " // SV Count: " .. #tbl.svs)
@@ -324,91 +264,7 @@ function placeAutomaticFrame(startTime, low, high, spacing, distance)
         msx = msx + mapProgress(distance[1], progress, distance[2])
         iterations = iterations + 1
     end
-    return tableToLines(msxTable, startTime, 0, spacing)
-end
-
----@diagnostic disable: need-check-nil, inject-field
-function CopyAndPasteMenu()
-    local settings = parameterWorkflow("edit_copyAndPaste", {
-        inputType = "Checkbox",
-        key = "includeBM",
-        label = "Include Bookmarks?",
-        value = true
-    })
-
-    local tbl = {
-        storedLines = {},
-        storedSVs = {},
-        storedBookmarks = {}
-    }
-
-    retrieveStateVariables("CopyAndPaste", tbl)
-
-    if RangeActivated("Copy") then
-        if (type(offsets) == "integer") then return end
-
-        local lines = getLinesInRange(offsets.startOffset, offsets.endOffset)
-
-        local svs = getSVsInRange(offsets.startOffset, offsets.endOffset)
-
-        local bookmarks = getBookmarksInRange(offsets.startOffset, offsets.endOffset)
-
-        local zeroOffsetLines = {}
-        local zeroOffsetSVs = {}
-        local zeroOffsetBookmarks = {}
-
-        for _, givenLine in pairs(lines) do
-            table.insert(zeroOffsetLines,
-                line(givenLine.StartTime - offsets.startOffset, givenLine.Bpm, givenLine.Hidden))
-        end
-
-        for _, givenSV in pairs(svs) do
-            table.insert(zeroOffsetSVs, sv(givenSV.StartTime - offsets.startOffset, givenSV.Multiplier))
-        end
-
-        for _, givenBookmark in pairs(bookmarks) do
-            table.insert(zeroOffsetBookmarks, bookmark(givenBookmark.StartTime - offsets.startOffset, givenBookmark.Note))
-        end
-
-        tbl.storedLines = zeroOffsetLines
-        tbl.storedSVs = zeroOffsetSVs
-        if (settings.includeBM) then tbl.storedBookmarks = zeroOffsetBookmarks end
-    end
-
-    if (#tbl.storedLines > 0 or #tbl.storedSVs > 0) then
-        if NoteActivated("Paste") then
-            if (type(offsets) == "integer") then return end
-
-            local linesToAdd = {}
-            local svsToAdd = {}
-            local bookmarksToAdd = {}
-
-            for _, storedLine in pairs(tbl.storedLines) do
-                table.insert(linesToAdd,
-                    line(storedLine.StartTime + offsets.startOffset, storedLine.Bpm, storedLine.Hidden))
-            end
-            for _, storedSV in pairs(tbl.storedSVs) do
-                table.insert(svsToAdd, sv(storedSV.StartTime + offsets.startOffset, storedSV.Multiplier))
-            end
-            for _, storedBookmark in pairs(tbl.storedBookmarks) do
-                table.insert(bookmarksToAdd,
-                    bookmark(storedBookmark.StartTime + offsets.startOffset, storedBookmark.Note))
-            end
-
-            actions.PerformBatch({
-                utils.CreateEditorAction(action_type.AddTimingPointBatch, linesToAdd),
-                utils.CreateEditorAction(action_type.AddScrollVelocityBatch, svsToAdd),
-                utils.CreateEditorAction(action_type.AddBookmarkBatch, bookmarksToAdd),
-            })
-        end
-    end
-
-    addSeparator()
-
-    imgui.Text(#tbl.storedLines ..
-        " Stored Lines // " .. #tbl.storedSVs .. " Stored SVs // " .. #tbl.storedBookmarks .. " Stored Bookmarks")
-
-    saveStateVariables("CopyAndPaste", tbl)
+    return tableToAffineFrame(msxTable, startTime, 0, spacing)
 end
 
 function SpectrumMenu()
@@ -480,7 +336,7 @@ function placeSpectrumFrame(startTime, center, maxSpread, lineDistance, spacing,
             iterations = iterations + 1
         end
 
-        return tableToLines(msxTable, startTime, 0, spacing)
+        return tableToAffineFrame(msxTable, startTime, 0, spacing)
     else
         local msx = center
 
@@ -492,7 +348,7 @@ function placeSpectrumFrame(startTime, center, maxSpread, lineDistance, spacing,
             iterations = iterations + 1
         end
 
-        return tableToLines(msxTable, startTime, 0, spacing)
+        return tableToAffineFrame(msxTable, startTime, 0, spacing)
     end
 end
 
@@ -520,7 +376,7 @@ function BasicManualAnimationMenu()
                 table.insert(msxTable, mapProgress(startMsxTable[i], progress, endMsxTable[i]))
             end
 
-            local tbl = tableToLines(msxTable, currentTime, 0, settings.spacing)
+            local tbl = tableToAffineFrame(msxTable, currentTime, 0, settings.spacing)
 
             if (tbl.time > offsets.endOffset) then break end
 
@@ -586,7 +442,7 @@ function IncrementalAnimationMenu()
             else
                 table.insert(msxTable, totalMsxTable[currentHeight])
             end
-            local tbl = tableToLines(msxTable, currentTime + 5, 0, settings.spacing)
+            local tbl = tableToAffineFrame(msxTable, currentTime + 5, 0, settings.spacing)
 
             lines = combineTables(lines, tbl.lines)
             svs = combineTables(svs, tbl.svs)
@@ -639,7 +495,7 @@ function GlitchMenu()
             for i = 1, settings.lineCount do
                 table.insert(msxTable, math.random(upperBound, lowerBound))
             end
-            local tbl = tableToLines(msxTable, currentTime, 0, settings.spacing)
+            local tbl = tableToAffineFrame(msxTable, currentTime, 0, settings.spacing)
 
             if (tbl.time > offsets.endOffset) then break end
 
@@ -785,7 +641,7 @@ function ConvergeDivergeMenu()
                 end
             end
 
-            local tbl = tableToLines(msxTable, currentTime, 0, settings.spacing)
+            local tbl = tableToAffineFrame(msxTable, currentTime, 0, settings.spacing)
 
             if (tbl.time > offsets.endOffset) then break end
 
@@ -883,7 +739,7 @@ function placeStaticFrame(startTime, min, max, lineDistance, spacing, boundary, 
         iterations = iterations + 1
     end
 
-    return tableToLines(msxTable, startTime, 0, spacing)
+    return tableToAffineFrame(msxTable, startTime, 0, spacing)
 end
 
 function DynamicBoundaryMenu()
@@ -955,7 +811,91 @@ function placeDynamicFrame(startTime, min, max, lineDistance, spacing, polynomia
         iterations = iterations + 1
     end
 
-    return tableToLines(msxTable, startTime, 0, spacing)
+    return tableToAffineFrame(msxTable, startTime, 0, spacing)
+end
+
+---@diagnostic disable: need-check-nil, inject-field
+function CopyAndPasteMenu()
+    local settings = parameterWorkflow("edit_copyAndPaste", {
+        inputType = "Checkbox",
+        key = "includeBM",
+        label = "Include Bookmarks?",
+        value = true
+    })
+
+    local tbl = {
+        storedLines = {},
+        storedSVs = {},
+        storedBookmarks = {}
+    }
+
+    retrieveStateVariables("CopyAndPaste", tbl)
+
+    if RangeActivated("Copy") then
+        if (type(offsets) == "integer") then return end
+
+        local lines = getLinesInRange(offsets.startOffset, offsets.endOffset)
+
+        local svs = getSVsInRange(offsets.startOffset, offsets.endOffset)
+
+        local bookmarks = getBookmarksInRange(offsets.startOffset, offsets.endOffset)
+
+        local zeroOffsetLines = {}
+        local zeroOffsetSVs = {}
+        local zeroOffsetBookmarks = {}
+
+        for _, givenLine in pairs(lines) do
+            table.insert(zeroOffsetLines,
+                line(givenLine.StartTime - offsets.startOffset, givenLine.Bpm, givenLine.Hidden))
+        end
+
+        for _, givenSV in pairs(svs) do
+            table.insert(zeroOffsetSVs, sv(givenSV.StartTime - offsets.startOffset, givenSV.Multiplier))
+        end
+
+        for _, givenBookmark in pairs(bookmarks) do
+            table.insert(zeroOffsetBookmarks, bookmark(givenBookmark.StartTime - offsets.startOffset, givenBookmark.Note))
+        end
+
+        tbl.storedLines = zeroOffsetLines
+        tbl.storedSVs = zeroOffsetSVs
+        if (settings.includeBM) then tbl.storedBookmarks = zeroOffsetBookmarks end
+    end
+
+    if (#tbl.storedLines > 0 or #tbl.storedSVs > 0) then
+        if NoteActivated("Paste") then
+            if (type(offsets) == "integer") then return end
+
+            local linesToAdd = {}
+            local svsToAdd = {}
+            local bookmarksToAdd = {}
+
+            for _, storedLine in pairs(tbl.storedLines) do
+                table.insert(linesToAdd,
+                    line(storedLine.StartTime + offsets.startOffset, storedLine.Bpm, storedLine.Hidden))
+            end
+            for _, storedSV in pairs(tbl.storedSVs) do
+                table.insert(svsToAdd, sv(storedSV.StartTime + offsets.startOffset, storedSV.Multiplier))
+            end
+            for _, storedBookmark in pairs(tbl.storedBookmarks) do
+                table.insert(bookmarksToAdd,
+                    bookmark(storedBookmark.StartTime + offsets.startOffset, storedBookmark.Note))
+            end
+
+            actions.PerformBatch({
+                utils.CreateEditorAction(action_type.AddTimingPointBatch, linesToAdd),
+                utils.CreateEditorAction(action_type.AddScrollVelocityBatch, svsToAdd),
+                utils.CreateEditorAction(action_type.AddBookmarkBatch, bookmarksToAdd),
+            })
+        end
+    end
+
+    addSeparator()
+
+    imgui.Text(#tbl.storedLines ..
+        " Stored Lines // " .. #tbl.storedSVs .. " Stored SVs // " .. #tbl.storedBookmarks .. " Stored Bookmarks")
+
+    saveStateVariables("CopyAndPaste", tbl)
 end
 
 local separatorTable = { " ", "!", "@", "#", "$", "%", "^", "&" }
@@ -1076,7 +1016,7 @@ function teleport(time, dist)
     }
 end
 
----Adds a teleport sv to an existsing table of svs.
+---Adds a teleport sv to an existing table of svs.
 ---@param svs SliderVelocityInfo[]
 ---@param time number
 ---@param dist number
@@ -1381,6 +1321,19 @@ function retrieveParameters(menu, parameterTable)
     end
 end
 
+---Outputs settings based on inputted parameters.
+---@param parameterTable Parameter[]
+---@return table
+function parametersToSettings(parameterTable)
+    local settings = {}
+
+    for _, tbl in ipairs(parameterTable) do
+        settings[tbl.key] = tbl.value
+    end
+
+    return settings
+end
+
 ---Provide a window name and parameter options, and this workflow will automatically manage state, generate input fields, and handle setting conversion.
 ---@param windowName string
 ---@param ... string | table
@@ -1393,19 +1346,6 @@ function parameterWorkflow(windowName, ...)
     local settings = parametersToSettings(parameterTable)
 
     saveParameters(windowName, parameterTable)
-
-    return settings
-end
-
----Outputs settings based on inputted parameters.
----@param parameterTable Parameter[]
----@return table
-function parametersToSettings(parameterTable)
-    local settings = {}
-
-    for _, tbl in ipairs(parameterTable) do
-        settings[tbl.key] = tbl.value
-    end
 
     return settings
 end
@@ -1641,7 +1581,7 @@ end
 ---@param msxOffset number
 ---@param spacing number
 ---@return AffineFrame
-function tableToLines(svTable, time, msxOffset, spacing)
+function tableToAffineFrame(svTable, time, msxOffset, spacing)
     local lines = {}
     local svs = {}
 
@@ -2181,6 +2121,106 @@ function NoteActivated(text)
     end
 end
 
+function ManualDeleteTab()
+    local settings = {
+        deletionType = DEFAULT_MENU_ID
+    }
+
+    retrieveStateVariables("deletion", settings)
+
+    local deletionTypeIndex = settings.deletionType - 1
+    local _, deletionTypeIndex = imgui.Combo("Deletion Type", deletionTypeIndex, DELETION_TYPE_LIST,
+        #DELETION_TYPE_LIST)
+    addSeparator()
+    settings.deletionType = deletionTypeIndex + 1
+
+    if (RangeActivated("Remove")) then
+        svs = getSVsInRange(offsets.startOffset, offsets.endOffset)
+        lines = getLinesInRange(offsets.startOffset, offsets.endOffset)
+
+        local actionTable = {}
+
+        if (settings.deletionType % 2 ~= 0) then
+            table.insert(actionTable,
+                utils.CreateEditorAction(action_type.RemoveScrollVelocityBatch, svs))
+        end
+
+        if (settings.deletionType <= 2) then
+            table.insert(actionTable, utils.CreateEditorAction(action_type.RemoveTimingPointBatch, lines))
+        end
+
+        actions.PerformBatch(actionTable)
+    end
+
+    saveStateVariables("deletion", settings)
+end
+
+---Create Menu
+---@param menuName string
+---@param typeText string
+---@param list string[]
+---@param functions fun()[]
+function CreateMenu(menuName, typeText, list, functions)
+    local settings = {
+        menuID = DEFAULT_MENU_ID
+    }
+
+    retrieveStateVariables(menuName, settings)
+
+    local createMenuIndex = settings.menuID - 1
+    local _, createMenuIndex = imgui.Combo(typeText .. " Type", createMenuIndex, list,
+        #list)
+    addSeparator()
+    settings.menuID = createMenuIndex + 1
+
+    chooseMenu(functions, settings.menuID)
+
+    saveStateVariables(menuName, settings)
+end
+
+function AutomaticDeleteTab()
+    local selectedID = state.GetValue("selectedID") or 1
+
+    for id, tbl in pairs(globalData) do
+        imgui.Selectable(
+            "Type: " ..
+            tbl.label ..
+            " // Lower/Upper Offset: " ..
+            tbl.lower .. ":" .. tbl.upper .. " // # Lines: " .. tbl.numLines .. " // # SVs: " .. tbl.numSVs,
+            selectedID == id)
+        if (imgui.IsItemClicked()) then
+            selectedID = id
+        end
+    end
+
+    if (#globalData == 0) then
+        imgui.Text("Create an animation or fixed lines to display them here.")
+    else
+        if (imgui.Button("Delete selected item")) then
+            tbl = globalData[selectedID]
+
+            local linesToRemove = getLinesInRange(tbl.lower, tbl.upper)
+            local svsToRemove = getSVsInRange(tbl.lower, tbl.upper)
+
+            actions.PerformBatch({
+                utils.CreateEditorAction(action_type.RemoveTimingPointBatch, linesToRemove),
+                utils.CreateEditorAction(action_type.RemoveScrollVelocityBatch, svsToRemove),
+                -- utils.CreateEditorAction(action_type.RemoveBookmarkBatch, bookmarksToRemove)
+            })
+
+            table.remove(globalData, selectedID)
+            saveMapState(globalData)
+        end
+
+        if (imgui.Button("Delete faulty entry")) then
+            table.remove(globalData, selectedID)
+            saveMapState(globalData)
+        end
+    end
+
+    state.SetValue("selectedID", selectedID)
+end
+
 function chooseMenu(tbl, menuID)
     if (tbl[menuID]) then
         tbl[menuID]();
@@ -2209,7 +2249,38 @@ function draw()
     -- IMPORTANT: DO NOT DELETE NEXT LINE BEFORE COMPILING.
     
 
-ANIMATION_MENU_FUNCTIONS = {
+LINE_STANDARD_MENU_FUNCTIONS = {
+    StandardSpreadMenu,
+    function () StandardAtNotesMenu(2) end,
+    function () StandardAtNotesMenu(1) end,
+    StandardRainbowMenu,
+    SetVisibilityMenu
+}
+
+LINE_FIXED_MENU_LIST = {
+    'Manual',
+    'Automatic',
+    'Random'
+}
+
+LINE_FIXED_MENU_FUNCTIONS = {
+    FixedManualMenu,
+    FixedAutomaticMenu,
+    FixedRandomMenu
+}
+
+LINE_ANIMATION_MENU_LIST = {
+    'Manual (Basic)',
+    'Incremental',
+    'Boundary (Static)',
+    'Boundary (Dynamic)',
+    'Glitch',
+    'Spectrum',
+    'Expansion / Contraction',
+    'Converge / Diverge'
+}
+
+LINE_ANIMATION_MENU_FUNCTIONS = {
     BasicManualAnimationMenu,
     IncrementalAnimationMenu,
     StaticBoundaryMenu,
@@ -2220,10 +2291,18 @@ ANIMATION_MENU_FUNCTIONS = {
     ConvergeDivergeMenu
 }
 
-CREATE_TAB_FUNCTIONS = {
-    function () CreateMenu("Standard", "Standard Placement", STANDARD_MENU_LIST, STANDARD_MENU_FUNCTIONS) end,
-    function () CreateMenu("Fixed", "Fixed Placement", FIXED_MENU_LIST, FIXED_MENU_FUNCTIONS) end,
-    function () CreateMenu("Animation", "Animation", ANIMATION_MENU_LIST, ANIMATION_MENU_FUNCTIONS) end
+CREATE_LINE_TAB_FUNCTIONS = {
+    function () CreateMenu("Standard", "Standard Placement", LINE_STANDARD_MENU_LIST, LINE_STANDARD_MENU_FUNCTIONS) end,
+    function () CreateMenu("Fixed", "Fixed Placement", LINE_FIXED_MENU_LIST, LINE_FIXED_MENU_FUNCTIONS) end,
+    function () CreateMenu("Animation", "Animation", LINE_ANIMATION_MENU_LIST, LINE_ANIMATION_MENU_FUNCTIONS) end
+}
+
+SV_VIBRO_MENU_FUNCTIONS = {
+    linearVibroMenu
+}
+
+CREATE_SV_TAB_FUNCTIONS = {
+    function () CreateMenu("Still Vibro", "Vibro Placement", SV_VIBRO_MENU_LIST, SV_VIBRO_MENU_FUNCTIONS) end
 }
 
 EDIT_TAB_FUNCTIONS = {
@@ -2231,27 +2310,22 @@ EDIT_TAB_FUNCTIONS = {
     -- function () end -- OffsetMenu
 }
 
-FIXED_MENU_FUNCTIONS = {
-    FixedManualMenu,
-    FixedAutomaticMenu,
-    FixedRandomMenu
-}
-
-STANDARD_MENU_FUNCTIONS = {
-    StandardSpreadMenu,
-    function () StandardAtNotesMenu(2) end,
-    function () StandardAtNotesMenu(1) end,
-    StandardRainbowMenu,
-    SetVisibilityMenu
-}
-
     retrieveStateVariables("main", settings)
 
     imgui.BeginTabBar("Main Tabs")
 
-    if imgui.BeginTabItem("Create") then
+    if imgui.BeginTabItem("Create Lines") then
         local mainMenuIndex = settings.menuID - 1
-        local _, mainMenuIndex = imgui.Combo("Line Placement Type", mainMenuIndex, CREATE_TAB_LIST, #CREATE_TAB_LIST)
+        local _, mainMenuIndex = imgui.Combo("Line Placement Type", mainMenuIndex, CREATE_LINE_TAB_LIST,
+            #CREATE_LINE_TAB_LIST)
+        settings.menuID = mainMenuIndex + 1
+        chooseMenu(CREATE_LINE_TAB_FUNCTIONS, settings.menuID)
+        imgui.EndTabItem()
+    end
+
+    if imgui.BeginTabItem("Create SVs") then
+        local mainMenuIndex = settings.menuID - 1
+        local _, mainMenuIndex = imgui.Combo("SV Placement Type", mainMenuIndex, CREATE_TAB_LIST, #CREATE_TAB_LIST)
         settings.menuID = mainMenuIndex + 1
         chooseMenu(CREATE_TAB_FUNCTIONS, settings.menuID)
         imgui.EndTabItem()

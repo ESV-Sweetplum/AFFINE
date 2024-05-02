@@ -22,7 +22,7 @@ function BasicManualAnimationMenu()
                 table.insert(msxTable, mapProgress(startMsxTable[i], progress, endMsxTable[i]))
             end
 
-            local tbl = tableToLines(msxTable, currentTime, 0, settings.spacing)
+            local tbl = tableToAffineFrame(msxTable, currentTime, 0, settings.spacing)
 
             if (tbl.time > offsets.endOffset) then break end
 

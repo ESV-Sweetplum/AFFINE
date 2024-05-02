@@ -4,7 +4,7 @@
 ---@param msxOffset number
 ---@param spacing number
 ---@return AffineFrame
-function tableToLines(svTable, time, msxOffset, spacing)
+function tableToAffineFrame(svTable, time, msxOffset, spacing)
     local lines = {}
     local svs = {}
 

@@ -67,5 +67,5 @@ function placeDynamicFrame(startTime, min, max, lineDistance, spacing, polynomia
         iterations = iterations + 1
     end
 
-    return tableToLines(msxTable, startTime, 0, spacing)
+    return tableToAffineFrame(msxTable, startTime, 0, spacing)
 end

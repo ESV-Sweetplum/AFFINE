@@ -20,7 +20,7 @@ function GlitchMenu()
             for i = 1, settings.lineCount do
                 table.insert(msxTable, math.random(upperBound, lowerBound))
             end
-            local tbl = tableToLines(msxTable, currentTime, 0, settings.spacing)
+            local tbl = tableToAffineFrame(msxTable, currentTime, 0, settings.spacing)
 
             if (tbl.time > offsets.endOffset) then break end
 

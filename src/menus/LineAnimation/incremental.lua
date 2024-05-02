@@ -37,7 +37,7 @@ function IncrementalAnimationMenu()
             else
                 table.insert(msxTable, totalMsxTable[currentHeight])
             end
-            local tbl = tableToLines(msxTable, currentTime + 5, 0, settings.spacing)
+            local tbl = tableToAffineFrame(msxTable, currentTime + 5, 0, settings.spacing)
 
             lines = combineTables(lines, tbl.lines)
             svs = combineTables(svs, tbl.svs)

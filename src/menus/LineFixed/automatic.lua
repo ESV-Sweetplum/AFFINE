@@ -21,5 +21,5 @@ function placeAutomaticFrame(startTime, low, high, spacing, distance)
         msx = msx + mapProgress(distance[1], progress, distance[2])
         iterations = iterations + 1
     end
-    return tableToLines(msxTable, startTime, 0, spacing)
+    return tableToAffineFrame(msxTable, startTime, 0, spacing)
 end

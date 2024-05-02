@@ -9,7 +9,7 @@ function teleport(time, dist)
     }
 end
 
----Adds a teleport sv to an existsing table of svs.
+---Adds a teleport sv to an existing table of svs.
 ---@param svs SliderVelocityInfo[]
 ---@param time number
 ---@param dist number

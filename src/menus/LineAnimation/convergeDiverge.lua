@@ -72,7 +72,7 @@ function ConvergeDivergeMenu()
                 end
             end
 
-            local tbl = tableToLines(msxTable, currentTime, 0, settings.spacing)
+            local tbl = tableToAffineFrame(msxTable, currentTime, 0, settings.spacing)
 
             if (tbl.time > offsets.endOffset) then break end
 
