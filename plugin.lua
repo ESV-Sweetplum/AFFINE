@@ -70,7 +70,8 @@ function linearVibroMenu()
 
         while (currentTime <= offsets.endOffset) and (iterations <= MAX_ITERATIONS) do
             local vibroHeight = mapProgress(settings.msxBounds[1],
-                getProgress(offsets.startOffset, currentTime, offsets.endOffset), settings.msxBounds[2])
+                getProgress(offsets.startOffset, currentTime, offsets.endOffset, settings.progressionExponent),
+                settings.msxBounds[2])
 
             if (settings.oneSided) then
                 local tempSVTbl = insertTeleport({}, currentTime, vibroHeight)
