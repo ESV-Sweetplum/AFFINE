@@ -32,7 +32,16 @@ function draw()
 
     if imgui.BeginTabItem("Create Lines") then
         local mainMenuIndex = settings.menuID - 1
-        local _, mainMenuIndex = imgui.Combo("Line Placement Type", mainMenuIndex, CREATE_TAB_LIST, #CREATE_TAB_LIST)
+        local _, mainMenuIndex = imgui.Combo("Line Placement Type", mainMenuIndex, CREATE_LINE_TAB_LIST,
+            #CREATE_LINE_TAB_LIST)
+        settings.menuID = mainMenuIndex + 1
+        chooseMenu(CREATE_LINE_TAB_FUNCTIONS, settings.menuID)
+        imgui.EndTabItem()
+    end
+
+    if imgui.BeginTabItem("Create SVs") then
+        local mainMenuIndex = settings.menuID - 1
+        local _, mainMenuIndex = imgui.Combo("SV Placement Type", mainMenuIndex, CREATE_TAB_LIST, #CREATE_TAB_LIST)
         settings.menuID = mainMenuIndex + 1
         chooseMenu(CREATE_TAB_FUNCTIONS, settings.menuID)
         imgui.EndTabItem()
