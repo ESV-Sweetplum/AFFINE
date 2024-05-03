@@ -43,6 +43,7 @@ SV_VIBRO_MENU_LIST = {
 
 CREATE_SV_TAB_LIST = {
     "Still Vibro"
+}
 
 DELETION_TYPE_LIST = {
     'Timing Lines + Scroll Velocities',
@@ -55,6 +56,107 @@ EDIT_TAB_LIST = {
     -- "Offset"
 }
 
+function ManualDeleteTab()
+    local settings = {
+        deletionType = DEFAULT_MENU_ID
+    }
+
+    retrieveStateVariables("deletion", settings)
+
+    local deletionTypeIndex = settings.deletionType - 1
+    local _, deletionTypeIndex = imgui.Combo("Deletion Type", deletionTypeIndex, DELETION_TYPE_LIST,
+        #DELETION_TYPE_LIST)
+    addSeparator()
+    settings.deletionType = deletionTypeIndex + 1
+
+    if (RangeActivated("Remove")) then
+        svs = getSVsInRange(offsets.startOffset, offsets.endOffset)
+        lines = getLinesInRange(offsets.startOffset, offsets.endOffset)
+
+        local actionTable = {}
+
+        if (settings.deletionType % 2 ~= 0) then
+            table.insert(actionTable,
+                utils.CreateEditorAction(action_type.RemoveScrollVelocityBatch, svs))
+        end
+
+        if (settings.deletionType <= 2) then
+            table.insert(actionTable, utils.CreateEditorAction(action_type.RemoveTimingPointBatch, lines))
+        end
+
+        actions.PerformBatch(actionTable)
+    end
+
+    saveStateVariables("deletion", settings)
+end
+
+---Create Menu
+---@param menuName string
+---@param typeText string
+---@param list string[]
+---@param functions fun()[]
+function CreateMenu(menuName, typeText, list, functions)
+    local settings = {
+        menuID = DEFAULT_MENU_ID
+    }
+
+    retrieveStateVariables(menuName, settings)
+
+    local createMenuIndex = settings.menuID - 1
+    local _, createMenuIndex = imgui.Combo(typeText .. " Type", createMenuIndex, list,
+        #list)
+    addSeparator()
+    settings.menuID = createMenuIndex + 1
+
+    chooseMenu(functions, settings.menuID)
+
+    saveStateVariables(menuName, settings)
+end
+
+function AutomaticDeleteTab()
+    local selectedID = state.GetValue("selectedID") or 1
+
+    for id, tbl in pairs(globalData) do
+        imgui.Selectable(
+            "Type: " ..
+            tbl.label ..
+            " // Lower/Upper Offset: " ..
+            tbl.lower .. ":" .. tbl.upper .. " // # Lines: " .. tbl.numLines .. " // # SVs: " .. tbl.numSVs,
+            selectedID == id)
+        if (imgui.IsItemClicked()) then
+            selectedID = id
+        end
+    end
+
+    if (#globalData == 0) then
+        imgui.Text("Create an animation or fixed lines to display them here.")
+    else
+        if (imgui.Button("Delete selected item")) then
+            tbl = globalData[selectedID]
+
+            local linesToRemove = getLinesInRange(tbl.lower, tbl.upper)
+            local svsToRemove = getSVsInRange(tbl.lower, tbl.upper)
+
+            actions.PerformBatch({
+                utils.CreateEditorAction(action_type.RemoveTimingPointBatch, linesToRemove),
+                utils.CreateEditorAction(action_type.RemoveScrollVelocityBatch, svsToRemove),
+                -- utils.CreateEditorAction(action_type.RemoveBookmarkBatch, bookmarksToRemove)
+            })
+
+            table.remove(globalData, selectedID)
+            saveMapState(globalData)
+        end
+
+        if (imgui.Button("Delete faulty entry")) then
+            table.remove(globalData, selectedID)
+            saveMapState(globalData)
+        end
+    end
+
+    state.SetValue("selectedID", selectedID)
+end
+
+---@diagnostic disable: undefined-field
 function linearVibroMenu()
     local settings = parameterWorkflow("linearVibro", "msxBounds", "fps", "progressionExponent", {
         inputType = "Checkbox",
@@ -68,36 +170,42 @@ function linearVibroMenu()
         local svs = {}
         local iterations = 1
 
+        local teleportSign = 1
+        local maxVibroHeight = 0
         while (currentTime <= offsets.endOffset) and (iterations <= MAX_ITERATIONS) do
             local vibroHeight = mapProgress(settings.msxBounds[1],
                 getProgress(offsets.startOffset, currentTime, offsets.endOffset, settings.progressionExponent),
                 settings.msxBounds[2])
 
-            if (settings.oneSided) then
-                local tempSVTbl = insertTeleport({}, currentTime, vibroHeight)
+            local recentSVValue = map.GetScrollVelocityAt(currentTime).Multiplier
+
+            if (settings.oneSided == true) then
+                local tempSVTbl = insertTeleport({}, currentTime, vibroHeight * -1, recentSVValue)
                 currentTime = currentTime + 1000 / settings.fps
-                tempSVTbl = insertTeleport(tempSVTbl, currentTime, vibroHeight)
-                currentTime = currentTime + 1000 / settings.fps
+                tempSVTbl = insertTeleport(tempSVTbl, currentTime, vibroHeight, recentSVValue)
 
                 if (currentTime < offsets.endOffset) then
                     svs = combineTables(svs, tempSVTbl)
+                    currentTime = currentTime + 1000 / settings.fps
                 end
             else
-                if (iterations == 1) then
-                    svs = insertTeleport({}, currentTime, vibroHeight)
-                else
-                    local tempSVTbl = insertTeleport({}, currentTime, vibroHeight * -2)
-                    currentTime = currentTime + 1000 / settings.fps
-                    tempSVTbl = insertTeleport(tempSVTbl, currentTime, vibroHeight * 2)
-                    currentTime = currentTime + 1000 / settings.fps
+                local tempSVTbl = insertTeleport({}, currentTime,
+                    iterations == 1 and vibroHeight or vibroHeight * 2 * teleportSign, recentSVValue)
 
-                    if (currentTime < offsets.endOffset - 2) then
-                        svs = combineTables(svs, tempSVTbl)
-                    end
+                if (currentTime < offsets.endOffset - 2) then
+                    svs = combineTables(svs, tempSVTbl)
+                    currentTime = currentTime + 1000 / settings.fps
+                    teleportSign = -1 * teleportSign
                 end
-                currentTime = currentTime + 1
-                svs = insertTeleport(svs, currentTime, vibroHeight * -1)
+                maxVibroHeight = math.max(maxVibroHeight, vibroHeight)
             end
+            iterations = iterations + 1
+        end
+
+        if (settings.oneSided == false) then
+            currentTime = offsets.endOffset - 1
+            svs = insertTeleport(svs, currentTime, maxVibroHeight * teleportSign,
+                map.GetScrollVelocityAt(currentTime).Multiplier)
         end
 
         actions.PlaceScrollVelocityBatch(cleanSVs(svs, offsets.startOffset, offsets.endOffset))
@@ -1009,11 +1117,12 @@ end
 ---Generates two svs for a teleport.
 ---@param time number
 ---@param dist number
+---@param endSV number
 ---@return SliderVelocityInfo[]
-function teleport(time, dist)
+function teleport(time, dist, endSV)
     return {
         sv(time, INCREMENT * dist),
-        sv(time + (1 / INCREMENT), 64000)
+        sv(time + (1 / INCREMENT), endSV)
     }
 end
 
@@ -1021,9 +1130,10 @@ end
 ---@param svs SliderVelocityInfo[]
 ---@param time number
 ---@param dist number
+---@param remainingSV? number
 ---@return SliderVelocityInfo[]
-function insertTeleport(svs, time, dist)
-    return combineTables(svs, teleport(time, dist))
+function insertTeleport(svs, time, dist, remainingSV)
+    return combineTables(svs, teleport(time, dist, remainingSV or 0))
 end
 
 ---@diagnostic disable: return-type-mismatch
@@ -1322,19 +1432,6 @@ function retrieveParameters(menu, parameterTable)
     end
 end
 
----Outputs settings based on inputted parameters.
----@param parameterTable Parameter[]
----@return table
-function parametersToSettings(parameterTable)
-    local settings = {}
-
-    for _, tbl in ipairs(parameterTable) do
-        settings[tbl.key] = tbl.value
-    end
-
-    return settings
-end
-
 ---Provide a window name and parameter options, and this workflow will automatically manage state, generate input fields, and handle setting conversion.
 ---@param windowName string
 ---@param ... string | table
@@ -1347,6 +1444,19 @@ function parameterWorkflow(windowName, ...)
     local settings = parametersToSettings(parameterTable)
 
     saveParameters(windowName, parameterTable)
+
+    return settings
+end
+
+---Outputs settings based on inputted parameters.
+---@param parameterTable Parameter[]
+---@return table
+function parametersToSettings(parameterTable)
+    local settings = {}
+
+    for _, tbl in ipairs(parameterTable) do
+        settings[tbl.key] = tbl.value
+    end
 
     return settings
 end
@@ -2122,106 +2232,6 @@ function NoteActivated(text)
     end
 end
 
-function ManualDeleteTab()
-    local settings = {
-        deletionType = DEFAULT_MENU_ID
-    }
-
-    retrieveStateVariables("deletion", settings)
-
-    local deletionTypeIndex = settings.deletionType - 1
-    local _, deletionTypeIndex = imgui.Combo("Deletion Type", deletionTypeIndex, DELETION_TYPE_LIST,
-        #DELETION_TYPE_LIST)
-    addSeparator()
-    settings.deletionType = deletionTypeIndex + 1
-
-    if (RangeActivated("Remove")) then
-        svs = getSVsInRange(offsets.startOffset, offsets.endOffset)
-        lines = getLinesInRange(offsets.startOffset, offsets.endOffset)
-
-        local actionTable = {}
-
-        if (settings.deletionType % 2 ~= 0) then
-            table.insert(actionTable,
-                utils.CreateEditorAction(action_type.RemoveScrollVelocityBatch, svs))
-        end
-
-        if (settings.deletionType <= 2) then
-            table.insert(actionTable, utils.CreateEditorAction(action_type.RemoveTimingPointBatch, lines))
-        end
-
-        actions.PerformBatch(actionTable)
-    end
-
-    saveStateVariables("deletion", settings)
-end
-
----Create Menu
----@param menuName string
----@param typeText string
----@param list string[]
----@param functions fun()[]
-function CreateMenu(menuName, typeText, list, functions)
-    local settings = {
-        menuID = DEFAULT_MENU_ID
-    }
-
-    retrieveStateVariables(menuName, settings)
-
-    local createMenuIndex = settings.menuID - 1
-    local _, createMenuIndex = imgui.Combo(typeText .. " Type", createMenuIndex, list,
-        #list)
-    addSeparator()
-    settings.menuID = createMenuIndex + 1
-
-    chooseMenu(functions, settings.menuID)
-
-    saveStateVariables(menuName, settings)
-end
-
-function AutomaticDeleteTab()
-    local selectedID = state.GetValue("selectedID") or 1
-
-    for id, tbl in pairs(globalData) do
-        imgui.Selectable(
-            "Type: " ..
-            tbl.label ..
-            " // Lower/Upper Offset: " ..
-            tbl.lower .. ":" .. tbl.upper .. " // # Lines: " .. tbl.numLines .. " // # SVs: " .. tbl.numSVs,
-            selectedID == id)
-        if (imgui.IsItemClicked()) then
-            selectedID = id
-        end
-    end
-
-    if (#globalData == 0) then
-        imgui.Text("Create an animation or fixed lines to display them here.")
-    else
-        if (imgui.Button("Delete selected item")) then
-            tbl = globalData[selectedID]
-
-            local linesToRemove = getLinesInRange(tbl.lower, tbl.upper)
-            local svsToRemove = getSVsInRange(tbl.lower, tbl.upper)
-
-            actions.PerformBatch({
-                utils.CreateEditorAction(action_type.RemoveTimingPointBatch, linesToRemove),
-                utils.CreateEditorAction(action_type.RemoveScrollVelocityBatch, svsToRemove),
-                -- utils.CreateEditorAction(action_type.RemoveBookmarkBatch, bookmarksToRemove)
-            })
-
-            table.remove(globalData, selectedID)
-            saveMapState(globalData)
-        end
-
-        if (imgui.Button("Delete faulty entry")) then
-            table.remove(globalData, selectedID)
-            saveMapState(globalData)
-        end
-    end
-
-    state.SetValue("selectedID", selectedID)
-end
-
 function chooseMenu(tbl, menuID)
     if (tbl[menuID]) then
         tbl[menuID]();
@@ -2326,9 +2336,9 @@ EDIT_TAB_FUNCTIONS = {
 
     if imgui.BeginTabItem("Create SVs") then
         local mainMenuIndex = settings.menuID - 1
-        local _, mainMenuIndex = imgui.Combo("SV Placement Type", mainMenuIndex, CREATE_TAB_LIST, #CREATE_TAB_LIST)
+        local _, mainMenuIndex = imgui.Combo("SV Placement Type", mainMenuIndex, CREATE_SV_TAB_LIST, #CREATE_SV_TAB_LIST)
         settings.menuID = mainMenuIndex + 1
-        chooseMenu(CREATE_TAB_FUNCTIONS, settings.menuID)
+        chooseMenu(CREATE_SV_TAB_FUNCTIONS, settings.menuID)
         imgui.EndTabItem()
     end
 

@@ -41,9 +41,9 @@ function draw()
 
     if imgui.BeginTabItem("Create SVs") then
         local mainMenuIndex = settings.menuID - 1
-        local _, mainMenuIndex = imgui.Combo("SV Placement Type", mainMenuIndex, CREATE_TAB_LIST, #CREATE_TAB_LIST)
+        local _, mainMenuIndex = imgui.Combo("SV Placement Type", mainMenuIndex, CREATE_SV_TAB_LIST, #CREATE_SV_TAB_LIST)
         settings.menuID = mainMenuIndex + 1
-        chooseMenu(CREATE_TAB_FUNCTIONS, settings.menuID)
+        chooseMenu(CREATE_SV_TAB_FUNCTIONS, settings.menuID)
         imgui.EndTabItem()
     end
 
