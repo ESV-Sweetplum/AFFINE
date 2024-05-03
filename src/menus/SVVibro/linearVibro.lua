@@ -41,7 +41,6 @@ function placeVibratoSVs(vibroHeightFn, oneSided, fps)
 
             if (currentTime < offsets.endOffset) then
                 svs = combineTables(svs, tempSVTbl)
-                currentTime = currentTime + 1000 / fps
             end
         else
             local tempSVTbl = insertTeleport({}, currentTime,
@@ -49,11 +48,11 @@ function placeVibratoSVs(vibroHeightFn, oneSided, fps)
 
             if (currentTime < offsets.endOffset - 2) then
                 svs = combineTables(svs, tempSVTbl)
-                currentTime = currentTime + 1000 / fps
                 teleportSign = -1 * teleportSign
             end
             maxVibroHeight = math.max(maxVibroHeight, vibroHeight)
         end
+        currentTime = currentTime + 1000 / fps
         iterations = iterations + 1
     end
 
