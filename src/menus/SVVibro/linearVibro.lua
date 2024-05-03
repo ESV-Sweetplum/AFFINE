@@ -30,6 +30,9 @@ function placeVibratoSVs(vibroHeightFn, oneSided, fps)
     local teleportSign = 1
     local maxVibroHeight = 0
     while (currentTime <= offsets.endOffset) and (iterations <= MAX_ITERATIONS) do
+        local _, decimalValue = math.modf(currentTime)
+        if (decimalValue < 0.1) then currentTime = math.floor(currentTime) + 0.1 end
+        if (decimalValue > 0.9) then currentTime = math.ceil(currentTime) - 0.1 end
         local vibroHeight = vibroHeightFn(currentTime)
         local recentSVValue = 1
         if (map.GetScrollVelocityAt(currentTime)) then recentSVValue = map.GetScrollVelocityAt(currentTime).Multiplier end
