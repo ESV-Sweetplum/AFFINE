@@ -11,10 +11,10 @@ function polynomialVibroMenu()
     if RangeActivated() then
         local vibroHeightFn = function (v)
             return mapProgress(settings.msxBounds[1], evaluateCoefficients(settings.boundCoefficients,
-                getProgress(offsets.startOffset, v, offsets.endOffset, settings.progressionExponent)),
+                    getProgress(offsets.startOffset, v, offsets.endOffset, settings.progressionExponent)),
                 settings.msxBounds[2])
         end
 
-        placeVibratoSVs(vibroHeightFn, settings.oneSided, settings.fps)
+        placeVibratoSVsByFn(vibroHeightFn, settings.oneSided, settings.fps)
     end
 end

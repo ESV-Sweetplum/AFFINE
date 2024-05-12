@@ -14,7 +14,7 @@ function linearVibroMenu()
                 settings.msxBounds[2])
         end
 
-        placeVibratoSVs(vibroHeightFn, settings.oneSided, settings.fps)
+        placeVibratoSVsByFn(vibroHeightFn, settings.oneSided, settings.fps)
     end
 end
 
@@ -22,7 +22,7 @@ end
 ---@param vibroHeightFn function
 ---@param oneSided boolean
 ---@param fps number
-function placeVibratoSVs(vibroHeightFn, oneSided, fps)
+function placeVibratoSVsByFn(vibroHeightFn, oneSided, fps)
     local OFFSET_SECURITY_CONSTANT = 2
 
     local currentTime = offsets.startOffset + OFFSET_SECURITY_CONSTANT

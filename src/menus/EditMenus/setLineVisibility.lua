@@ -1,5 +1,5 @@
 function SetVisibilityMenu()
-    local settings = parameterWorkflow("standard_setVisibility", {
+    local settings = parameterWorkflow("edit_setVisibility", {
         inputType = "RadioBoolean",
         key = "enable",
         label = { "Turn Lines Invisible", "Turn Lines Visible" },

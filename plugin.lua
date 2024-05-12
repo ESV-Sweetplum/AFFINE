@@ -39,7 +39,8 @@ CREATE_LINE_TAB_LIST = {
 
 SV_VIBRO_MENU_LIST = {
     "Linear",
-    "Polynomial"
+    "Polynomial",
+    "Stack"
 }
 
 CREATE_SV_TAB_LIST = {
@@ -158,6 +159,52 @@ function AutomaticDeleteTab()
 end
 
 ---@diagnostic disable: undefined-field
+
+function stackVibroMenu()
+    local settings = parameterWorkflow("stackVibro", "msxList", "fps")
+
+    if RangeActivated() then
+        local tbl = table.split(settings.msxList, "%S+")
+
+        placeVibratoSVsByTbl(tbl, settings.fps)
+    end
+end
+
+function placeVibratoSVsByTbl(tbl, fps)
+    local OFFSET_SECURITY_CONSTANT = 2
+
+    local currentTime = offsets.startOffset + OFFSET_SECURITY_CONSTANT
+    local svs = {}
+    local iterations = 1
+
+    while (currentTime <= offsets.endOffset - 1) and (iterations <= MAX_ITERATIONS) do
+        local _, decimalValue = math.modf(currentTime)
+        if (decimalValue < 0.1) then currentTime = math.floor(currentTime) + 0.1 end
+        if (decimalValue > 0.9) then currentTime = math.ceil(currentTime) - 0.1 end
+
+        local vibroHeight = tbl[((iterations - 1) % #tbl) + 1]
+        local recentSVValue = 1
+        if (map.GetScrollVelocityAt(currentTime)) then recentSVValue = map.GetScrollVelocityAt(currentTime).Multiplier end
+
+        local tempSVTbl = insertTeleport({}, currentTime, vibroHeight * -1, recentSVValue)
+        currentTime = currentTime + 1000 / fps
+        tempSVTbl = insertTeleport(tempSVTbl, currentTime, vibroHeight, recentSVValue)
+
+        if (currentTime < offsets.endOffset - OFFSET_SECURITY_CONSTANT) then
+            svs = combineTables(svs, tempSVTbl)
+        end
+
+        currentTime = currentTime + 1000 / fps
+        iterations = iterations + 1
+    end
+
+    actions.PlaceScrollVelocityBatch(cleanSVs(svs, offsets.startOffset + OFFSET_SECURITY_CONSTANT,
+        offsets.endOffset - OFFSET_SECURITY_CONSTANT))
+
+    setDebug("SV Count: " .. #svs)
+end
+
+---@diagnostic disable: undefined-field
 function polynomialVibroMenu()
     local settings = parameterWorkflow("polynomialVibro", "msxBounds", "boundCoefficients", "fps",
         "progressionExponent", {
@@ -170,11 +217,11 @@ function polynomialVibroMenu()
     if RangeActivated() then
         local vibroHeightFn = function (v)
             return mapProgress(settings.msxBounds[1], evaluateCoefficients(settings.boundCoefficients,
-                getProgress(offsets.startOffset, v, offsets.endOffset, settings.progressionExponent)),
+                    getProgress(offsets.startOffset, v, offsets.endOffset, settings.progressionExponent)),
                 settings.msxBounds[2])
         end
 
-        placeVibratoSVs(vibroHeightFn, settings.oneSided, settings.fps)
+        placeVibratoSVsByFn(vibroHeightFn, settings.oneSided, settings.fps)
     end
 end
 
@@ -194,7 +241,7 @@ function linearVibroMenu()
                 settings.msxBounds[2])
         end
 
-        placeVibratoSVs(vibroHeightFn, settings.oneSided, settings.fps)
+        placeVibratoSVsByFn(vibroHeightFn, settings.oneSided, settings.fps)
     end
 end
 
@@ -202,7 +249,7 @@ end
 ---@param vibroHeightFn function
 ---@param oneSided boolean
 ---@param fps number
-function placeVibratoSVs(vibroHeightFn, oneSided, fps)
+function placeVibratoSVsByFn(vibroHeightFn, oneSided, fps)
     local OFFSET_SECURITY_CONSTANT = 2
 
     local currentTime = offsets.startOffset + OFFSET_SECURITY_CONSTANT
@@ -227,6 +274,7 @@ function placeVibratoSVs(vibroHeightFn, oneSided, fps)
                 svs = combineTables(svs, tempSVTbl)
             end
         else
+            -- REDO LATER
             local tempSVTbl = insertTeleport({}, currentTime,
                 iterations == 1 and vibroHeight or vibroHeight * 2 * teleportSign, recentSVValue)
 
@@ -2350,7 +2398,8 @@ CREATE_LINE_TAB_FUNCTIONS = {
 
 SV_VIBRO_MENU_FUNCTIONS = {
     linearVibroMenu,
-    polynomialVibroMenu
+    polynomialVibroMenu,
+    stackVibroMenu
 }
 
 CREATE_SV_TAB_FUNCTIONS = {

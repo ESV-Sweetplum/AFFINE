@@ -55,7 +55,7 @@ function draw()
         imgui.EndTabItem()
     end
 
-    if imgui.BeginTabItem("Delete (Automatic) [BETA]") then
+    if imgui.BeginTabItem("Delete (Auto)") then
         AutomaticDeleteTab()
         imgui.EndTabItem()
     end

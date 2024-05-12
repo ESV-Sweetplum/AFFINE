@@ -1,9 +1,11 @@
 SV_VIBRO_MENU_LIST = {
     "Linear",
-    "Polynomial"
+    "Polynomial",
+    "Stack"
 }
 
 SV_VIBRO_MENU_FUNCTIONS = {
     linearVibroMenu,
-    polynomialVibroMenu
+    polynomialVibroMenu,
+    stackVibroMenu
 }
