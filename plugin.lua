@@ -190,7 +190,7 @@ function linearVibroMenu()
     if RangeActivated() then
         local vibroHeightFn = function (v)
             return mapProgress(settings.msxBounds[1],
-                getProgress(offsets.startOffset, v, offsets.endOffset, settings.progressionExponent),
+                getProgress(offsets.startOffset, v, offsets.endOffset - 1, settings.progressionExponent),
                 settings.msxBounds[2])
         end
 
@@ -203,13 +203,14 @@ end
 ---@param oneSided boolean
 ---@param fps number
 function placeVibratoSVs(vibroHeightFn, oneSided, fps)
-    local currentTime = offsets.startOffset
+    local OFFSET_SECURITY_CONSTANT = 2
+
+    local currentTime = offsets.startOffset + OFFSET_SECURITY_CONSTANT
     local svs = {}
     local iterations = 1
 
     local teleportSign = 1
-    local maxVibroHeight = 0
-    while (currentTime <= offsets.endOffset) and (iterations <= MAX_ITERATIONS) do
+    while (currentTime <= offsets.endOffset - 1) and (iterations <= MAX_ITERATIONS) do
         local _, decimalValue = math.modf(currentTime)
         if (decimalValue < 0.1) then currentTime = math.floor(currentTime) + 0.1 end
         if (decimalValue > 0.9) then currentTime = math.ceil(currentTime) - 0.1 end
@@ -222,32 +223,33 @@ function placeVibratoSVs(vibroHeightFn, oneSided, fps)
             currentTime = currentTime + 1000 / fps
             tempSVTbl = insertTeleport(tempSVTbl, currentTime, vibroHeight, recentSVValue)
 
-            if (currentTime < offsets.endOffset) then
+            if (currentTime < offsets.endOffset - OFFSET_SECURITY_CONSTANT) then
                 svs = combineTables(svs, tempSVTbl)
             end
         else
             local tempSVTbl = insertTeleport({}, currentTime,
                 iterations == 1 and vibroHeight or vibroHeight * 2 * teleportSign, recentSVValue)
 
-            if (currentTime < offsets.endOffset - 2) then
+            if (currentTime < offsets.endOffset - OFFSET_SECURITY_CONSTANT - 1) then
                 svs = combineTables(svs, tempSVTbl)
                 teleportSign = -1 * teleportSign
             end
-            maxVibroHeight = math.max(maxVibroHeight, vibroHeight)
+            mostRecentHeight = vibroHeight
         end
         currentTime = currentTime + 1000 / fps
         iterations = iterations + 1
     end
 
     if (not oneSided) then
-        currentTime = offsets.endOffset - 1
+        currentTime = offsets.endOffset - OFFSET_SECURITY_CONSTANT - 1
         local multiplier = 1
         if (map.GetScrollVelocityAt(currentTime)) then multiplier = map.GetScrollVelocityAt(currentTime).Multiplier end
-        svs = insertTeleport(svs, currentTime, maxVibroHeight * teleportSign,
+        svs = insertTeleport(svs, currentTime, mostRecentHeight * -1,
             multiplier)
     end
 
-    actions.PlaceScrollVelocityBatch(cleanSVs(svs, offsets.startOffset + 1, offsets.endOffset - 1))
+    actions.PlaceScrollVelocityBatch(cleanSVs(svs, offsets.startOffset + OFFSET_SECURITY_CONSTANT,
+        offsets.endOffset - OFFSET_SECURITY_CONSTANT))
 
     setDebug("SV Count: " .. #svs)
 end
@@ -1855,7 +1857,7 @@ function generateAffines(lines, svs, lower, upper, affineType, debugData)
         lower = lower,
         upper = upper,
         numLines = #lines,
-        numSVs = #svs,
+        numSVs = (debugData and debugData.S) and debugData.S or #svs,
     } ---@type AffineSaveTable
 
     table.insert(globalData, newGlobalTable)

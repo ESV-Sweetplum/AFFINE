@@ -31,7 +31,7 @@ function generateAffines(lines, svs, lower, upper, affineType, debugData)
         lower = lower,
         upper = upper,
         numLines = #lines,
-        numSVs = #svs,
+        numSVs = (debugData and debugData.S) and debugData.S or #svs,
     } ---@type AffineSaveTable
 
     table.insert(globalData, newGlobalTable)
