@@ -27,8 +27,7 @@ LINE_STANDARD_MENU_LIST = {
     'Spread',
     'At Notes (Preserve Location)',
     'At Notes (Preserve Snap)',
-    "Rainbow",
-    "Set Line Visibility"
+    "Rainbow"
 }
 
 CREATE_LINE_TAB_LIST = {
@@ -55,1045 +54,8 @@ DELETION_TYPE_LIST = {
 
 EDIT_TAB_LIST = {
     "Copy + Paste",
-    -- "Offset"
+    "Set Line Visibility"
 }
-
-function ManualDeleteTab()
-    local settings = {
-        deletionType = DEFAULT_MENU_ID
-    }
-
-    retrieveStateVariables("deletion", settings)
-
-    local deletionTypeIndex = settings.deletionType - 1
-    local _, deletionTypeIndex = imgui.Combo("Deletion Type", deletionTypeIndex, DELETION_TYPE_LIST,
-        #DELETION_TYPE_LIST)
-    addSeparator()
-    settings.deletionType = deletionTypeIndex + 1
-
-    if (RangeActivated("Remove")) then
-        svs = getSVsInRange(offsets.startOffset, offsets.endOffset)
-        lines = getLinesInRange(offsets.startOffset, offsets.endOffset)
-
-        local actionTable = {}
-
-        if (settings.deletionType % 2 ~= 0) then
-            table.insert(actionTable,
-                utils.CreateEditorAction(action_type.RemoveScrollVelocityBatch, svs))
-        end
-
-        if (settings.deletionType <= 2) then
-            table.insert(actionTable, utils.CreateEditorAction(action_type.RemoveTimingPointBatch, lines))
-        end
-
-        actions.PerformBatch(actionTable)
-    end
-
-    saveStateVariables("deletion", settings)
-end
-
----Create Menu
----@param menuName string
----@param typeText string
----@param list string[]
----@param functions fun()[]
-function CreateMenu(menuName, typeText, list, functions)
-    local settings = {
-        menuID = DEFAULT_MENU_ID
-    }
-
-    retrieveStateVariables(menuName, settings)
-
-    local createMenuIndex = settings.menuID - 1
-    local _, createMenuIndex = imgui.Combo(typeText .. " Type", createMenuIndex, list,
-        #list)
-    addSeparator()
-    settings.menuID = createMenuIndex + 1
-
-    chooseMenu(functions, settings.menuID)
-
-    saveStateVariables(menuName, settings)
-end
-
-function AutomaticDeleteTab()
-    local selectedID = state.GetValue("selectedID") or 1
-
-    for id, tbl in pairs(globalData) do
-        imgui.Selectable(
-            "Type: " ..
-            tbl.label ..
-            " // Lower/Upper Offset: " ..
-            tbl.lower .. ":" .. tbl.upper .. " // # Lines: " .. tbl.numLines .. " // # SVs: " .. tbl.numSVs,
-            selectedID == id)
-        if (imgui.IsItemClicked()) then
-            selectedID = id
-        end
-    end
-
-    if (#globalData == 0) then
-        imgui.Text("Create an animation or fixed lines to display them here.")
-    else
-        if (imgui.Button("Delete selected item")) then
-            tbl = globalData[selectedID]
-
-            local linesToRemove = getLinesInRange(tbl.lower, tbl.upper)
-            local svsToRemove = getSVsInRange(tbl.lower, tbl.upper)
-
-            actions.PerformBatch({
-                utils.CreateEditorAction(action_type.RemoveTimingPointBatch, linesToRemove),
-                utils.CreateEditorAction(action_type.RemoveScrollVelocityBatch, svsToRemove),
-                -- utils.CreateEditorAction(action_type.RemoveBookmarkBatch, bookmarksToRemove)
-            })
-
-            table.remove(globalData, selectedID)
-            saveMapState(globalData)
-        end
-
-        if (imgui.Button("Delete faulty entry")) then
-            table.remove(globalData, selectedID)
-            saveMapState(globalData)
-        end
-    end
-
-    state.SetValue("selectedID", selectedID)
-end
-
----@diagnostic disable: undefined-field
-
-function stackVibroMenu()
-    local settings = parameterWorkflow("stackVibro", "msxList", "fps")
-
-    if RangeActivated() then
-        local tbl = table.split(settings.msxList, "%S+")
-
-        placeVibratoSVsByTbl(tbl, settings.fps)
-    end
-end
-
-function placeVibratoSVsByTbl(tbl, fps)
-    local OFFSET_SECURITY_CONSTANT = 2
-
-    local currentTime = offsets.startOffset + OFFSET_SECURITY_CONSTANT
-    local svs = {}
-    local iterations = 1
-
-    while (currentTime <= offsets.endOffset - 1) and (iterations <= MAX_ITERATIONS) do
-        local _, decimalValue = math.modf(currentTime)
-        if (decimalValue < 0.1) then currentTime = math.floor(currentTime) + 0.1 end
-        if (decimalValue > 0.9) then currentTime = math.ceil(currentTime) - 0.1 end
-
-        local vibroHeight = tbl[((iterations - 1) % #tbl) + 1]
-        local recentSVValue = 1
-        if (map.GetScrollVelocityAt(currentTime)) then recentSVValue = map.GetScrollVelocityAt(currentTime).Multiplier end
-
-        local tempSVTbl = insertTeleport({}, currentTime, vibroHeight * -1, recentSVValue)
-        currentTime = currentTime + 1000 / fps
-        tempSVTbl = insertTeleport(tempSVTbl, currentTime, vibroHeight, recentSVValue)
-
-        if (currentTime < offsets.endOffset - OFFSET_SECURITY_CONSTANT) then
-            svs = combineTables(svs, tempSVTbl)
-        end
-
-        currentTime = currentTime + 1000 / fps
-        iterations = iterations + 1
-    end
-
-    actions.PlaceScrollVelocityBatch(cleanSVs(svs, offsets.startOffset + OFFSET_SECURITY_CONSTANT,
-        offsets.endOffset - OFFSET_SECURITY_CONSTANT))
-
-    setDebug("SV Count: " .. #svs)
-end
-
----@diagnostic disable: undefined-field
-function polynomialVibroMenu()
-    local settings = parameterWorkflow("polynomialVibro", "msxBounds", "boundCoefficients", "fps",
-        "progressionExponent", {
-            inputType = "Checkbox",
-            key = "oneSided",
-            label = "One-Sided Vibro?",
-            value = false
-        })
-
-    if RangeActivated() then
-        local vibroHeightFn = function (v)
-            return mapProgress(settings.msxBounds[1], evaluateCoefficients(settings.boundCoefficients,
-                    getProgress(offsets.startOffset, v, offsets.endOffset, settings.progressionExponent)),
-                settings.msxBounds[2])
-        end
-
-        placeVibratoSVsByFn(vibroHeightFn, settings.oneSided, settings.fps)
-    end
-end
-
----@diagnostic disable: undefined-field
-function linearVibroMenu()
-    local settings = parameterWorkflow("linearVibro", "msxBounds", "fps", "progressionExponent", {
-        inputType = "Checkbox",
-        key = "oneSided",
-        label = "One-Sided Vibro?",
-        value = false
-    })
-
-    if RangeActivated() then
-        local vibroHeightFn = function (v)
-            return mapProgress(settings.msxBounds[1],
-                getProgress(offsets.startOffset, v, offsets.endOffset - 1, settings.progressionExponent),
-                settings.msxBounds[2])
-        end
-
-        placeVibratoSVsByFn(vibroHeightFn, settings.oneSided, settings.fps)
-    end
-end
-
----Given a vibrato height function, places a clean set of vibrato SVs.
----@param vibroHeightFn function
----@param oneSided boolean
----@param fps number
-function placeVibratoSVsByFn(vibroHeightFn, oneSided, fps)
-    local OFFSET_SECURITY_CONSTANT = 2
-
-    local currentTime = offsets.startOffset + OFFSET_SECURITY_CONSTANT
-    local svs = {}
-    local iterations = 1
-
-    local teleportSign = 1
-    while (currentTime <= offsets.endOffset - 1) and (iterations <= MAX_ITERATIONS) do
-        local _, decimalValue = math.modf(currentTime)
-        if (decimalValue < 0.1) then currentTime = math.floor(currentTime) + 0.1 end
-        if (decimalValue > 0.9) then currentTime = math.ceil(currentTime) - 0.1 end
-        local vibroHeight = vibroHeightFn(currentTime)
-        local recentSVValue = 1
-        if (map.GetScrollVelocityAt(currentTime)) then recentSVValue = map.GetScrollVelocityAt(currentTime).Multiplier end
-
-        if (oneSided) then
-            local tempSVTbl = insertTeleport({}, currentTime, vibroHeight * -1, recentSVValue)
-            currentTime = currentTime + 1000 / fps
-            tempSVTbl = insertTeleport(tempSVTbl, currentTime, vibroHeight, recentSVValue)
-
-            if (currentTime < offsets.endOffset - OFFSET_SECURITY_CONSTANT) then
-                svs = combineTables(svs, tempSVTbl)
-            end
-        else
-            -- REDO LATER
-            local tempSVTbl = insertTeleport({}, currentTime,
-                iterations == 1 and vibroHeight or vibroHeight * 2 * teleportSign, recentSVValue)
-
-            if (currentTime < offsets.endOffset - OFFSET_SECURITY_CONSTANT - 1) then
-                svs = combineTables(svs, tempSVTbl)
-                teleportSign = -1 * teleportSign
-            end
-            mostRecentHeight = vibroHeight
-        end
-        currentTime = currentTime + 1000 / fps
-        iterations = iterations + 1
-    end
-
-    if (not oneSided) then
-        currentTime = offsets.endOffset - OFFSET_SECURITY_CONSTANT - 1
-        local multiplier = 1
-        if (map.GetScrollVelocityAt(currentTime)) then multiplier = map.GetScrollVelocityAt(currentTime).Multiplier end
-        svs = insertTeleport(svs, currentTime, mostRecentHeight * -1,
-            multiplier)
-    end
-
-    actions.PlaceScrollVelocityBatch(cleanSVs(svs, offsets.startOffset + OFFSET_SECURITY_CONSTANT,
-        offsets.endOffset - OFFSET_SECURITY_CONSTANT))
-
-    setDebug("SV Count: " .. #svs)
-end
-
-function StandardSpreadMenu()
-    local settings = parameterWorkflow("standard_spread", 'distance')
-
-    if RangeActivated() then
-        local lines = {}
-        local msx = offsets.startOffset
-
-        local iterations = 0
-
-        while (msx <= offsets.endOffset) and (iterations < MAX_ITERATIONS) do
-            local progress = getProgress(offsets.startOffset, msx, offsets.endOffset)
-
-            table.insert(lines, line(msx))
-
-            msx = msx + mapProgress(settings.distance[1], progress, settings.distance[2])
-
-            iterations = iterations + 1
-        end
-
-        local notes = getNotesInRange(offsets.startOffset, offsets.endOffset)
-        if (type(notes) ~= "integer") then
-            for _, note in pairs(notes) do
-                lines = combineTables(lines, keepColorLine(note.StartTime, true))
-            end
-        end
-
-        lines = cleanLines(lines, offsets.startOffset, offsets.endOffset)
-
-        setDebug("Line Count: " .. #lines) -- DEBUG TEXT
-
-        actions.PlaceTimingPointBatch(lines)
-    end
-end
-
-function SetVisibilityMenu()
-    local settings = parameterWorkflow("standard_setVisibility", {
-        inputType = "RadioBoolean",
-        key = "enable",
-        label = { "Turn Lines Invisible", "Turn Lines Visible" },
-        value = false
-    })
-
-    if NoteActivated() then
-        local linesToRemove = getLinesInRange(offsets.startOffset, offsets.endOffset)
-
-        local linesToAdd = {}
-
-        for _, currentLine in pairs(linesToRemove) do
-            table.insert(linesToAdd, line(currentLine.StartTime, currentLine.Bpm, not settings.enable))
-        end
-
-        actions.PerformBatch({
-            utils.CreateEditorAction(action_type.RemoveTimingPointBatch, linesToRemove),
-            utils.CreateEditorAction(action_type.AddTimingPointBatch, linesToAdd)
-        })
-    end
-end
-
-function StandardRainbowMenu()
-    local settings = parameterWorkflow("standard_rainbow", "colorList")
-
-    local times = getSelectedOffsets()
-    if NoteActivated() then
-        local lines = {}
-        local rainbowTable = table.split(settings.colorList, "%S+")
-        local rainbowIndex = 1
-
-        if (type(times) == "integer") then return end
-
-        local hidden = false
-
-        for _, time in pairs(times) do
-            if (rainbowIndex == 1) then hidden = false else hidden = true end
-            lines = combineTables(lines, applyColorToTime(rainbowTable[rainbowIndex], time, hidden))
-            rainbowIndex = rainbowIndex + 1
-            if (rainbowIndex > #rainbowTable) then
-                rainbowIndex = 1
-            end
-        end
-
-        lines = cleanLines(lines, offsets[1] - 10, offsets[#offsets] + 10)
-
-        actions.PlaceTimingPointBatch(lines)
-    end
-end
-
-function StandardAtNotesMenu(preservationType)
-    local times = getSelectedOffsets()
-
-    if NoteActivated() then
-        local lines = {}
-
-        if (type(times) == "integer") then return end
-
-        if (preservationType == 1) then -- PRESERVE SNAP
-            for _, time in pairs(times) do
-                lines = combineTables(lines, keepColorLine(time))
-            end
-        else -- PRESERVE LOCATION
-            for _, time in pairs(times) do
-                table.insert(lines, line(time))
-            end
-        end
-        lines = cleanLines(lines, times[1], times[#times] + 10)
-
-        actions.PlaceTimingPointBatch(lines)
-    end
-end
-
-function FixedRandomMenu()
-    local settings = parameterWorkflow("fixed_random", 'msxBounds', 'lineCount', 'delay', 'spacing')
-
-    if NoteActivated() then
-        msxTable = {}
-        for _ = 1, settings.lineCount do
-            table.insert(msxTable, math.random(settings.msxBounds[1], settings.msxBounds[2]))
-        end
-        local tbl = tableToAffineFrame(msxTable, offsets.startOffset + settings.delay, 0, settings.spacing)
-
-        generateAffines(tbl.lines, tbl.svs, offsets.startOffset, offsets.endOffset, "Random Fixed")
-        setDebug("Line Count: " .. #tbl.lines .. " // SV Count: " .. #tbl.svs)
-    end
-end
-
-function FixedManualMenu()
-    local settings = parameterWorkflow("fixed_manual", 'msxList', 'offset', 'delay', 'spacing')
-
-    if NoteActivated() then
-        msxTable = table.split(settings.msxList, "%S+")
-        local tbl = tableToAffineFrame(msxTable, offsets.startOffset + settings.delay, settings.offset, settings.spacing)
-        generateAffines(tbl.lines, tbl.svs, offsets.startOffset, offsets.endOffset, "Manual Fixed")
-
-        setDebug("Line Count: " .. #tbl.lines .. " // SV Count: " .. #tbl.svs)
-    end
-end
-
-function FixedAutomaticMenu()
-    local settings = parameterWorkflow("fixed_automatic", 'msxBounds', 'distance', 'delay', 'spacing')
-
-    if NoteActivated() then
-        local tbl = placeAutomaticFrame(offsets.startOffset + settings.delay, settings.msxBounds[1],
-            settings.msxBounds[2],
-            settings.spacing, settings.distance)
-
-        generateAffines(tbl.lines, tbl.svs, offsets.startOffset, offsets.endOffset, "Automatic Fixed")
-        setDebug("Line Count: " .. #tbl.lines .. " // SV Count: " .. #tbl.svs)
-    end
-end
-
-function placeAutomaticFrame(startTime, low, high, spacing, distance)
-    msxTable = {}
-    local msx = low
-    local iterations = 0
-    while (msx <= high) and (iterations < MAX_ITERATIONS) do
-        local progress = getProgress(low, msx, high)
-        table.insert(msxTable, msx)
-        msx = msx + mapProgress(distance[1], progress, distance[2])
-        iterations = iterations + 1
-    end
-    return tableToAffineFrame(msxTable, startTime, 0, spacing)
-end
-
-function SpectrumMenu()
-    local settings = parameterWorkflow("animation_spectrum", "center", "maxSpread", "distance", "progressionExponent",
-        "spacing",
-        "boundCoefficients", {
-            inputType = "Checkbox",
-            key = "inverse",
-            label = "Inverse?",
-            value = false
-        })
-
-    if RangeActivated() then
-        local currentTime = offsets.startOffset + settings.spacing
-
-        local iterations = 0
-        local lines = {}
-        local svs = {}
-        local frameLengths = {}
-
-        while ((currentTime + (2 / INCREMENT)) <= offsets.endOffset) and (iterations < MAX_ITERATIONS) do
-            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset,
-                settings.progressionExponent)
-
-            local heightDifferential = settings.maxSpread *
-                evaluateCoefficients(settings.boundCoefficients, progress)
-
-            local tbl = placeSpectrumFrame(currentTime, settings.center, settings.maxSpread, settings.distance,
-                settings.spacing, heightDifferential, settings.inverse)
-
-            if (tbl.time > offsets.endOffset) then break end
-
-            table.insert(frameLengths, tbl.time - currentTime + 2)
-
-            currentTime = tbl.time
-
-            lines = combineTables(lines, tbl.lines)
-            svs = combineTables(svs, tbl.svs)
-
-            insertTeleport(svs, currentTime + 1 / INCREMENT, FRAME_SIZE)
-
-            iterations = iterations + 1
-
-            currentTime = currentTime + 2
-        end
-
-        local stats = getStatisticsFromTable(frameLengths)
-
-        generateAffines(lines, svs, offsets.startOffset, offsets.endOffset, "Spectrum",
-            constructDebugTable(lines, svs, stats))
-        setDebug("Line Count: " .. #lines .. " // SV Count: " .. #svs)
-    end
-    Plot(settings.boundCoefficients, settings.progressionExponent)
-end
-
-function placeSpectrumFrame(startTime, center, maxSpread, lineDistance, spacing, boundary, inverse)
-    msxTable = {}
-
-    local iterations = 0
-
-    if (inverse) then
-        local msx = center + maxSpread
-
-        while (msx >= center + boundary) and (iterations < MAX_ITERATIONS) do
-            local progress = getProgress(center, msx, center + maxSpread)
-            table.insert(msxTable, msx)
-            table.insert(msxTable, 2 * center - msx)
-            msx = msx - mapProgress(lineDistance[1], progress, lineDistance[2])
-            iterations = iterations + 1
-        end
-
-        return tableToAffineFrame(msxTable, startTime, 0, spacing)
-    else
-        local msx = center
-
-        while (msx <= center + boundary) and (iterations < MAX_ITERATIONS) do
-            local progress = getProgress(center, msx, center + maxSpread)
-            table.insert(msxTable, msx)
-            table.insert(msxTable, 2 * center - msx)
-            msx = msx + mapProgress(lineDistance[1], progress, lineDistance[2])
-            iterations = iterations + 1
-        end
-
-        return tableToAffineFrame(msxTable, startTime, 0, spacing)
-    end
-end
-
-function BasicManualAnimationMenu()
-    local settings = parameterWorkflow("animation_manual", 'msxList1', 'msxList2', 'progressionExponent', 'fps',
-        'spacing')
-
-    if RangeActivated() then
-        startMsxTable = table.split(settings.msxList1, "%S+")
-        endMsxTable = table.split(settings.msxList2, "%S+")
-
-        local currentTime = offsets.startOffset + settings.spacing
-        local iterations = 0
-        local lines = {}
-        local svs = {}
-        local frameLengths = {}
-
-        while (currentTime < offsets.endOffset) and (iterations < MAX_ITERATIONS) do
-            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset,
-                settings.progressionExponent)
-
-            local msxTable = {}
-
-            for i = 1, #endMsxTable do
-                table.insert(msxTable, mapProgress(startMsxTable[i], progress, endMsxTable[i]))
-            end
-
-            local tbl = tableToAffineFrame(msxTable, currentTime, 0, settings.spacing)
-
-            if (tbl.time > offsets.endOffset) then break end
-
-            timeDiff = math.max(1000 / settings.fps - 2, tbl.time - currentTime)
-
-            table.insert(frameLengths, timeDiff + 2)
-
-            currentTime = currentTime + timeDiff
-
-            lines = combineTables(lines, tbl.lines)
-            svs = combineTables(svs, tbl.svs)
-
-            insertTeleport(svs, currentTime + 1 / INCREMENT, FRAME_SIZE)
-
-            currentTime = currentTime + 2
-            iterations = iterations + 1
-        end
-
-        local stats = getStatisticsFromTable(frameLengths)
-
-        generateAffines(lines, svs, offsets.startOffset, offsets.endOffset, "Manual Animation",
-            constructDebugTable(lines, svs, stats))
-        setDebug("Line Count: " .. #lines .. " // SV Count: " .. #svs)
-    end
-end
-
-function IncrementalAnimationMenu()
-    local settings = parameterWorkflow("animation_incremental", 'msxList', 'spacing', {
-        inputType = "RadioBoolean",
-        key = "bounce",
-        label = { "12341234", "1234321" },
-        value = false
-    }, {
-        inputType = "Checkbox",
-        key = "allLinesVisible",
-        label = "All Lines Visible?",
-        value = true,
-        sameLine = true
-    })
-
-    if RangeActivated() then
-        local times = getSelectedOffsets()
-
-        local currentIndex = 1
-        local currentHeight = 1
-
-        local currentAddition = 1
-
-        local totalMsxTable = table.split(settings.msxList, "%S+")
-        local MAX_HEIGHT = #totalMsxTable
-
-        local lines = {}
-        local svs = {}
-        while (currentIndex <= #times) do
-            local currentTime = times[currentIndex] + 1
-
-            local msxTable = {}
-
-            if (settings.allLinesVisible) then
-                for i = 1, currentHeight do
-                    table.insert(msxTable, totalMsxTable[i])
-                end
-            else
-                table.insert(msxTable, totalMsxTable[currentHeight])
-            end
-            local tbl = tableToAffineFrame(msxTable, currentTime + 5, 0, settings.spacing)
-
-            lines = combineTables(lines, tbl.lines)
-            svs = combineTables(svs, tbl.svs)
-
-            insertTeleport(svs, currentTime + 1 / INCREMENT, FRAME_SIZE)
-
-            currentIndex = currentIndex + 1
-
-            if (settings.bounce) then
-                if (currentHeight == MAX_HEIGHT) then
-                    currentAddition = -1
-                elseif (currentHeight == 1) then
-                    currentAddition = 1
-                end
-                currentHeight = currentHeight + currentAddition
-            else
-                if (currentHeight == MAX_HEIGHT) then
-                    currentHeight = 1
-                else
-                    currentHeight = currentHeight + 1
-                end
-            end
-        end
-
-        generateAffines(lines, svs, offsets.startOffset, offsets.endOffset, "Incremental",
-            constructDebugTable(lines, svs))
-        setDebug("Line Count: " .. #lines .. " // SV Count: " .. #svs)
-    end
-end
-
-function GlitchMenu()
-    local settings = parameterWorkflow("animation_glitch", 'msxBounds1', 'msxBounds2', 'lineCount', 'progressionExponent',
-        'fps',
-        'spacing')
-
-    if RangeActivated() then
-        local currentTime = offsets.startOffset
-        local lines = {}
-        local svs = {}
-        local frameLengths = {}
-
-        while (currentTime <= offsets.endOffset) do
-            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset,
-                settings.progressionExponent)
-
-            local lowerBound = mapProgress(settings.msxBounds1[1], progress, settings.msxBounds2[1])
-            local upperBound = mapProgress(settings.msxBounds1[2], progress, settings.msxBounds2[2])
-
-            msxTable = {}
-            for i = 1, settings.lineCount do
-                table.insert(msxTable, math.random(upperBound, lowerBound))
-            end
-            local tbl = tableToAffineFrame(msxTable, currentTime, 0, settings.spacing)
-
-            if (tbl.time > offsets.endOffset) then break end
-
-            local timeDiff = math.max(1000 / settings.fps - 2, tbl.time - currentTime)
-
-            table.insert(frameLengths, timeDiff + 2)
-
-            currentTime = currentTime + timeDiff
-
-            lines = combineTables(lines, tbl.lines)
-            svs = combineTables(svs, tbl.svs)
-
-            insertTeleport(svs, currentTime + 1 / INCREMENT, FRAME_SIZE)
-
-            currentTime = currentTime + 2
-        end
-
-        local stats = getStatisticsFromTable(frameLengths)
-
-        generateAffines(lines, svs, offsets.startOffset, offsets.endOffset, "Glitch",
-            constructDebugTable(lines, svs, stats))
-        setDebug("Line Count: " .. #lines .. " // SV Count: " .. #svs)
-    end
-end
-
-function ExpansionContractionMenu()
-    local settings = parameterWorkflow("animation_expansionContraction", 'msxBounds', 'distance', 'progressionExponent',
-        'spacing')
-
-    if RangeActivated() then
-        local currentTime = offsets.startOffset + settings.spacing
-
-        local iterations = 0
-
-        local lines = {}
-        local svs = {}
-        local frameLengths = {}
-
-        while (currentTime <= offsets.endOffset) and (iterations < MAX_ITERATIONS) do
-            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset,
-                settings.progressionExponent)
-
-            local distance = mapProgress(settings.distance[1], progress, settings.distance[2])
-
-            local tbl = placeAutomaticFrame(currentTime, settings.msxBounds[1], settings.msxBounds[2], settings.spacing,
-                { distance, distance })
-
-            if (tbl.time > offsets.endOffset) then break end
-
-            table.insert(frameLengths, tbl.time - currentTime + 2)
-
-            currentTime = tbl.time
-
-            lines = combineTables(lines, tbl.lines)
-            svs = combineTables(svs, tbl.svs)
-
-            insertTeleport(svs, currentTime + 1 / INCREMENT, FRAME_SIZE)
-
-            iterations = iterations + 1
-
-            currentTime = currentTime + 2
-        end
-
-        local stats = getStatisticsFromTable(frameLengths)
-
-        generateAffines(lines, svs, offsets.startOffset, offsets.endOffset, "Expansion/Contraction",
-            constructDebugTable(lines, svs, stats))
-        setDebug("Line Count: " .. #lines .. " // SV Count: " .. #svs)
-    end
-end
-
-function ConvergeDivergeMenu()
-    local settings = parameterWorkflow("animation_convergeDiverge", "center", "maxSpread", "lineCount", "lineDuration",
-        "progressionExponent",
-        "spacing", "pathCoefficients", {
-            inputType = "Checkbox",
-            key = "renderBelow",
-            label = "Render Below?",
-            value = true,
-        }, {
-            inputType = "Checkbox",
-            key = "renderAbove",
-            label = "Render Above?",
-            value = true,
-            sameLine = true
-        }
-        , {
-            inputType = "Checkbox",
-            key = "prefill",
-            label = "Pre-Filled?",
-            value = false,
-        }
-        , {
-            inputType = "Checkbox",
-            key = "terminateEarly",
-            label = "Terminate Life Cycle?",
-            value = false,
-            sameLine = true
-        })
-
-    if RangeActivated() then
-        local currentTime = offsets.startOffset + settings.spacing
-
-        local iterations = 0
-        local lines = {}
-        local svs = {}
-        local frameLengths = {}
-        local lineProgressionTable = {}
-        local timeToGenerateClone = settings.lineDuration / settings.lineCount
-        local lastClonedProgress = -1 * timeToGenerateClone
-
-        if (settings.prefill) then
-            for i = 1, settings.lineCount do
-                table.insert(lineProgressionTable, -1 * i * timeToGenerateClone)
-            end
-        end
-
-        while ((currentTime + (2 / INCREMENT)) <= offsets.endOffset) and (iterations < MAX_ITERATIONS) do
-            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset,
-                settings.progressionExponent)
-
-            if (not settings.terminateEarly) or (progress < 1 - settings.lineDuration + timeToGenerateClone) then
-                if (progress - lastClonedProgress > timeToGenerateClone) then
-                    lastClonedProgress = lastClonedProgress + timeToGenerateClone
-                    table.insert(lineProgressionTable, progress)
-                end
-            end
-
-            local msxTable = {}
-            for idx, v in pairs(lineProgressionTable) do
-                local lineProgression = progress - v
-                if (lineProgression > settings.lineDuration) then
-                    table.remove(lineProgressionTable, idx)
-                else
-                    local lineProgress = lineProgression / settings.lineDuration
-                    local height = evaluateCoefficients(settings.pathCoefficients, lineProgress)
-                    if (settings.renderAbove) then
-                        table.insert(msxTable, mapProgress(settings.center, height, settings.center + settings.maxSpread))
-                    end
-                    if (settings.renderBelow) then
-                        table.insert(msxTable, mapProgress(settings.center, height, settings.center - settings.maxSpread))
-                    end
-                end
-            end
-
-            local tbl = tableToAffineFrame(msxTable, currentTime, 0, settings.spacing)
-
-            if (tbl.time > offsets.endOffset) then break end
-
-            timeDiff = tbl.time - currentTime
-
-            table.insert(frameLengths, timeDiff + 1)
-
-            currentTime = currentTime + timeDiff
-
-            lines = combineTables(lines, tbl.lines)
-            svs = combineTables(svs, tbl.svs)
-
-            insertTeleport(svs, currentTime + 1 / INCREMENT, FRAME_SIZE)
-
-            currentTime = currentTime + 1
-
-            iterations = iterations + 1
-        end
-
-        local stats = getStatisticsFromTable(frameLengths)
-
-        generateAffines(lines, svs, offsets.startOffset, offsets.endOffset, "Converge/Diverge",
-            constructDebugTable(lines, svs, stats))
-        setDebug("Line Count: " .. #lines .. " // SV Count: " .. #svs)
-    end
-    Plot(settings.pathCoefficients, settings.progressionExponent, "Line Path Over Duration of Life Cycle")
-end
-
-function StaticBoundaryMenu()
-    local settings = parameterWorkflow("animation_boundaryStatic", "msxBounds", "distance", "progressionExponent",
-        "spacing",
-        "boundCoefficients", {
-            inputType = "RadioBoolean",
-            key = "evalUnder",
-            label = { "Render Over Boundary", "Render Under Boundary" },
-            value = true
-        })
-
-    if RangeActivated() then
-        local currentTime = offsets.startOffset + settings.spacing
-
-        local iterations = 0
-        local lines = {}
-        local svs = {}
-        local frameLengths = {}
-
-        while ((currentTime + (2 / INCREMENT)) <= offsets.endOffset) and (iterations < MAX_ITERATIONS) do
-            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset,
-                settings.progressionExponent)
-
-            local boundary = settings.msxBounds[2] * evaluateCoefficients(settings.boundCoefficients, progress)
-
-            local tbl = placeStaticFrame(currentTime, settings.msxBounds[1], settings.msxBounds[2], settings.distance,
-                settings.spacing, boundary, settings.evalUnder)
-
-            if (tbl.time > offsets.endOffset) then break end
-
-            table.insert(frameLengths, tbl.time - currentTime + 2)
-
-            currentTime = tbl.time
-
-            lines = combineTables(lines, tbl.lines)
-            svs = combineTables(svs, tbl.svs)
-
-            insertTeleport(svs, currentTime + 1 / INCREMENT, FRAME_SIZE)
-
-            iterations = iterations + 1
-
-            currentTime = currentTime + 2
-        end
-
-        local stats = getStatisticsFromTable(frameLengths)
-
-        generateAffines(lines, svs, offsets.startOffset, offsets.endOffset, "Static Boundary",
-            constructDebugTable(lines, svs, stats))
-        setDebug("Line Count: " .. #lines .. " // SV Count: " .. #svs)
-    end
-
-    Plot(settings.boundCoefficients, settings.progressionExponent)
-end
-
-function placeStaticFrame(startTime, min, max, lineDistance, spacing, boundary, evalUnder)
-    msxTable = {}
-    local msx = min
-    local iterations = 0
-
-    while (msx <= max) and (iterations < MAX_ITERATIONS) do
-        local progress = getProgress(min, msx, max)
-        if (evalUnder) then
-            if (msx <= boundary) then table.insert(msxTable, msx) end
-        else
-            if (msx >= boundary) then table.insert(msxTable, msx) end
-        end
-        msx = msx + mapProgress(lineDistance[1], progress, lineDistance[2])
-        iterations = iterations + 1
-    end
-
-    return tableToAffineFrame(msxTable, startTime, 0, spacing)
-end
-
-function DynamicBoundaryMenu()
-    local settings = parameterWorkflow("animation_boundaryDynamic", "msxBounds", 'distance', "progressionExponent",
-        "spacing",
-        "boundCoefficients", {
-            inputType = "RadioBoolean",
-            key = "evalOver",
-            label = { "Change Bottom Bound", "Change Top Bound" },
-            value = true
-        })
-
-    if RangeActivated() then
-        local currentTime = offsets.startOffset + settings.spacing
-
-        local iterations = 0
-
-        local lines = {}
-        local svs = {}
-        local frameLengths = {}
-
-        while ((currentTime + (2 / INCREMENT)) <= offsets.endOffset) and (iterations < MAX_ITERATIONS) do
-            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset,
-                settings.progressionExponent)
-
-            local polynomialHeight = evaluateCoefficients(settings.boundCoefficients, progress)
-
-            local tbl = placeDynamicFrame(currentTime, settings.msxBounds[1], settings.msxBounds[2], settings.distance,
-                settings.spacing, polynomialHeight, settings.evalOver)
-
-            if (tbl.time > offsets.endOffset) then break end
-
-            table.insert(frameLengths, tbl.time - currentTime + 2)
-
-            currentTime = tbl.time
-
-            lines = combineTables(lines, tbl.lines)
-            svs = combineTables(svs, tbl.svs)
-
-            insertTeleport(svs, currentTime + 1 / INCREMENT, FRAME_SIZE)
-
-            iterations = iterations + 1
-
-            currentTime = currentTime + 2
-        end
-
-        local stats = getStatisticsFromTable(frameLengths)
-
-        generateAffines(lines, svs, offsets.startOffset, offsets.endOffset, "Dynamic Boundary",
-            constructDebugTable(lines, svs, stats))
-        setDebug("Line Count: " .. #lines .. " // SV Count: " .. #svs)
-    end
-    Plot(settings.boundCoefficients, settings.progressionExponent)
-end
-
-function placeDynamicFrame(startTime, min, max, lineDistance, spacing, polynomialHeight, evalOver)
-    msxTable = {}
-    local msx = min
-    local iterations = 0
-
-    while (msx <= max) and (iterations < MAX_ITERATIONS) do
-        local progress = getProgress(min, msx, max)
-        if (evalOver) then
-            table.insert(msxTable, (msx - min) * polynomialHeight + min)
-        else
-            table.insert(msxTable, max - (msx - min) * (1 - polynomialHeight))
-        end
-        msx = msx + mapProgress(lineDistance[1], progress, lineDistance[2])
-        iterations = iterations + 1
-    end
-
-    return tableToAffineFrame(msxTable, startTime, 0, spacing)
-end
-
----@diagnostic disable: need-check-nil, inject-field
-function CopyAndPasteMenu()
-    local settings = parameterWorkflow("edit_copyAndPaste", {
-        inputType = "Checkbox",
-        key = "includeBM",
-        label = "Include Bookmarks?",
-        value = true
-    })
-
-    local tbl = {
-        storedLines = {},
-        storedSVs = {},
-        storedBookmarks = {}
-    }
-
-    retrieveStateVariables("CopyAndPaste", tbl)
-
-    if RangeActivated("Copy") then
-        if (type(offsets) == "integer") then return end
-
-        local lines = getLinesInRange(offsets.startOffset, offsets.endOffset)
-
-        local svs = getSVsInRange(offsets.startOffset, offsets.endOffset)
-
-        local bookmarks = getBookmarksInRange(offsets.startOffset, offsets.endOffset)
-
-        local zeroOffsetLines = {}
-        local zeroOffsetSVs = {}
-        local zeroOffsetBookmarks = {}
-
-        for _, givenLine in pairs(lines) do
-            table.insert(zeroOffsetLines,
-                line(givenLine.StartTime - offsets.startOffset, givenLine.Bpm, givenLine.Hidden))
-        end
-
-        for _, givenSV in pairs(svs) do
-            table.insert(zeroOffsetSVs, sv(givenSV.StartTime - offsets.startOffset, givenSV.Multiplier))
-        end
-
-        for _, givenBookmark in pairs(bookmarks) do
-            table.insert(zeroOffsetBookmarks, bookmark(givenBookmark.StartTime - offsets.startOffset, givenBookmark.Note))
-        end
-
-        tbl.storedLines = zeroOffsetLines
-        tbl.storedSVs = zeroOffsetSVs
-        if (settings.includeBM) then tbl.storedBookmarks = zeroOffsetBookmarks end
-    end
-
-    if (#tbl.storedLines > 0 or #tbl.storedSVs > 0) then
-        if NoteActivated("Paste") then
-            if (type(offsets) == "integer") then return end
-
-            local linesToAdd = {}
-            local svsToAdd = {}
-            local bookmarksToAdd = {}
-
-            for _, storedLine in pairs(tbl.storedLines) do
-                table.insert(linesToAdd,
-                    line(storedLine.StartTime + offsets.startOffset, storedLine.Bpm, storedLine.Hidden))
-            end
-            for _, storedSV in pairs(tbl.storedSVs) do
-                table.insert(svsToAdd, sv(storedSV.StartTime + offsets.startOffset, storedSV.Multiplier))
-            end
-            for _, storedBookmark in pairs(tbl.storedBookmarks) do
-                table.insert(bookmarksToAdd,
-                    bookmark(storedBookmark.StartTime + offsets.startOffset, storedBookmark.Note))
-            end
-
-            actions.PerformBatch({
-                utils.CreateEditorAction(action_type.AddTimingPointBatch, linesToAdd),
-                utils.CreateEditorAction(action_type.AddScrollVelocityBatch, svsToAdd),
-                utils.CreateEditorAction(action_type.AddBookmarkBatch, bookmarksToAdd),
-            })
-        end
-    end
-
-    addSeparator()
-
-    imgui.Text(#tbl.storedLines ..
-        " Stored Lines // " .. #tbl.storedSVs .. " Stored SVs // " .. #tbl.storedBookmarks .. " Stored Bookmarks")
-
-    saveStateVariables("CopyAndPaste", tbl)
-end
 
 local separatorTable = { " ", "!", "@", "#", "$", "%", "^", "&" }
 
@@ -1520,6 +482,19 @@ function retrieveParameters(menu, parameterTable)
     end
 end
 
+---Outputs settings based on inputted parameters.
+---@param parameterTable Parameter[]
+---@return table
+function parametersToSettings(parameterTable)
+    local settings = {}
+
+    for _, tbl in ipairs(parameterTable) do
+        settings[tbl.key] = tbl.value
+    end
+
+    return settings
+end
+
 ---Provide a window name and parameter options, and this workflow will automatically manage state, generate input fields, and handle setting conversion.
 ---@param windowName string
 ---@param ... string | table
@@ -1532,19 +507,6 @@ function parameterWorkflow(windowName, ...)
     local settings = parametersToSettings(parameterTable)
 
     saveParameters(windowName, parameterTable)
-
-    return settings
-end
-
----Outputs settings based on inputted parameters.
----@param parameterTable Parameter[]
----@return table
-function parametersToSettings(parameterTable)
-    local settings = {}
-
-    for _, tbl in ipairs(parameterTable) do
-        settings[tbl.key] = tbl.value
-    end
 
     return settings
 end
@@ -1616,6 +578,10 @@ INPUT_DICTIONARY = {
         return InputFloatWrapper("Progression Exponent", v,
             "Adjust this to change how the animation progresses over time. The higher the number, the slower the animation takes to start, but it ramps up much faster. If you aren't familiar with exponential graphs, keep this at 1.")
     end,
+    progressionTable = function (v)
+        return InputTextWrapper("Progression Table", v,
+            "Adjust this to change how the animation progresses over time. The higher the number, the slower the animation takes to start, but it ramps up much faster. If only one value is given, it will apply to all lines. Otherwise, it will apply to its associated line.")
+    end,
     fps = function (v)
         return InputFloatWrapper("Animation FPS", v,
             "Maximum FPS of the animation. Note that if there are too many timing lines, the animation (not game) FPS will go down.")
@@ -1668,6 +634,7 @@ DEFAULT_DICTIONARY = {
     lineCount = DEFAULT_LINE_COUNT,
     lineDuration = DEFAULT_LINE_DURATION,
     progressionExponent = DEFAULT_PROGRESSION_EXPONENT,
+    progressionTable = tostring(DEFAULT_PROGRESSION_EXPONENT),
     boundCoefficients = DEFAULT_BOUND_COEFFICIENTS,
     pathCoefficients = DEFAULT_PATH_COEFFICIENTS,
     fps = DEFAULT_FPS,
@@ -2320,6 +1287,1058 @@ function NoteActivated(text)
     end
 end
 
+function ManualDeleteTab()
+    local settings = {
+        deletionType = DEFAULT_MENU_ID
+    }
+
+    retrieveStateVariables("deletion", settings)
+
+    local deletionTypeIndex = settings.deletionType - 1
+    local _, deletionTypeIndex = imgui.Combo("Deletion Type", deletionTypeIndex, DELETION_TYPE_LIST,
+        #DELETION_TYPE_LIST)
+    addSeparator()
+    settings.deletionType = deletionTypeIndex + 1
+
+    if (RangeActivated("Remove")) then
+        svs = getSVsInRange(offsets.startOffset, offsets.endOffset)
+        lines = getLinesInRange(offsets.startOffset, offsets.endOffset)
+
+        local actionTable = {}
+
+        if (settings.deletionType % 2 ~= 0) then
+            table.insert(actionTable,
+                utils.CreateEditorAction(action_type.RemoveScrollVelocityBatch, svs))
+        end
+
+        if (settings.deletionType <= 2) then
+            table.insert(actionTable, utils.CreateEditorAction(action_type.RemoveTimingPointBatch, lines))
+        end
+
+        actions.PerformBatch(actionTable)
+    end
+
+    saveStateVariables("deletion", settings)
+end
+
+---Create Menu
+---@param menuName string
+---@param typeText string
+---@param list string[]
+---@param functions fun()[]
+function CreateMenu(menuName, typeText, list, functions)
+    local settings = {
+        menuID = DEFAULT_MENU_ID
+    }
+
+    retrieveStateVariables(menuName, settings)
+
+    local createMenuIndex = settings.menuID - 1
+    local _, createMenuIndex = imgui.Combo(typeText .. " Type", createMenuIndex, list,
+        #list)
+    addSeparator()
+    settings.menuID = createMenuIndex + 1
+
+    chooseMenu(functions, settings.menuID)
+
+    saveStateVariables(menuName, settings)
+end
+
+function AutomaticDeleteTab()
+    local selectedID = state.GetValue("selectedID") or 1
+
+    for id, tbl in pairs(globalData) do
+        imgui.Selectable(
+            "Type: " ..
+            tbl.label ..
+            " // Lower/Upper Offset: " ..
+            tbl.lower .. ":" .. tbl.upper .. " // # Lines: " .. tbl.numLines .. " // # SVs: " .. tbl.numSVs,
+            selectedID == id)
+        if (imgui.IsItemClicked()) then
+            selectedID = id
+        end
+    end
+
+    if (#globalData == 0) then
+        imgui.Text("Create an animation or fixed lines to display them here.")
+    else
+        if (imgui.Button("Delete selected item")) then
+            tbl = globalData[selectedID]
+
+            local linesToRemove = getLinesInRange(tbl.lower, tbl.upper)
+            local svsToRemove = getSVsInRange(tbl.lower, tbl.upper)
+
+            actions.PerformBatch({
+                utils.CreateEditorAction(action_type.RemoveTimingPointBatch, linesToRemove),
+                utils.CreateEditorAction(action_type.RemoveScrollVelocityBatch, svsToRemove),
+                -- utils.CreateEditorAction(action_type.RemoveBookmarkBatch, bookmarksToRemove)
+            })
+
+            table.remove(globalData, selectedID)
+            saveMapState(globalData)
+        end
+
+        if (imgui.Button("Delete faulty entry")) then
+            table.remove(globalData, selectedID)
+            saveMapState(globalData)
+        end
+    end
+
+    state.SetValue("selectedID", selectedID)
+end
+
+---@diagnostic disable: undefined-field
+
+function stackVibroMenu()
+    local settings = parameterWorkflow("stackVibro", "msxList", "fps")
+
+    if RangeActivated() then
+        local tbl = table.split(settings.msxList, "%S+")
+
+        placeVibratoSVsByTbl(tbl, settings.fps)
+    end
+end
+
+function placeVibratoSVsByTbl(tbl, fps)
+    local OFFSET_SECURITY_CONSTANT = 2
+
+    local currentTime = offsets.startOffset + OFFSET_SECURITY_CONSTANT
+    local svs = {}
+    local iterations = 1
+
+    while (currentTime <= offsets.endOffset - 1) and (iterations <= MAX_ITERATIONS) do
+        local _, decimalValue = math.modf(currentTime)
+        if (decimalValue < 0.1) then currentTime = math.floor(currentTime) + 0.1 end
+        if (decimalValue > 0.9) then currentTime = math.ceil(currentTime) - 0.1 end
+
+        local vibroHeight = tbl[((iterations - 1) % #tbl) + 1]
+        local recentSVValue = 1
+        if (map.GetScrollVelocityAt(currentTime)) then recentSVValue = map.GetScrollVelocityAt(currentTime).Multiplier end
+
+        local tempSVTbl = insertTeleport({}, currentTime, vibroHeight * -1, recentSVValue)
+        currentTime = currentTime + 1000 / fps
+        tempSVTbl = insertTeleport(tempSVTbl, currentTime, vibroHeight, recentSVValue)
+
+        if (currentTime < offsets.endOffset - OFFSET_SECURITY_CONSTANT) then
+            svs = combineTables(svs, tempSVTbl)
+        end
+
+        currentTime = currentTime + 1000 / fps
+        iterations = iterations + 1
+    end
+
+    actions.PlaceScrollVelocityBatch(cleanSVs(svs, offsets.startOffset + OFFSET_SECURITY_CONSTANT,
+        offsets.endOffset - OFFSET_SECURITY_CONSTANT))
+
+    setDebug("SV Count: " .. #svs)
+end
+
+---@diagnostic disable: undefined-field
+function polynomialVibroMenu()
+    local settings = parameterWorkflow("polynomialVibro", "msxBounds", "boundCoefficients", "fps",
+        "progressionExponent", {
+            inputType = "Checkbox",
+            key = "oneSided",
+            label = "One-Sided Vibro?",
+            value = false
+        })
+
+    if RangeActivated() then
+        local vibroHeightFn = function (v)
+            return mapProgress(settings.msxBounds[1], evaluateCoefficients(settings.boundCoefficients,
+                    getProgress(offsets.startOffset, v, offsets.endOffset, settings.progressionExponent)),
+                settings.msxBounds[2])
+        end
+
+        placeVibratoSVsByFn(vibroHeightFn, settings.oneSided, settings.fps)
+    end
+end
+
+---@diagnostic disable: undefined-field
+function linearVibroMenu()
+    local settings = parameterWorkflow("linearVibro", "msxBounds", "fps", "progressionExponent", {
+        inputType = "Checkbox",
+        key = "oneSided",
+        label = "One-Sided Vibro?",
+        value = false
+    })
+
+    if RangeActivated() then
+        local vibroHeightFn = function (v)
+            return mapProgress(settings.msxBounds[1],
+                getProgress(offsets.startOffset, v, offsets.endOffset - 1, settings.progressionExponent),
+                settings.msxBounds[2])
+        end
+
+        placeVibratoSVsByFn(vibroHeightFn, settings.oneSided, settings.fps)
+    end
+end
+
+---Given a vibrato height function, places a clean set of vibrato SVs.
+---@param vibroHeightFn function
+---@param oneSided boolean
+---@param fps number
+function placeVibratoSVsByFn(vibroHeightFn, oneSided, fps)
+    local OFFSET_SECURITY_CONSTANT = 2
+
+    local currentTime = offsets.startOffset + OFFSET_SECURITY_CONSTANT
+    local svs = {}
+    local iterations = 1
+
+    local teleportSign = 1
+    while (currentTime <= offsets.endOffset - 1) and (iterations <= MAX_ITERATIONS) do
+        local _, decimalValue = math.modf(currentTime)
+        if (decimalValue < 0.1) then currentTime = math.floor(currentTime) + 0.1 end
+        if (decimalValue > 0.9) then currentTime = math.ceil(currentTime) - 0.1 end
+        local vibroHeight = vibroHeightFn(currentTime)
+        local recentSVValue = 1
+        if (map.GetScrollVelocityAt(currentTime)) then recentSVValue = map.GetScrollVelocityAt(currentTime).Multiplier end
+
+        if (oneSided) then
+            local tempSVTbl = insertTeleport({}, currentTime, vibroHeight * -1, recentSVValue)
+            currentTime = currentTime + 1000 / fps
+            tempSVTbl = insertTeleport(tempSVTbl, currentTime, vibroHeight, recentSVValue)
+
+            if (currentTime < offsets.endOffset - OFFSET_SECURITY_CONSTANT) then
+                svs = combineTables(svs, tempSVTbl)
+            end
+        else
+            -- REDO LATER
+            local tempSVTbl = insertTeleport({}, currentTime,
+                iterations == 1 and vibroHeight or vibroHeight * 2 * teleportSign, recentSVValue)
+
+            if (currentTime < offsets.endOffset - OFFSET_SECURITY_CONSTANT - 1) then
+                svs = combineTables(svs, tempSVTbl)
+                teleportSign = -1 * teleportSign
+            end
+            mostRecentHeight = vibroHeight
+        end
+        currentTime = currentTime + 1000 / fps
+        iterations = iterations + 1
+    end
+
+    if (not oneSided) then
+        currentTime = offsets.endOffset - OFFSET_SECURITY_CONSTANT - 1
+        local multiplier = 1
+        if (map.GetScrollVelocityAt(currentTime)) then multiplier = map.GetScrollVelocityAt(currentTime).Multiplier end
+        svs = insertTeleport(svs, currentTime, mostRecentHeight * -1,
+            multiplier)
+    end
+
+    actions.PlaceScrollVelocityBatch(cleanSVs(svs, offsets.startOffset + OFFSET_SECURITY_CONSTANT,
+        offsets.endOffset - OFFSET_SECURITY_CONSTANT))
+
+    setDebug("SV Count: " .. #svs)
+end
+
+function StandardSpreadMenu()
+    local settings = parameterWorkflow("standard_spread", 'distance')
+
+    if RangeActivated() then
+        local lines = {}
+        local msx = offsets.startOffset
+
+        local iterations = 0
+
+        while (msx <= offsets.endOffset) and (iterations < MAX_ITERATIONS) do
+            local progress = getProgress(offsets.startOffset, msx, offsets.endOffset)
+
+            table.insert(lines, line(msx))
+
+            msx = msx + mapProgress(settings.distance[1], progress, settings.distance[2])
+
+            iterations = iterations + 1
+        end
+
+        local notes = getNotesInRange(offsets.startOffset, offsets.endOffset)
+        if (type(notes) ~= "integer") then
+            for _, note in pairs(notes) do
+                lines = combineTables(lines, keepColorLine(note.StartTime, true))
+            end
+        end
+
+        lines = cleanLines(lines, offsets.startOffset, offsets.endOffset)
+
+        setDebug("Line Count: " .. #lines) -- DEBUG TEXT
+
+        actions.PlaceTimingPointBatch(lines)
+    end
+end
+
+function StandardRainbowMenu()
+    local settings = parameterWorkflow("standard_rainbow", "colorList")
+
+    local times = getSelectedOffsets()
+    if NoteActivated() then
+        local lines = {}
+        local rainbowTable = table.split(settings.colorList, "%S+")
+        local rainbowIndex = 1
+
+        if (type(times) == "integer") then return end
+
+        local hidden = false
+
+        for _, time in pairs(times) do
+            if (rainbowIndex == 1) then hidden = false else hidden = true end
+            lines = combineTables(lines, applyColorToTime(rainbowTable[rainbowIndex], time, hidden))
+            rainbowIndex = rainbowIndex + 1
+            if (rainbowIndex > #rainbowTable) then
+                rainbowIndex = 1
+            end
+        end
+
+        lines = cleanLines(lines, offsets[1] - 10, offsets[#offsets] + 10)
+
+        actions.PlaceTimingPointBatch(lines)
+    end
+end
+
+function StandardAtNotesMenu(preservationType)
+    local times = getSelectedOffsets()
+
+    if NoteActivated() then
+        local lines = {}
+
+        if (type(times) == "integer") then return end
+
+        if (preservationType == 1) then -- PRESERVE SNAP
+            for _, time in pairs(times) do
+                lines = combineTables(lines, keepColorLine(time))
+            end
+        else -- PRESERVE LOCATION
+            for _, time in pairs(times) do
+                table.insert(lines, line(time))
+            end
+        end
+        lines = cleanLines(lines, times[1], times[#times] + 10)
+
+        actions.PlaceTimingPointBatch(lines)
+    end
+end
+
+function FixedRandomMenu()
+    local settings = parameterWorkflow("fixed_random", 'msxBounds', 'lineCount', 'delay', 'spacing')
+
+    if NoteActivated() then
+        msxTable = {}
+        for _ = 1, settings.lineCount do
+            table.insert(msxTable, math.random(settings.msxBounds[1], settings.msxBounds[2]))
+        end
+        local tbl = tableToAffineFrame(msxTable, offsets.startOffset + settings.delay, 0, settings.spacing)
+
+        generateAffines(tbl.lines, tbl.svs, offsets.startOffset, offsets.endOffset, "Random Fixed")
+        setDebug("Line Count: " .. #tbl.lines .. " // SV Count: " .. #tbl.svs)
+    end
+end
+
+function FixedManualMenu()
+    local settings = parameterWorkflow("fixed_manual", 'msxList', 'offset', 'delay', 'spacing')
+
+    if NoteActivated() then
+        msxTable = table.split(settings.msxList, "%S+")
+        local tbl = tableToAffineFrame(msxTable, offsets.startOffset + settings.delay, settings.offset, settings.spacing)
+        generateAffines(tbl.lines, tbl.svs, offsets.startOffset, offsets.endOffset, "Manual Fixed")
+
+        setDebug("Line Count: " .. #tbl.lines .. " // SV Count: " .. #tbl.svs)
+    end
+end
+
+function FixedAutomaticMenu()
+    local settings = parameterWorkflow("fixed_automatic", 'msxBounds', 'distance', 'delay', 'spacing')
+
+    if NoteActivated() then
+        local tbl = placeAutomaticFrame(offsets.startOffset + settings.delay, settings.msxBounds[1],
+            settings.msxBounds[2],
+            settings.spacing, settings.distance)
+
+        generateAffines(tbl.lines, tbl.svs, offsets.startOffset, offsets.endOffset, "Automatic Fixed")
+        setDebug("Line Count: " .. #tbl.lines .. " // SV Count: " .. #tbl.svs)
+    end
+end
+
+function placeAutomaticFrame(startTime, low, high, spacing, distance)
+    msxTable = {}
+    local msx = low
+    local iterations = 0
+    while (msx <= high) and (iterations < MAX_ITERATIONS) do
+        local progress = getProgress(low, msx, high)
+        table.insert(msxTable, msx)
+        msx = msx + mapProgress(distance[1], progress, distance[2])
+        iterations = iterations + 1
+    end
+    return tableToAffineFrame(msxTable, startTime, 0, spacing)
+end
+
+function SpectrumMenu()
+    local settings = parameterWorkflow("animation_spectrum", "center", "maxSpread", "distance", "progressionExponent",
+        "spacing",
+        "boundCoefficients", {
+            inputType = "Checkbox",
+            key = "inverse",
+            label = "Inverse?",
+            value = false
+        })
+
+    if RangeActivated() then
+        local currentTime = offsets.startOffset + settings.spacing
+
+        local iterations = 0
+        local lines = {}
+        local svs = {}
+        local frameLengths = {}
+
+        while ((currentTime + (2 / INCREMENT)) <= offsets.endOffset) and (iterations < MAX_ITERATIONS) do
+            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset,
+                settings.progressionExponent)
+
+            local heightDifferential = settings.maxSpread *
+                evaluateCoefficients(settings.boundCoefficients, progress)
+
+            local tbl = placeSpectrumFrame(currentTime, settings.center, settings.maxSpread, settings.distance,
+                settings.spacing, heightDifferential, settings.inverse)
+
+            if (tbl.time > offsets.endOffset) then break end
+
+            table.insert(frameLengths, tbl.time - currentTime + 2)
+
+            currentTime = tbl.time
+
+            lines = combineTables(lines, tbl.lines)
+            svs = combineTables(svs, tbl.svs)
+
+            insertTeleport(svs, currentTime + 1 / INCREMENT, FRAME_SIZE)
+
+            iterations = iterations + 1
+
+            currentTime = currentTime + 2
+        end
+
+        local stats = getStatisticsFromTable(frameLengths)
+
+        generateAffines(lines, svs, offsets.startOffset, offsets.endOffset, "Spectrum",
+            constructDebugTable(lines, svs, stats))
+        setDebug("Line Count: " .. #lines .. " // SV Count: " .. #svs)
+    end
+    Plot(settings.boundCoefficients, settings.progressionExponent)
+end
+
+function placeSpectrumFrame(startTime, center, maxSpread, lineDistance, spacing, boundary, inverse)
+    msxTable = {}
+
+    local iterations = 0
+
+    if (inverse) then
+        local msx = center + maxSpread
+
+        while (msx >= center + boundary) and (iterations < MAX_ITERATIONS) do
+            local progress = getProgress(center, msx, center + maxSpread)
+            table.insert(msxTable, msx)
+            table.insert(msxTable, 2 * center - msx)
+            msx = msx - mapProgress(lineDistance[1], progress, lineDistance[2])
+            iterations = iterations + 1
+        end
+
+        return tableToAffineFrame(msxTable, startTime, 0, spacing)
+    else
+        local msx = center
+
+        while (msx <= center + boundary) and (iterations < MAX_ITERATIONS) do
+            local progress = getProgress(center, msx, center + maxSpread)
+            table.insert(msxTable, msx)
+            table.insert(msxTable, 2 * center - msx)
+            msx = msx + mapProgress(lineDistance[1], progress, lineDistance[2])
+            iterations = iterations + 1
+        end
+
+        return tableToAffineFrame(msxTable, startTime, 0, spacing)
+    end
+end
+
+function BasicManualAnimationMenu()
+    local settings = parameterWorkflow("animation_manual", 'msxList1', 'msxList2', 'progressionTable', 'fps',
+        'spacing')
+
+    if RangeActivated() then
+        startMsxTable = table.split(settings.msxList1, "%S+")
+        endMsxTable = table.split(settings.msxList2, "%S+")
+        progressionTable = table.split(settings.progressionTable, "%S+")
+
+        if (#startMsxTable ~= #endMsxTable) then
+            print("The start and end msx values are not of equal length.")
+            return;
+        end
+
+        if (#endMsxTable ~= #progressionTable) then
+            print("The msx table and progression table are not of equal length.")
+            return;
+        end
+
+        local currentTime = offsets.startOffset + settings.spacing
+        local iterations = 0
+        local lines = {}
+        local svs = {}
+        local frameLengths = {}
+
+        while (currentTime < offsets.endOffset) and (iterations < MAX_ITERATIONS) do
+            local msxTable = {}
+
+            for i = 1, #endMsxTable do
+                local progressionExponent = progressionTable[1]
+                if (#progressionTable >= 2) and (#endMsxTable == #progressionTable) then
+                    progressionExponent = progressionTable[i]
+                end
+                local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset,
+                    progressionExponent)
+
+                table.insert(msxTable, mapProgress(startMsxTable[i], progress, endMsxTable[i]))
+            end
+
+            local tbl = tableToAffineFrame(msxTable, currentTime, 0, settings.spacing)
+
+            if (tbl.time > offsets.endOffset) then break end
+
+            timeDiff = math.max(1000 / settings.fps - 2, tbl.time - currentTime)
+
+            table.insert(frameLengths, timeDiff + 2)
+
+            currentTime = currentTime + timeDiff
+
+            lines = combineTables(lines, tbl.lines)
+            svs = combineTables(svs, tbl.svs)
+
+            insertTeleport(svs, currentTime + 1 / INCREMENT, FRAME_SIZE)
+
+            currentTime = currentTime + 2
+            iterations = iterations + 1
+        end
+
+        local stats = getStatisticsFromTable(frameLengths)
+
+        generateAffines(lines, svs, offsets.startOffset, offsets.endOffset, "Manual Animation",
+            constructDebugTable(lines, svs, stats))
+        setDebug("Line Count: " .. #lines .. " // SV Count: " .. #svs)
+    end
+end
+
+function IncrementalAnimationMenu()
+    local settings = parameterWorkflow("animation_incremental", 'msxList', 'spacing', {
+        inputType = "RadioBoolean",
+        key = "bounce",
+        label = { "12341234", "1234321" },
+        value = false
+    }, {
+        inputType = "Checkbox",
+        key = "allLinesVisible",
+        label = "All Lines Visible?",
+        value = true,
+        sameLine = true
+    })
+
+    if RangeActivated() then
+        local times = getSelectedOffsets()
+
+        local currentIndex = 1
+        local currentHeight = 1
+
+        local currentAddition = 1
+
+        local totalMsxTable = table.split(settings.msxList, "%S+")
+        local MAX_HEIGHT = #totalMsxTable
+
+        local lines = {}
+        local svs = {}
+        while (currentIndex <= #times) do
+            local currentTime = times[currentIndex] + 1
+
+            local msxTable = {}
+
+            if (settings.allLinesVisible) then
+                for i = 1, currentHeight do
+                    table.insert(msxTable, totalMsxTable[i])
+                end
+            else
+                table.insert(msxTable, totalMsxTable[currentHeight])
+            end
+            local tbl = tableToAffineFrame(msxTable, currentTime + 5, 0, settings.spacing)
+
+            lines = combineTables(lines, tbl.lines)
+            svs = combineTables(svs, tbl.svs)
+
+            insertTeleport(svs, currentTime + 1 / INCREMENT, FRAME_SIZE)
+
+            currentIndex = currentIndex + 1
+
+            if (settings.bounce) then
+                if (currentHeight == MAX_HEIGHT) then
+                    currentAddition = -1
+                elseif (currentHeight == 1) then
+                    currentAddition = 1
+                end
+                currentHeight = currentHeight + currentAddition
+            else
+                if (currentHeight == MAX_HEIGHT) then
+                    currentHeight = 1
+                else
+                    currentHeight = currentHeight + 1
+                end
+            end
+        end
+
+        generateAffines(lines, svs, offsets.startOffset, offsets.endOffset, "Incremental",
+            constructDebugTable(lines, svs))
+        setDebug("Line Count: " .. #lines .. " // SV Count: " .. #svs)
+    end
+end
+
+function GlitchMenu()
+    local settings = parameterWorkflow("animation_glitch", 'msxBounds1', 'msxBounds2', 'lineCount', 'progressionExponent',
+        'fps',
+        'spacing')
+
+    if RangeActivated() then
+        local currentTime = offsets.startOffset
+        local lines = {}
+        local svs = {}
+        local frameLengths = {}
+
+        while (currentTime <= offsets.endOffset) do
+            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset,
+                settings.progressionExponent)
+
+            local lowerBound = mapProgress(settings.msxBounds1[1], progress, settings.msxBounds2[1])
+            local upperBound = mapProgress(settings.msxBounds1[2], progress, settings.msxBounds2[2])
+
+            msxTable = {}
+            for i = 1, settings.lineCount do
+                table.insert(msxTable, math.random(upperBound, lowerBound))
+            end
+            local tbl = tableToAffineFrame(msxTable, currentTime, 0, settings.spacing)
+
+            if (tbl.time > offsets.endOffset) then break end
+
+            local timeDiff = math.max(1000 / settings.fps - 2, tbl.time - currentTime)
+
+            table.insert(frameLengths, timeDiff + 2)
+
+            currentTime = currentTime + timeDiff
+
+            lines = combineTables(lines, tbl.lines)
+            svs = combineTables(svs, tbl.svs)
+
+            insertTeleport(svs, currentTime + 1 / INCREMENT, FRAME_SIZE)
+
+            currentTime = currentTime + 2
+        end
+
+        local stats = getStatisticsFromTable(frameLengths)
+
+        generateAffines(lines, svs, offsets.startOffset, offsets.endOffset, "Glitch",
+            constructDebugTable(lines, svs, stats))
+        setDebug("Line Count: " .. #lines .. " // SV Count: " .. #svs)
+    end
+end
+
+function ExpansionContractionMenu()
+    local settings = parameterWorkflow("animation_expansionContraction", 'msxBounds', 'distance', 'progressionExponent',
+        'spacing')
+
+    if RangeActivated() then
+        local currentTime = offsets.startOffset + settings.spacing
+
+        local iterations = 0
+
+        local lines = {}
+        local svs = {}
+        local frameLengths = {}
+
+        while (currentTime <= offsets.endOffset) and (iterations < MAX_ITERATIONS) do
+            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset,
+                settings.progressionExponent)
+
+            local distance = mapProgress(settings.distance[1], progress, settings.distance[2])
+
+            local tbl = placeAutomaticFrame(currentTime, settings.msxBounds[1], settings.msxBounds[2], settings.spacing,
+                { distance, distance })
+
+            if (tbl.time > offsets.endOffset) then break end
+
+            table.insert(frameLengths, tbl.time - currentTime + 2)
+
+            currentTime = tbl.time
+
+            lines = combineTables(lines, tbl.lines)
+            svs = combineTables(svs, tbl.svs)
+
+            insertTeleport(svs, currentTime + 1 / INCREMENT, FRAME_SIZE)
+
+            iterations = iterations + 1
+
+            currentTime = currentTime + 2
+        end
+
+        local stats = getStatisticsFromTable(frameLengths)
+
+        generateAffines(lines, svs, offsets.startOffset, offsets.endOffset, "Expansion/Contraction",
+            constructDebugTable(lines, svs, stats))
+        setDebug("Line Count: " .. #lines .. " // SV Count: " .. #svs)
+    end
+end
+
+function ConvergeDivergeMenu()
+    local settings = parameterWorkflow("animation_convergeDiverge", "center", "maxSpread", "lineCount", "lineDuration",
+        "progressionExponent",
+        "spacing", "pathCoefficients", {
+            inputType = "Checkbox",
+            key = "renderBelow",
+            label = "Render Below?",
+            value = true,
+        }, {
+            inputType = "Checkbox",
+            key = "renderAbove",
+            label = "Render Above?",
+            value = true,
+            sameLine = true
+        }
+        , {
+            inputType = "Checkbox",
+            key = "prefill",
+            label = "Pre-Filled?",
+            value = false,
+        }
+        , {
+            inputType = "Checkbox",
+            key = "terminateEarly",
+            label = "Terminate Life Cycle?",
+            value = false,
+            sameLine = true
+        })
+
+    if RangeActivated() then
+        local currentTime = offsets.startOffset + settings.spacing
+
+        local iterations = 0
+        local lines = {}
+        local svs = {}
+        local frameLengths = {}
+        local lineProgressionTable = {}
+        local timeToGenerateClone = settings.lineDuration / settings.lineCount
+        local lastClonedProgress = -1 * timeToGenerateClone
+
+        if (settings.prefill) then
+            for i = 1, settings.lineCount do
+                table.insert(lineProgressionTable, -1 * i * timeToGenerateClone)
+            end
+        end
+
+        while ((currentTime + (2 / INCREMENT)) <= offsets.endOffset) and (iterations < MAX_ITERATIONS) do
+            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset,
+                settings.progressionExponent)
+
+            if (not settings.terminateEarly) or (progress < 1 - settings.lineDuration + timeToGenerateClone) then
+                if (progress - lastClonedProgress > timeToGenerateClone) then
+                    lastClonedProgress = lastClonedProgress + timeToGenerateClone
+                    table.insert(lineProgressionTable, progress)
+                end
+            end
+
+            local msxTable = {}
+            for idx, v in pairs(lineProgressionTable) do
+                local lineProgression = progress - v
+                if (lineProgression > settings.lineDuration) then
+                    table.remove(lineProgressionTable, idx)
+                else
+                    local lineProgress = lineProgression / settings.lineDuration
+                    local height = evaluateCoefficients(settings.pathCoefficients, lineProgress)
+                    if (settings.renderAbove) then
+                        table.insert(msxTable, mapProgress(settings.center, height, settings.center + settings.maxSpread))
+                    end
+                    if (settings.renderBelow) then
+                        table.insert(msxTable, mapProgress(settings.center, height, settings.center - settings.maxSpread))
+                    end
+                end
+            end
+
+            local tbl = tableToAffineFrame(msxTable, currentTime, 0, settings.spacing)
+
+            if (tbl.time > offsets.endOffset) then break end
+
+            timeDiff = tbl.time - currentTime
+
+            table.insert(frameLengths, timeDiff + 1)
+
+            currentTime = currentTime + timeDiff
+
+            lines = combineTables(lines, tbl.lines)
+            svs = combineTables(svs, tbl.svs)
+
+            insertTeleport(svs, currentTime + 1 / INCREMENT, FRAME_SIZE)
+
+            currentTime = currentTime + 1
+
+            iterations = iterations + 1
+        end
+
+        local stats = getStatisticsFromTable(frameLengths)
+
+        generateAffines(lines, svs, offsets.startOffset, offsets.endOffset, "Converge/Diverge",
+            constructDebugTable(lines, svs, stats))
+        setDebug("Line Count: " .. #lines .. " // SV Count: " .. #svs)
+    end
+    Plot(settings.pathCoefficients, settings.progressionExponent, "Line Path Over Duration of Life Cycle")
+end
+
+function StaticBoundaryMenu()
+    local settings = parameterWorkflow("animation_boundaryStatic", "msxBounds", "distance", "progressionExponent",
+        "spacing",
+        "boundCoefficients", {
+            inputType = "RadioBoolean",
+            key = "evalUnder",
+            label = { "Render Over Boundary", "Render Under Boundary" },
+            value = true
+        })
+
+    if RangeActivated() then
+        local currentTime = offsets.startOffset + settings.spacing
+
+        local iterations = 0
+        local lines = {}
+        local svs = {}
+        local frameLengths = {}
+
+        while ((currentTime + (2 / INCREMENT)) <= offsets.endOffset) and (iterations < MAX_ITERATIONS) do
+            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset,
+                settings.progressionExponent)
+
+            local boundary = settings.msxBounds[2] * evaluateCoefficients(settings.boundCoefficients, progress)
+
+            local tbl = placeStaticFrame(currentTime, settings.msxBounds[1], settings.msxBounds[2], settings.distance,
+                settings.spacing, boundary, settings.evalUnder)
+
+            if (tbl.time > offsets.endOffset) then break end
+
+            table.insert(frameLengths, tbl.time - currentTime + 2)
+
+            currentTime = tbl.time
+
+            lines = combineTables(lines, tbl.lines)
+            svs = combineTables(svs, tbl.svs)
+
+            insertTeleport(svs, currentTime + 1 / INCREMENT, FRAME_SIZE)
+
+            iterations = iterations + 1
+
+            currentTime = currentTime + 2
+        end
+
+        local stats = getStatisticsFromTable(frameLengths)
+
+        generateAffines(lines, svs, offsets.startOffset, offsets.endOffset, "Static Boundary",
+            constructDebugTable(lines, svs, stats))
+        setDebug("Line Count: " .. #lines .. " // SV Count: " .. #svs)
+    end
+
+    Plot(settings.boundCoefficients, settings.progressionExponent)
+end
+
+function placeStaticFrame(startTime, min, max, lineDistance, spacing, boundary, evalUnder)
+    msxTable = {}
+    local msx = min
+    local iterations = 0
+
+    while (msx <= max) and (iterations < MAX_ITERATIONS) do
+        local progress = getProgress(min, msx, max)
+        if (evalUnder) then
+            if (msx <= boundary) then table.insert(msxTable, msx) end
+        else
+            if (msx >= boundary) then table.insert(msxTable, msx) end
+        end
+        msx = msx + mapProgress(lineDistance[1], progress, lineDistance[2])
+        iterations = iterations + 1
+    end
+
+    return tableToAffineFrame(msxTable, startTime, 0, spacing)
+end
+
+function DynamicBoundaryMenu()
+    local settings = parameterWorkflow("animation_boundaryDynamic", "msxBounds", 'distance', "progressionExponent",
+        "spacing",
+        "boundCoefficients", {
+            inputType = "RadioBoolean",
+            key = "evalOver",
+            label = { "Change Bottom Bound", "Change Top Bound" },
+            value = true
+        })
+
+    if RangeActivated() then
+        local currentTime = offsets.startOffset + settings.spacing
+
+        local iterations = 0
+
+        local lines = {}
+        local svs = {}
+        local frameLengths = {}
+
+        while ((currentTime + (2 / INCREMENT)) <= offsets.endOffset) and (iterations < MAX_ITERATIONS) do
+            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset,
+                settings.progressionExponent)
+
+            local polynomialHeight = evaluateCoefficients(settings.boundCoefficients, progress)
+
+            local tbl = placeDynamicFrame(currentTime, settings.msxBounds[1], settings.msxBounds[2], settings.distance,
+                settings.spacing, polynomialHeight, settings.evalOver)
+
+            if (tbl.time > offsets.endOffset) then break end
+
+            table.insert(frameLengths, tbl.time - currentTime + 2)
+
+            currentTime = tbl.time
+
+            lines = combineTables(lines, tbl.lines)
+            svs = combineTables(svs, tbl.svs)
+
+            insertTeleport(svs, currentTime + 1 / INCREMENT, FRAME_SIZE)
+
+            iterations = iterations + 1
+
+            currentTime = currentTime + 2
+        end
+
+        local stats = getStatisticsFromTable(frameLengths)
+
+        generateAffines(lines, svs, offsets.startOffset, offsets.endOffset, "Dynamic Boundary",
+            constructDebugTable(lines, svs, stats))
+        setDebug("Line Count: " .. #lines .. " // SV Count: " .. #svs)
+    end
+    Plot(settings.boundCoefficients, settings.progressionExponent)
+end
+
+function placeDynamicFrame(startTime, min, max, lineDistance, spacing, polynomialHeight, evalOver)
+    msxTable = {}
+    local msx = min
+    local iterations = 0
+
+    while (msx <= max) and (iterations < MAX_ITERATIONS) do
+        local progress = getProgress(min, msx, max)
+        if (evalOver) then
+            table.insert(msxTable, (msx - min) * polynomialHeight + min)
+        else
+            table.insert(msxTable, max - (msx - min) * (1 - polynomialHeight))
+        end
+        msx = msx + mapProgress(lineDistance[1], progress, lineDistance[2])
+        iterations = iterations + 1
+    end
+
+    return tableToAffineFrame(msxTable, startTime, 0, spacing)
+end
+
+function SetVisibilityMenu()
+    local settings = parameterWorkflow("edit_setVisibility", {
+        inputType = "RadioBoolean",
+        key = "enable",
+        label = { "Turn Lines Invisible", "Turn Lines Visible" },
+        value = false
+    })
+
+    if NoteActivated() then
+        local linesToRemove = getLinesInRange(offsets.startOffset, offsets.endOffset)
+
+        local linesToAdd = {}
+
+        for _, currentLine in pairs(linesToRemove) do
+            table.insert(linesToAdd, line(currentLine.StartTime, currentLine.Bpm, not settings.enable))
+        end
+
+        actions.PerformBatch({
+            utils.CreateEditorAction(action_type.RemoveTimingPointBatch, linesToRemove),
+            utils.CreateEditorAction(action_type.AddTimingPointBatch, linesToAdd)
+        })
+    end
+end
+
+---@diagnostic disable: need-check-nil, inject-field
+function CopyAndPasteMenu()
+    local settings = parameterWorkflow("edit_copyAndPaste", {
+        inputType = "Checkbox",
+        key = "includeBM",
+        label = "Include Bookmarks?",
+        value = true
+    })
+
+    local tbl = {
+        storedLines = {},
+        storedSVs = {},
+        storedBookmarks = {}
+    }
+
+    retrieveStateVariables("CopyAndPaste", tbl)
+
+    if RangeActivated("Copy") then
+        if (type(offsets) == "integer") then return end
+
+        local lines = getLinesInRange(offsets.startOffset, offsets.endOffset)
+
+        local svs = getSVsInRange(offsets.startOffset, offsets.endOffset)
+
+        local bookmarks = getBookmarksInRange(offsets.startOffset, offsets.endOffset)
+
+        local zeroOffsetLines = {}
+        local zeroOffsetSVs = {}
+        local zeroOffsetBookmarks = {}
+
+        for _, givenLine in pairs(lines) do
+            table.insert(zeroOffsetLines,
+                line(givenLine.StartTime - offsets.startOffset, givenLine.Bpm, givenLine.Hidden))
+        end
+
+        for _, givenSV in pairs(svs) do
+            table.insert(zeroOffsetSVs, sv(givenSV.StartTime - offsets.startOffset, givenSV.Multiplier))
+        end
+
+        for _, givenBookmark in pairs(bookmarks) do
+            table.insert(zeroOffsetBookmarks, bookmark(givenBookmark.StartTime - offsets.startOffset, givenBookmark.Note))
+        end
+
+        tbl.storedLines = zeroOffsetLines
+        tbl.storedSVs = zeroOffsetSVs
+        if (settings.includeBM) then tbl.storedBookmarks = zeroOffsetBookmarks end
+    end
+
+    if (#tbl.storedLines > 0 or #tbl.storedSVs > 0) then
+        if NoteActivated("Paste") then
+            if (type(offsets) == "integer") then return end
+
+            local linesToAdd = {}
+            local svsToAdd = {}
+            local bookmarksToAdd = {}
+
+            for _, storedLine in pairs(tbl.storedLines) do
+                table.insert(linesToAdd,
+                    line(storedLine.StartTime + offsets.startOffset, storedLine.Bpm, storedLine.Hidden))
+            end
+            for _, storedSV in pairs(tbl.storedSVs) do
+                table.insert(svsToAdd, sv(storedSV.StartTime + offsets.startOffset, storedSV.Multiplier))
+            end
+            for _, storedBookmark in pairs(tbl.storedBookmarks) do
+                table.insert(bookmarksToAdd,
+                    bookmark(storedBookmark.StartTime + offsets.startOffset, storedBookmark.Note))
+            end
+
+            actions.PerformBatch({
+                utils.CreateEditorAction(action_type.AddTimingPointBatch, linesToAdd),
+                utils.CreateEditorAction(action_type.AddScrollVelocityBatch, svsToAdd),
+                utils.CreateEditorAction(action_type.AddBookmarkBatch, bookmarksToAdd),
+            })
+        end
+    end
+
+    addSeparator()
+
+    imgui.Text(#tbl.storedLines ..
+        " Stored Lines // " .. #tbl.storedSVs .. " Stored SVs // " .. #tbl.storedBookmarks .. " Stored Bookmarks")
+
+    saveStateVariables("CopyAndPaste", tbl)
+end
+
 function chooseMenu(tbl, menuID)
     if (tbl[menuID]) then
         tbl[menuID]();
@@ -2352,8 +2371,7 @@ LINE_STANDARD_MENU_FUNCTIONS = {
     StandardSpreadMenu,
     function () StandardAtNotesMenu(2) end,
     function () StandardAtNotesMenu(1) end,
-    StandardRainbowMenu,
-    SetVisibilityMenu
+    StandardRainbowMenu
 }
 
 LINE_FIXED_MENU_LIST = {
@@ -2408,7 +2426,7 @@ CREATE_SV_TAB_FUNCTIONS = {
 
 EDIT_TAB_FUNCTIONS = {
     CopyAndPasteMenu,
-    -- function () end -- OffsetMenu
+    SetVisibilityMenu
 }
 
     retrieveStateVariables("main", settings)
@@ -2440,7 +2458,7 @@ EDIT_TAB_FUNCTIONS = {
         imgui.EndTabItem()
     end
 
-    if imgui.BeginTabItem("Delete (Automatic) [BETA]") then
+    if imgui.BeginTabItem("Delete (Auto)") then
         AutomaticDeleteTab()
         imgui.EndTabItem()
     end
