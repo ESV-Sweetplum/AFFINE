@@ -7,6 +7,16 @@ function BasicManualAnimationMenu()
         endMsxTable = table.split(settings.msxList2, "%S+")
         progressionTable = table.split(settings.progressionTable, "%S+")
 
+        if (#startMsxTable ~= #endMsxTable) then
+            print("The start and end msx values are not of equal length.")
+            return;
+        end
+
+        if (#endMsxTable ~= #progressionTable) then
+            print("The msx table and progression table are not of equal length.")
+            return;
+        end
+
         local currentTime = offsets.startOffset + settings.spacing
         local iterations = 0
         local lines = {}
