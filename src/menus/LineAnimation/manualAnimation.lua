@@ -1,10 +1,11 @@
 function BasicManualAnimationMenu()
-    local settings = parameterWorkflow("animation_manual", 'msxList1', 'msxList2', 'progressionExponent', 'fps',
+    local settings = parameterWorkflow("animation_manual", 'msxList1', 'msxList2', 'progressionTable', 'fps',
         'spacing')
 
     if RangeActivated() then
         startMsxTable = table.split(settings.msxList1, "%S+")
         endMsxTable = table.split(settings.msxList2, "%S+")
+        progressionTable = table.split(settings.progressionTable, "%S+")
 
         local currentTime = offsets.startOffset + settings.spacing
         local iterations = 0
@@ -13,12 +14,16 @@ function BasicManualAnimationMenu()
         local frameLengths = {}
 
         while (currentTime < offsets.endOffset) and (iterations < MAX_ITERATIONS) do
-            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset,
-                settings.progressionExponent)
-
             local msxTable = {}
 
             for i = 1, #endMsxTable do
+                local progressionExponent = progressionTable[1]
+                if (#progressionTable >= 2) and (#endMsxTable == #progressionTable) then
+                    progressionExponent = progressionTable[i]
+                end
+                local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset,
+                    progressionExponent)
+
                 table.insert(msxTable, mapProgress(startMsxTable[i], progress, endMsxTable[i]))
             end
 

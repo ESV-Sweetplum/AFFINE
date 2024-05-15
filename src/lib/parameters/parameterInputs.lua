@@ -65,6 +65,10 @@ INPUT_DICTIONARY = {
         return InputFloatWrapper("Progression Exponent", v,
             "Adjust this to change how the animation progresses over time. The higher the number, the slower the animation takes to start, but it ramps up much faster. If you aren't familiar with exponential graphs, keep this at 1.")
     end,
+    progressionTable = function (v)
+        return InputTextWrapper("Progression Table", v,
+            "Adjust this to change how the animation progresses over time. The higher the number, the slower the animation takes to start, but it ramps up much faster. If only one value is given, it will apply to all lines. Otherwise, it will apply to its associated line.")
+    end,
     fps = function (v)
         return InputFloatWrapper("Animation FPS", v,
             "Maximum FPS of the animation. Note that if there are too many timing lines, the animation (not game) FPS will go down.")

@@ -12,6 +12,7 @@ DEFAULT_DICTIONARY = {
     lineCount = DEFAULT_LINE_COUNT,
     lineDuration = DEFAULT_LINE_DURATION,
     progressionExponent = DEFAULT_PROGRESSION_EXPONENT,
+    progressionTable = tostring(DEFAULT_PROGRESSION_EXPONENT),
     boundCoefficients = DEFAULT_BOUND_COEFFICIENTS,
     pathCoefficients = DEFAULT_PATH_COEFFICIENTS,
     fps = DEFAULT_FPS,
