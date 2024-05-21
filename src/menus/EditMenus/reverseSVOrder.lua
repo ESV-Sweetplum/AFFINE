@@ -1,5 +1,5 @@
 function ReverseSVOrderMenu()
-    if RangeActivated() then
+    if RangeActivated("Switch", "SVs") then
         local svsToReverse = getSVsInRange(offsets.startOffset, offsets.endOffset)
 
         local newSVs = reverseSVs(svsToReverse)
