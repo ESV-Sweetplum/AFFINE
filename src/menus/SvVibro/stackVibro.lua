@@ -11,8 +11,6 @@ function stackVibroMenu()
 end
 
 function placeVibratoSVsByTbl(tbl, fps)
-    local OFFSET_SECURITY_CONSTANT = 2
-
     local currentTime = offsets.startOffset + OFFSET_SECURITY_CONSTANT
     local svs = {}
     local iterations = 1

@@ -15,6 +15,6 @@ function polynomialVibroMenu()
                 settings.msxBounds[2])
         end
 
-        placeVibratoSVsByFn(vibroHeightFn, settings.oneSided, settings.fps)
+        placeVibratoGroupsByFn(vibroHeightFn, settings.oneSided, settings.fps)
     end
 end

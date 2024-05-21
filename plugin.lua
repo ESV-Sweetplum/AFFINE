@@ -9,7 +9,7 @@ DEFAULT_MSX_BOUNDS = { 0, 400 }              -- integer[2]
 DEFAULT_DISTANCE = { 15, 15 }                -- integer[2]
 DEFAULT_LINE_COUNT = 10                      -- integer
 DEFAULT_LINE_DURATION = 0.5                  -- integer
-DEFAULT_FPS = 90                             -- float
+DEFAULT_FPS = 91                             -- float
 DEFAULT_CENTER = 200                         -- integer
 DEFAULT_MAX_SPREAD = 200                     -- integer
 DEFAULT_PROGRESSION_EXPONENT = 1             -- float
@@ -21,14 +21,16 @@ INCREMENT = 64                               -- integer
 MAX_ITERATIONS = 1000                        -- integer
 FRAME_SIZE = 500                             -- integer
 
+SPLITSCROLL_MODE = true                      -- boolean
+OFFSET_SECURITY_CONSTANT = 2                 -- integer
+
 -- END DEFAULT SETTINGS (DONT DELETE THIS LINE)
 
 LINE_STANDARD_MENU_LIST = {
     'Spread',
     'At Notes (Preserve Location)',
     'At Notes (Preserve Snap)',
-    "Rainbow",
-    "Set Line Visibility"
+    "Rainbow"
 }
 
 CREATE_LINE_TAB_LIST = {
@@ -55,7 +57,8 @@ DELETION_TYPE_LIST = {
 
 EDIT_TAB_LIST = {
     "Copy + Paste",
-    -- "Offset"
+    "Set Line Visibility",
+    "Add Forefront Teleport"
 }
 
 function ManualDeleteTab()
@@ -171,8 +174,6 @@ function stackVibroMenu()
 end
 
 function placeVibratoSVsByTbl(tbl, fps)
-    local OFFSET_SECURITY_CONSTANT = 2
-
     local currentTime = offsets.startOffset + OFFSET_SECURITY_CONSTANT
     local svs = {}
     local iterations = 1
@@ -221,7 +222,7 @@ function polynomialVibroMenu()
                 settings.msxBounds[2])
         end
 
-        placeVibratoSVsByFn(vibroHeightFn, settings.oneSided, settings.fps)
+        placeVibratoGroupsByFn(vibroHeightFn, settings.oneSided, settings.fps)
     end
 end
 
@@ -241,7 +242,7 @@ function linearVibroMenu()
                 settings.msxBounds[2])
         end
 
-        placeVibratoSVsByFn(vibroHeightFn, settings.oneSided, settings.fps)
+        placeVibratoGroupsByFn(vibroHeightFn, settings.oneSided, settings.fps)
     end
 end
 
@@ -249,57 +250,71 @@ end
 ---@param vibroHeightFn function
 ---@param oneSided boolean
 ---@param fps number
-function placeVibratoSVsByFn(vibroHeightFn, oneSided, fps)
-    local OFFSET_SECURITY_CONSTANT = 2
+function placeVibratoGroupsByFn(vibroHeightFn, oneSided, fps)
+    local selectedTimes = getSelectedOffsets()
+    local svs = {}
+    for i=1, #selectedTimes - 1 do
+        svs = combineTables(svs, getVibratoSVsByFn(vibroHeightFn, oneSided, fps, selectedTimes[i], selectedTimes[i + 1]))
+    end
 
-    local currentTime = offsets.startOffset + OFFSET_SECURITY_CONSTANT
+    actions.PlaceScrollVelocityBatch(cleanSVs(svs, offsets.startOffset + OFFSET_SECURITY_CONSTANT,
+    offsets.endOffset - OFFSET_SECURITY_CONSTANT))
+    
+    setDebug("SV Count: " .. #svs)
+end
+
+---Given a vibrato height function, returns a clean set of vibrato SVs between two values.
+---@param vibroHeightFn function
+---@param oneSided boolean
+---@param fps number
+---@param startTime number
+---@param endTime number
+---@return TimingPointInfo[]
+function getVibratoSVsByFn(vibroHeightFn, oneSided, fps, startTime, endTime)
+    local currentTime = startTime + OFFSET_SECURITY_CONSTANT
     local svs = {}
     local iterations = 1
 
     local teleportSign = 1
-    while (currentTime <= offsets.endOffset - 1) and (iterations <= MAX_ITERATIONS) do
+    while (currentTime <= endTime - 1) and (iterations <= MAX_ITERATIONS) do
         local _, decimalValue = math.modf(currentTime)
         if (decimalValue < 0.1) then currentTime = math.floor(currentTime) + 0.1 end
         if (decimalValue > 0.9) then currentTime = math.ceil(currentTime) - 0.1 end
         local vibroHeight = vibroHeightFn(currentTime)
-        local recentSVValue = 1
-        if (map.GetScrollVelocityAt(currentTime)) then recentSVValue = map.GetScrollVelocityAt(currentTime).Multiplier end
+        local recentSVValue = mostRecentSV(currentTime)
 
         if (oneSided) then
             local tempSVTbl = insertTeleport({}, currentTime, vibroHeight * -1, recentSVValue)
             currentTime = currentTime + 1000 / fps
             tempSVTbl = insertTeleport(tempSVTbl, currentTime, vibroHeight, recentSVValue)
 
-            if (currentTime < offsets.endOffset - OFFSET_SECURITY_CONSTANT) then
+            if (currentTime < endTime - OFFSET_SECURITY_CONSTANT) then
                 svs = combineTables(svs, tempSVTbl)
             end
         else
             -- REDO LATER
             local tempSVTbl = insertTeleport({}, currentTime,
                 iterations == 1 and vibroHeight or vibroHeight * 2 * teleportSign, recentSVValue)
+                mostRecentHeight = vibroHeight * teleportSign
 
-            if (currentTime < offsets.endOffset - OFFSET_SECURITY_CONSTANT - 1) then
+            if (currentTime < endTime - OFFSET_SECURITY_CONSTANT - 1) then
                 svs = combineTables(svs, tempSVTbl)
                 teleportSign = -1 * teleportSign
             end
-            mostRecentHeight = vibroHeight
         end
         currentTime = currentTime + 1000 / fps
         iterations = iterations + 1
     end
 
     if (not oneSided) then
-        currentTime = offsets.endOffset - OFFSET_SECURITY_CONSTANT - 1
+        currentTime = endTime - OFFSET_SECURITY_CONSTANT - 1
         local multiplier = 1
         if (map.GetScrollVelocityAt(currentTime)) then multiplier = map.GetScrollVelocityAt(currentTime).Multiplier end
         svs = insertTeleport(svs, currentTime, mostRecentHeight * -1,
             multiplier)
     end
 
-    actions.PlaceScrollVelocityBatch(cleanSVs(svs, offsets.startOffset + OFFSET_SECURITY_CONSTANT,
-        offsets.endOffset - OFFSET_SECURITY_CONSTANT))
-
-    setDebug("SV Count: " .. #svs)
+    return svs
 end
 
 function StandardSpreadMenu()
@@ -333,30 +348,6 @@ function StandardSpreadMenu()
         setDebug("Line Count: " .. #lines) -- DEBUG TEXT
 
         actions.PlaceTimingPointBatch(lines)
-    end
-end
-
-function SetVisibilityMenu()
-    local settings = parameterWorkflow("standard_setVisibility", {
-        inputType = "RadioBoolean",
-        key = "enable",
-        label = { "Turn Lines Invisible", "Turn Lines Visible" },
-        value = false
-    })
-
-    if NoteActivated() then
-        local linesToRemove = getLinesInRange(offsets.startOffset, offsets.endOffset)
-
-        local linesToAdd = {}
-
-        for _, currentLine in pairs(linesToRemove) do
-            table.insert(linesToAdd, line(currentLine.StartTime, currentLine.Bpm, not settings.enable))
-        end
-
-        actions.PerformBatch({
-            utils.CreateEditorAction(action_type.RemoveTimingPointBatch, linesToRemove),
-            utils.CreateEditorAction(action_type.AddTimingPointBatch, linesToAdd)
-        })
     end
 end
 
@@ -400,12 +391,12 @@ function StandardAtNotesMenu(preservationType)
             for _, time in pairs(times) do
                 lines = combineTables(lines, keepColorLine(time))
             end
+            lines = cleanLines(lines, times[1], times[#times] + 10)
         else -- PRESERVE LOCATION
             for _, time in pairs(times) do
                 table.insert(lines, line(time))
             end
         end
-        lines = cleanLines(lines, times[1], times[#times] + 10)
 
         actions.PlaceTimingPointBatch(lines)
     end
@@ -1011,6 +1002,30 @@ function placeDynamicFrame(startTime, min, max, lineDistance, spacing, polynomia
     return tableToAffineFrame(msxTable, startTime, 0, spacing)
 end
 
+function SetVisibilityMenu()
+    local settings = parameterWorkflow("edit_setVisibility", {
+        inputType = "RadioBoolean",
+        key = "enable",
+        label = { "Turn Lines Invisible", "Turn Lines Visible" },
+        value = false
+    })
+
+    if NoteActivated() then
+        local linesToRemove = getLinesInRange(offsets.startOffset, offsets.endOffset)
+
+        local linesToAdd = {}
+
+        for _, currentLine in pairs(linesToRemove) do
+            table.insert(linesToAdd, line(currentLine.StartTime, currentLine.Bpm, not settings.enable))
+        end
+
+        actions.PerformBatch({
+            utils.CreateEditorAction(action_type.RemoveTimingPointBatch, linesToRemove),
+            utils.CreateEditorAction(action_type.AddTimingPointBatch, linesToAdd)
+        })
+    end
+end
+
 ---@diagnostic disable: need-check-nil, inject-field
 function CopyAndPasteMenu()
     local settings = parameterWorkflow("edit_copyAndPaste", {
@@ -1093,6 +1108,25 @@ function CopyAndPasteMenu()
         " Stored Lines // " .. #tbl.storedSVs .. " Stored SVs // " .. #tbl.storedBookmarks .. " Stored Bookmarks")
 
     saveStateVariables("CopyAndPaste", tbl)
+end
+
+function AddForefrontTeleportMenu()
+    local settings = parameterWorkflow("edit_addForefrontTeleport", "msxList")
+
+    if NoteActivated() then
+        local offsets = getSelectedOffsets()
+
+        local svs = {}
+        local msxList = table.split(settings.msxList, "%S+")
+
+        local mostRecentSV = map.GetScrollVelocityAt(offsets[1]).Multiplier
+
+        for idx, v in pairs(offsets) do
+            svs = insertTeleport(svs, v - 1, tonumber(msxList[(idx - 1) % #msxList + 1]), mostRecentSV)
+        end
+
+        actions.Perform(utils.CreateEditorAction(action_type.AddScrollVelocityBatch, svs))
+    end
 end
 
 local separatorTable = { " ", "!", "@", "#", "$", "%", "^", "&" }
@@ -1231,6 +1265,14 @@ end
 ---@return SliderVelocityInfo
 function sv(time, multiplier)
     return utils.CreateScrollVelocity(time, multiplier)
+end
+
+---@diagnostic disable: undefined-field
+function mostRecentSV(time)
+    if (map.GetScrollVelocityAt(time)) then
+        return map.GetScrollVelocityAt(time).Multiplier
+    end
+    return 1
 end
 
 ---Returns all ScrollVelocities within a certain temporal range.
@@ -2352,8 +2394,7 @@ LINE_STANDARD_MENU_FUNCTIONS = {
     StandardSpreadMenu,
     function () StandardAtNotesMenu(2) end,
     function () StandardAtNotesMenu(1) end,
-    StandardRainbowMenu,
-    SetVisibilityMenu
+    StandardRainbowMenu
 }
 
 LINE_FIXED_MENU_LIST = {
@@ -2408,7 +2449,8 @@ CREATE_SV_TAB_FUNCTIONS = {
 
 EDIT_TAB_FUNCTIONS = {
     CopyAndPasteMenu,
-    -- function () end -- OffsetMenu
+    SetVisibilityMenu,
+    AddForefrontTeleportMenu,
 }
 
     retrieveStateVariables("main", settings)
@@ -2440,7 +2482,7 @@ EDIT_TAB_FUNCTIONS = {
         imgui.EndTabItem()
     end
 
-    if imgui.BeginTabItem("Delete (Automatic) [BETA]") then
+    if imgui.BeginTabItem("Delete (Auto)") then
         AutomaticDeleteTab()
         imgui.EndTabItem()
     end
