@@ -18,6 +18,12 @@ function ReverseSVOrderMenu()
     end
 end
 
+---Reverses the svs, either in place, or with respect to time.
+---@param svs SliderVelocityInfo[]
+---@param startTime number
+---@param endTime number
+---@param preserveTime boolean
+---@return SliderVelocityInfo[]
 function reverseSVs(svs, startTime, endTime, preserveTime)
     if preserveTime then
         local newTbl = {}
