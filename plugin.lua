@@ -1028,17 +1028,30 @@ function SetVisibilityMenu()
 end
 
 function ReverseSVOrderMenu()
-    local settings = parameterWorkflow("edit_reverseSV", {
-        inputType = "Checkbox",
-        key = "preserveRelativeTime",
-        label = "Preserve Time?",
-        value = true
-    })
+    local settings = parameterWorkflow("edit_reverseSV", "delay",
+        {
+            inputType = "Int",
+            key = "llv",
+            label = "Large Value Filter",
+            value = 69420
+        }, {
+            inputType = "Checkbox",
+            key = "preserveRelativeTime",
+            label = "Preserve Time?",
+            value = true
+        })
 
     if RangeActivated("Switch", "SVs") then
-        local svsToReverse = getSVsInRange(offsets.startOffset, offsets.endOffset)
+        local svsInRange = getSVsInRange(offsets.startOffset + settings.delay, offsets.endOffset - settings.delay)
 
-        local newSVs = reverseSVs(svsToReverse, offsets.startOffset, offsets.endOffset, settings.preserveRelativeTime)
+        local svsToReverse = {}
+
+        for _, v in pairs(svsInRange) do
+            if (math.abs(v.Multiplier) < settings.llv) then table.insert(svsToReverse, v) end
+        end
+
+        local newSVs = reverseSVs(svsToReverse, offsets.startOffset + settings.delay, offsets.endOffset - settings.delay,
+            settings.preserveRelativeTime)
 
         actions.PerformBatch({
             utils.CreateEditorAction(action_type.AddScrollVelocityBatch, newSVs),
@@ -1047,6 +1060,12 @@ function ReverseSVOrderMenu()
     end
 end
 
+---Reverses the svs, either in place, or with respect to time.
+---@param svs SliderVelocityInfo[]
+---@param startTime number
+---@param endTime number
+---@param preserveTime boolean
+---@return SliderVelocityInfo[]
 function reverseSVs(svs, startTime, endTime, preserveTime)
     if preserveTime then
         local newTbl = {}

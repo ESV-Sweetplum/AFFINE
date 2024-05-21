@@ -1,15 +1,35 @@
 function ReverseSVOrderMenu()
-    local settings = parameterWorkflow("edit_reverseSV", {
-        inputType = "Checkbox",
-        key = "preserveRelativeTime",
-        label = "Preserve Time?",
-        value = true
-    })
+    local settings = parameterWorkflow("edit_reverseSV", "delay",
+        {
+            inputType = "Int",
+            key = "llv",
+            label = "Large Value Filter",
+            value = 69420
+        }, {
+            inputType = "Checkbox",
+            key = "preserveRelativeTime",
+            label = "Preserve Time?",
+            value = true
+        })
 
     if RangeActivated("Switch", "SVs") then
-        local svsToReverse = getSVsInRange(offsets.startOffset, offsets.endOffset)
+        local svsInRange = getSVsInRange(offsets.startOffset + settings.delay, offsets.endOffset - settings.delay)
 
-        local newSVs = reverseSVs(svsToReverse, offsets.startOffset, offsets.endOffset, settings.preserveRelativeTime)
+        if (#svsInRange == 0) then return end
+
+        local svsToReverse = {}
+
+        for _, v in pairs(svsInRange) do
+            if (math.abs(v.Multiplier) < settings.llv) then table.insert(svsToReverse, v) end
+        end
+
+        local newSVs = reverseSVs(svsToReverse, offsets.startOffset + settings.delay, offsets.endOffset - settings.delay,
+            settings.preserveRelativeTime)
+
+        if (#svsToReverse == 0) then
+            print("fuck you")
+            return
+        end
 
         actions.PerformBatch({
             utils.CreateEditorAction(action_type.AddScrollVelocityBatch, newSVs),
