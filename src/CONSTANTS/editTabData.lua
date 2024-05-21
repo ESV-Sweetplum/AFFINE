@@ -1,11 +1,13 @@
 EDIT_TAB_LIST = {
+    "Add Forefront Teleport",
     "Copy + Paste",
     "Set Line Visibility",
-    "Add Forefront Teleport"
+    "Reverse SV Order"
 }
 
 EDIT_TAB_FUNCTIONS = {
+    AddForefrontTeleportMenu,
     CopyAndPasteMenu,
     SetVisibilityMenu,
-    AddForefrontTeleportMenu,
+    ReverseSVOrderMenu,
 }

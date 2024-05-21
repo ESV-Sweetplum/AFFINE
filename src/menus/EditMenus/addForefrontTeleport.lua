@@ -1,3 +1,4 @@
+---@diagnostic disable: undefined-field
 function AddForefrontTeleportMenu()
     local settings = parameterWorkflow("edit_addForefrontTeleport", "msxList")
 

@@ -56,9 +56,10 @@ DELETION_TYPE_LIST = {
 }
 
 EDIT_TAB_LIST = {
+    "Add Forefront Teleport",
     "Copy + Paste",
     "Set Line Visibility",
-    "Add Forefront Teleport"
+    "Reverse SV Order"
 }
 
 function ManualDeleteTab()
@@ -1026,6 +1027,29 @@ function SetVisibilityMenu()
     end
 end
 
+function ReverseSVOrderMenu()
+    if RangeActivated() then
+        local svsToReverse = getSVsInRange(offsets.startOffset, offsets.endOffset)
+
+        local newSVs = reverseSVs(svsToReverse)
+
+        actions.PerformBatch({
+            utils.CreateEditorAction(action_type.AddScrollVelocityBatch, newSVs),
+            utils.CreateEditorAction(action_type.RemoveScrollVelocityBatch, svsToReverse)
+        })
+    end
+end
+
+function reverseSVs(svs)
+    local newTbl = {}
+
+    for idx, item in ipairs(svs) do
+        table.insert(newTbl, sv(svs[#svs - idx + 1].StartTime, item.Multiplier))
+    end
+
+    return newTbl
+end
+
 ---@diagnostic disable: need-check-nil, inject-field
 function CopyAndPasteMenu()
     local settings = parameterWorkflow("edit_copyAndPaste", {
@@ -1110,6 +1134,7 @@ function CopyAndPasteMenu()
     saveStateVariables("CopyAndPaste", tbl)
 end
 
+---@diagnostic disable: undefined-field
 function AddForefrontTeleportMenu()
     local settings = parameterWorkflow("edit_addForefrontTeleport", "msxList")
 
@@ -2448,9 +2473,10 @@ CREATE_SV_TAB_FUNCTIONS = {
 }
 
 EDIT_TAB_FUNCTIONS = {
+    AddForefrontTeleportMenu,
     CopyAndPasteMenu,
     SetVisibilityMenu,
-    AddForefrontTeleportMenu,
+    ReverseSVOrderMenu,
 }
 
     retrieveStateVariables("main", settings)
