@@ -1044,6 +1044,8 @@ function ReverseSVOrderMenu()
     if RangeActivated("Switch", "SVs") then
         local svsInRange = getSVsInRange(offsets.startOffset + settings.delay, offsets.endOffset - settings.delay)
 
+        if (#svsInRange == 0) then return end
+
         local svsToReverse = {}
 
         for _, v in pairs(svsInRange) do
@@ -1052,6 +1054,11 @@ function ReverseSVOrderMenu()
 
         local newSVs = reverseSVs(svsToReverse, offsets.startOffset + settings.delay, offsets.endOffset - settings.delay,
             settings.preserveRelativeTime)
+
+        if (#svsToReverse == 0) then
+            print("fuck you")
+            return
+        end
 
         actions.PerformBatch({
             utils.CreateEditorAction(action_type.AddScrollVelocityBatch, newSVs),
