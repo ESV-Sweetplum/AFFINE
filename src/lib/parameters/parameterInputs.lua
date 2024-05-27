@@ -83,7 +83,7 @@ INPUT_DICTIONARY = {
     end,
     colorList = function (v)
         return InputTextWrapper("Snap Color List", v,
-            "These numbers are the denominator of the snaps. Here are the corresponding values:\n1 = Red\n2 = Blue\n3 = Purple\n4 = Yellow\n5 = White\n6 = Pink\n8 = Orange\n12 = Pink\n16 = Green")
+            "These numbers are the denominator of the snaps. Here are the corresponding values:\n1 = Red\n2 = Blue\n3 = Purple\n4 = Yellow\n5 = White\n6 = Pink\n8 = Orange\n12 = Cyan\n16 = Green")
     end,
     oneSided = function (v)
         return CheckboxWrapper("One-Sided Vibro?", v, "Applies vibrato to strictly one direction relative to the note.")
@@ -92,13 +92,18 @@ INPUT_DICTIONARY = {
 
 CUSTOM_INPUT_DICTIONARY = {
     Int = function (label, v, tooltip, sameLine) return InputIntWrapper(label, v, tooltip) end,
+    Int2 = function (label, v, tooltip, sameLine) return InputInt2Wrapper(label, v, tooltip) end,
+    Int3 = function (label, v, tooltip, sameLine) return InputInt3Wrapper(label, v, tooltip) end,
+    Int4 = function (label, v, tooltip, sameLine) return InputInt4Wrapper(label, v, tooltip) end,
+    Float = function (label, v, tooltip, sameLine) return InputFloatWrapper(label, v, tooltip) end,
+    Float2 = function (label, v, tooltip, sameLine) return InputFloat2Wrapper(label, v, tooltip) end,
+    Float3 = function (label, v, tooltip, sameLine) return InputFloat3Wrapper(label, v, tooltip) end,
+    Float4 = function (label, v, tooltip, sameLine) return InputFloat4Wrapper(label, v, tooltip) end,
     RadioBoolean = function (labels, v, tooltip, sameLine) return RadioBoolean(labels[1], labels[2], v, tooltip) end,
     Checkbox = function (label, v, tooltip, sameLine) return CheckboxWrapper(label, v, tooltip, sameLine) end,
-    Int2 = function (label, v, tooltip, sameLine) return InputInt2Wrapper(label, v, tooltip) end,
-    Float = function (label, v, tooltip, sameLine) return InputFloatWrapper(label, v, tooltip) end
 }
 
----@alias inputType "Int" | "RadioBoolean" | "Checkbox" | "Int2" | "Float"
+---@alias inputType "Int" | "Int2" | "Int3" | "Int4" | "Float" | "Float2" | "Float3" | "Float4" | "RadioBoolean" | "Checkbox"
 
 ---Creates imgui inputs using the given parameter table.
 ---@param parameterTable Parameter[]

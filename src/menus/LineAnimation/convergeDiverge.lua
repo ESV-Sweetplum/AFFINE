@@ -4,7 +4,7 @@ function ConvergeDivergeMenu()
         "spacing", "pathCoefficients",
         customParameter("Checkbox", "Render Below?", "renderBelow", true),
         customParameter("Checkbox", "Render Above?", "renderAbove", true, true),
-        customParameter("Checkbox", "Pre-Filled??", "prefill", false),
+        customParameter("Checkbox", "Pre-Filled?", "prefill", false),
         customParameter("Checkbox", "Terminate Life Cycle?", "terminateEarly", false, true)
     )
 

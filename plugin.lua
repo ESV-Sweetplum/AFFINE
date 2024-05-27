@@ -471,7 +471,7 @@ function evaluateCoefficients(coefficients, xVal)
     for idx, coefficient in pairs(coefficients) do
         sum = sum + (xVal) ^ (degree - idx + 1) * coefficient
     end
-    
+
     return sum
 end
 
@@ -1083,6 +1083,30 @@ function InputInt2Wrapper(label, v, tooltip)
     _, v = imgui.InputInt2(label, v)
     Tooltip(tooltip)
     ---@cast v integer[]
+    return v
+end
+
+---Creates an `InputFloat2` element.
+---@param label string
+---@param v number[]
+---@param tooltip string
+---@return number[]
+function InputFloat2Wrapper(label, v, tooltip)
+    _, v = imgui.InputFloat2(label, v, "%.2f")
+    Tooltip(tooltip)
+    ---@cast v number[]
+    return v
+end
+
+---Creates an `InputFloat3` element.
+---@param label string
+---@param v number[]
+---@param tooltip string
+---@return number[]
+function InputFloat3Wrapper(label, v, tooltip)
+    _, v = imgui.InputFloat3(label, v, "%.2f")
+    Tooltip(tooltip)
+    ---@cast v number[]
     return v
 end
 
@@ -2445,71 +2469,71 @@ function draw()
     -- drawSpike(state.WindowSize[1] * 1.5 / 25)
 
     -- IMPORTANT: DO NOT DELETE NEXT LINE BEFORE COMPILING.
-    
 
-LINE_STANDARD_MENU_FUNCTIONS = {
-    StandardSpreadMenu,
-    function () StandardAtNotesMenu(2) end,
-    function () StandardAtNotesMenu(1) end,
-    StandardRainbowMenu
-}
 
-LINE_FIXED_MENU_LIST = {
-    'Manual',
-    'Automatic',
-    'Random'
-}
+    LINE_STANDARD_MENU_FUNCTIONS = {
+        StandardSpreadMenu,
+        function () StandardAtNotesMenu(2) end,
+        function () StandardAtNotesMenu(1) end,
+        StandardRainbowMenu
+    }
 
-LINE_FIXED_MENU_FUNCTIONS = {
-    FixedManualMenu,
-    FixedAutomaticMenu,
-    FixedRandomMenu
-}
+    LINE_FIXED_MENU_LIST = {
+        'Manual',
+        'Automatic',
+        'Random'
+    }
 
-LINE_ANIMATION_MENU_LIST = {
-    'Manual (Basic)',
-    'Incremental',
-    'Boundary (Static)',
-    'Boundary (Dynamic)',
-    'Glitch',
-    'Spectrum',
-    'Expansion / Contraction',
-    'Converge / Diverge'
-}
+    LINE_FIXED_MENU_FUNCTIONS = {
+        FixedManualMenu,
+        FixedAutomaticMenu,
+        FixedRandomMenu
+    }
 
-LINE_ANIMATION_MENU_FUNCTIONS = {
-    BasicManualAnimationMenu,
-    IncrementalAnimationMenu,
-    StaticBoundaryMenu,
-    DynamicBoundaryMenu,
-    GlitchMenu,
-    SpectrumMenu,
-    ExpansionContractionMenu,
-    ConvergeDivergeMenu
-}
+    LINE_ANIMATION_MENU_LIST = {
+        'Manual (Basic)',
+        'Incremental',
+        'Boundary (Static)',
+        'Boundary (Dynamic)',
+        'Glitch',
+        'Spectrum',
+        'Expansion / Contraction',
+        'Converge / Diverge'
+    }
 
-CREATE_LINE_TAB_FUNCTIONS = {
-    function () CreateMenu("Standard", "Standard Placement", LINE_STANDARD_MENU_LIST, LINE_STANDARD_MENU_FUNCTIONS) end,
-    function () CreateMenu("Fixed", "Fixed Placement", LINE_FIXED_MENU_LIST, LINE_FIXED_MENU_FUNCTIONS) end,
-    function () CreateMenu("Animation", "Animation", LINE_ANIMATION_MENU_LIST, LINE_ANIMATION_MENU_FUNCTIONS) end
-}
+    LINE_ANIMATION_MENU_FUNCTIONS = {
+        BasicManualAnimationMenu,
+        IncrementalAnimationMenu,
+        StaticBoundaryMenu,
+        DynamicBoundaryMenu,
+        GlitchMenu,
+        SpectrumMenu,
+        ExpansionContractionMenu,
+        ConvergeDivergeMenu
+    }
 
-SV_VIBRO_MENU_FUNCTIONS = {
-    linearVibroMenu,
-    polynomialVibroMenu,
-    stackVibroMenu
-}
+    CREATE_LINE_TAB_FUNCTIONS = {
+        function () CreateMenu("Standard", "Standard Placement", LINE_STANDARD_MENU_LIST, LINE_STANDARD_MENU_FUNCTIONS) end,
+        function () CreateMenu("Fixed", "Fixed Placement", LINE_FIXED_MENU_LIST, LINE_FIXED_MENU_FUNCTIONS) end,
+        function () CreateMenu("Animation", "Animation", LINE_ANIMATION_MENU_LIST, LINE_ANIMATION_MENU_FUNCTIONS) end
+    }
 
-CREATE_SV_TAB_FUNCTIONS = {
-    function () CreateMenu("Still Vibro", "Vibro Placement", SV_VIBRO_MENU_LIST, SV_VIBRO_MENU_FUNCTIONS) end
-}
+    SV_VIBRO_MENU_FUNCTIONS = {
+        linearVibroMenu,
+        polynomialVibroMenu,
+        stackVibroMenu
+    }
 
-EDIT_TAB_FUNCTIONS = {
-    AddForefrontTeleportMenu,
-    CopyAndPasteMenu,
-    SetVisibilityMenu,
-    ReverseSVOrderMenu,
-}
+    CREATE_SV_TAB_FUNCTIONS = {
+        function () CreateMenu("Still Vibro", "Vibro Placement", SV_VIBRO_MENU_LIST, SV_VIBRO_MENU_FUNCTIONS) end
+    }
+
+    EDIT_TAB_FUNCTIONS = {
+        AddForefrontTeleportMenu,
+        CopyAndPasteMenu,
+        SetVisibilityMenu,
+        ReverseSVOrderMenu,
+    }
 
     retrieveStateVariables("main", settings)
 
