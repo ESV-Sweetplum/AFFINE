@@ -34,7 +34,9 @@ LINE_ANIMATION_MENU_LIST = {
     'Glitch',
     'Spectrum',
     'Expansion / Contraction',
-    'Converge / Diverge'
+    'Converge / Diverge',
+    'Trail (Static)',
+    'Trail (Follow)'
 }
 
 LINE_ANIMATION_MENU_FUNCTIONS = {
@@ -45,5 +47,7 @@ LINE_ANIMATION_MENU_FUNCTIONS = {
     GlitchMenu,
     SpectrumMenu,
     ExpansionContractionMenu,
-    ConvergeDivergeMenu
+    ConvergeDivergeMenu,
+    TrailStaticMenu,
+    TrailFollowMenu
 }
