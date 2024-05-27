@@ -8,7 +8,7 @@ DEFAULT_MSX_BOUNDS = { 0, 400 }              -- integer[2]
 DEFAULT_DISTANCE = { 15, 15 }                -- integer[2]
 DEFAULT_LINE_COUNT = 10                      -- integer
 DEFAULT_LINE_DURATION = 0.5                  -- integer
-DEFAULT_FPS = 90                             -- float
+DEFAULT_FPS = 91                             -- float
 DEFAULT_CENTER = 200                         -- integer
 DEFAULT_MAX_SPREAD = 200                     -- integer
 DEFAULT_PROGRESSION_EXPONENT = 1             -- float
@@ -19,5 +19,8 @@ DEFAULT_COLOR_LIST = '1 8 4 16 12 2 3 6'     -- integer[any]
 INCREMENT = 64                               -- integer
 MAX_ITERATIONS = 1000                        -- integer
 FRAME_SIZE = 500                             -- integer
+
+SPLITSCROLL_MODE = true                      -- boolean
+OFFSET_SECURITY_CONSTANT = 2                 -- integer
 
 -- END DEFAULT SETTINGS (DONT DELETE THIS LINE)
