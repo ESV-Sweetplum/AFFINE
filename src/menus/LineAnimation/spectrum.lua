@@ -1,12 +1,9 @@
 function SpectrumMenu()
     local settings = parameterWorkflow("animation_spectrum", "center", "maxSpread", "distance", "progressionExponent",
         "spacing",
-        "boundCoefficients", {
-            inputType = "Checkbox",
-            key = "inverse",
-            label = "Inverse?",
-            value = false
-        })
+        "boundCoefficients",
+        customParameter("Checkbox", "Inverse?", "inverse", false)
+    )
 
     if RangeActivated() then
         local currentTime = offsets.startOffset + settings.spacing

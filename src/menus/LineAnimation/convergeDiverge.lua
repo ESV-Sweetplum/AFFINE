@@ -1,31 +1,12 @@
 function ConvergeDivergeMenu()
     local settings = parameterWorkflow("animation_convergeDiverge", "center", "maxSpread", "lineCount", "lineDuration",
         "progressionExponent",
-        "spacing", "pathCoefficients", {
-            inputType = "Checkbox",
-            key = "renderBelow",
-            label = "Render Below?",
-            value = true,
-        }, {
-            inputType = "Checkbox",
-            key = "renderAbove",
-            label = "Render Above?",
-            value = true,
-            sameLine = true
-        }
-        , {
-            inputType = "Checkbox",
-            key = "prefill",
-            label = "Pre-Filled?",
-            value = false,
-        }
-        , {
-            inputType = "Checkbox",
-            key = "terminateEarly",
-            label = "Terminate Life Cycle?",
-            value = false,
-            sameLine = true
-        })
+        "spacing", "pathCoefficients",
+        customParameter("Checkbox", "Render Below?", "renderBelow", true),
+        customParameter("Checkbox", "Render Above?", "renderAbove", true, true),
+        customParameter("Checkbox", "Pre-Filled??", "prefill", false),
+        customParameter("Checkbox", "Terminate Life Cycle?", "terminateEarly", false, true)
+    )
 
     if RangeActivated() then
         local currentTime = offsets.startOffset + settings.spacing

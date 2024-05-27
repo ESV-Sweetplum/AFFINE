@@ -1,11 +1,6 @@
 ---@diagnostic disable: undefined-field
 function linearVibroMenu()
-    local settings = parameterWorkflow("linearVibro", "msxBounds", "fps", "progressionExponent", {
-        inputType = "Checkbox",
-        key = "oneSided",
-        label = "One-Sided Vibro?",
-        value = false
-    })
+    local settings = parameterWorkflow("linearVibro", "msxBounds", "fps", "progressionExponent", "oneSided")
 
     if RangeActivated() then
         local vibroHeightFn = function (v)
@@ -25,16 +20,15 @@ end
 function placeVibratoGroupsByFn(vibroHeightFn, oneSided, fps)
     local selectedTimes = getSelectedOffsets()
     local svs = {}
-    for i=1, #selectedTimes - 1 do
+    for i = 1, #selectedTimes - 1 do
         svs = combineTables(svs, getVibratoSVsByFn(vibroHeightFn, oneSided, fps, selectedTimes[i], selectedTimes[i + 1]))
     end
 
     actions.PlaceScrollVelocityBatch(cleanSVs(svs, offsets.startOffset + OFFSET_SECURITY_CONSTANT,
-    offsets.endOffset - OFFSET_SECURITY_CONSTANT))
-    
+        offsets.endOffset - OFFSET_SECURITY_CONSTANT))
+
     setDebug("SV Count: " .. #svs)
 end
-
 
 ---Given a vibrato height function, returns a clean set of vibrato SVs between two values.
 ---@param vibroHeightFn function
@@ -68,7 +62,7 @@ function getVibratoSVsByFn(vibroHeightFn, oneSided, fps, startTime, endTime)
             -- REDO LATER
             local tempSVTbl = insertTeleport({}, currentTime,
                 iterations == 1 and vibroHeight or vibroHeight * 2 * teleportSign, recentSVValue)
-                mostRecentHeight = vibroHeight * teleportSign
+            mostRecentHeight = vibroHeight * teleportSign
 
             if (currentTime < endTime - OFFSET_SECURITY_CONSTANT - 1) then
                 svs = combineTables(svs, tempSVTbl)

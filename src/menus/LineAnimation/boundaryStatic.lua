@@ -1,12 +1,9 @@
 function StaticBoundaryMenu()
     local settings = parameterWorkflow("animation_boundaryStatic", "msxBounds", "distance", "progressionExponent",
         "spacing",
-        "boundCoefficients", {
-            inputType = "RadioBoolean",
-            key = "evalUnder",
-            label = { "Render Over Boundary", "Render Under Boundary" },
-            value = true
-        })
+        "boundCoefficients",
+        customParameter("RadioBoolean", { "Render Over Boundary", "Render Under Boundary" }, "evalUnder", true)
+    )
 
     if RangeActivated() then
         local currentTime = offsets.startOffset + settings.spacing

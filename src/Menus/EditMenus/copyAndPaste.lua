@@ -1,11 +1,7 @@
 ---@diagnostic disable: need-check-nil, inject-field
 function CopyAndPasteMenu()
-    local settings = parameterWorkflow("edit_copyAndPaste", {
-        inputType = "Checkbox",
-        key = "includeBM",
-        label = "Include Bookmarks?",
-        value = true
-    })
+    local settings = parameterWorkflow("edit_copyAndPaste",
+        customParameter("Checkbox", "Include Bookmarks?", "includeBM", true))
 
     local tbl = {
         storedLines = {},

@@ -1,12 +1,7 @@
 ---@diagnostic disable: undefined-field
 function polynomialVibroMenu()
     local settings = parameterWorkflow("polynomialVibro", "msxBounds", "boundCoefficients", "fps",
-        "progressionExponent", {
-            inputType = "Checkbox",
-            key = "oneSided",
-            label = "One-Sided Vibro?",
-            value = false
-        })
+        "progressionExponent", "oneSided")
 
     if RangeActivated() then
         local vibroHeightFn = function (v)

@@ -1,16 +1,7 @@
 function ReverseSVOrderMenu()
     local settings = parameterWorkflow("edit_reverseSV", "delay",
-        {
-            inputType = "Int",
-            key = "llv",
-            label = "Large Value Filter",
-            value = 69420
-        }, {
-            inputType = "Checkbox",
-            key = "preserveRelativeTime",
-            label = "Preserve Time?",
-            value = true
-        })
+        customParameter("Int", "Large Value Filter", "llv", 69420),
+        customParameter("Checkbox", "Preserve Time?", "preserveRelativeTime", true))
 
     if RangeActivated("Switch", "SVs") then
         local svsInRange = getSVsInRange(offsets.startOffset + settings.delay, offsets.endOffset - settings.delay)

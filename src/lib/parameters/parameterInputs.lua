@@ -84,6 +84,9 @@ INPUT_DICTIONARY = {
     colorList = function (v)
         return InputTextWrapper("Snap Color List", v,
             "These numbers are the denominator of the snaps. Here are the corresponding values:\n1 = Red\n2 = Blue\n3 = Purple\n4 = Yellow\n5 = White\n6 = Pink\n8 = Orange\n12 = Pink\n16 = Green")
+    end,
+    oneSided = function (v)
+        return CheckboxWrapper("One-Sided Vibro?", v, "Applies vibrato to strictly one direction relative to the note.")
     end
 }
 
@@ -94,6 +97,8 @@ CUSTOM_INPUT_DICTIONARY = {
     Int2 = function (label, v, tooltip, sameLine) return InputInt2Wrapper(label, v, tooltip) end,
     Float = function (label, v, tooltip, sameLine) return InputFloatWrapper(label, v, tooltip) end
 }
+
+---@alias inputType "Int" | "RadioBoolean" | "Checkbox" | "Int2" | "Float"
 
 ---Creates imgui inputs using the given parameter table.
 ---@param parameterTable Parameter[]

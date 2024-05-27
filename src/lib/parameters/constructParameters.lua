@@ -18,7 +18,8 @@ DEFAULT_DICTIONARY = {
     fps = DEFAULT_FPS,
     center = DEFAULT_CENTER,
     maxSpread = DEFAULT_MAX_SPREAD,
-    colorList = DEFAULT_COLOR_LIST
+    colorList = DEFAULT_COLOR_LIST,
+    oneSided = false
 }
 
 ---Given a set of input names, creates an ordered table of key value pairs (normal table isn't used to preserve order).

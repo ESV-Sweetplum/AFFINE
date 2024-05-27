@@ -1,16 +1,8 @@
 function IncrementalAnimationMenu()
-    local settings = parameterWorkflow("animation_incremental", 'msxList', 'spacing', {
-        inputType = "RadioBoolean",
-        key = "bounce",
-        label = { "12341234", "1234321" },
-        value = false
-    }, {
-        inputType = "Checkbox",
-        key = "allLinesVisible",
-        label = "All Lines Visible?",
-        value = true,
-        sameLine = true
-    })
+    local settings = parameterWorkflow("animation_incremental", 'msxList', 'spacing',
+        customParameter("RadioBoolean", { "12341234", "1234321" }, "bounce", false),
+        customParameter("Checkbox", "All Lines Visible?", "allLinesVisible", true, true)
+    )
 
     if RangeActivated() then
         local times = getSelectedOffsets()

@@ -7,7 +7,7 @@ function Plot(polynomialCoefficients, progressionExponent, title)
     local tbl = {}
 
     if (polynomialCoefficients == state.GetValue("cachedCoefficients")) then
-        tbl = state.GetValue("cachedPlotvalues")
+        tbl = state.GetValue("cachedPlotValues")
     else
         local RESOLUTION = 50
         for i = 0, RESOLUTION do
@@ -19,7 +19,7 @@ function Plot(polynomialCoefficients, progressionExponent, title)
     end
 
     state.SetValue("cachedCoefficients", polynomialCoefficients)
-    state.SetValue("cachedPlotvalues", tbl)
+    state.SetValue("cachedPlotValues", tbl)
 
     imgui.PlotLines("", tbl, #tbl, 0,
         polynomialString(polynomialCoefficients, progressionExponent),

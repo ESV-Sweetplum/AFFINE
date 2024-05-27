@@ -1,10 +1,6 @@
 function SetVisibilityMenu()
-    local settings = parameterWorkflow("edit_setVisibility", {
-        inputType = "RadioBoolean",
-        key = "enable",
-        label = { "Turn Lines Invisible", "Turn Lines Visible" },
-        value = false
-    })
+    local settings = parameterWorkflow("edit_setVisibility",
+        customParameter("RadioBoolean", { "Turn Lines Invisible", "Turn Lines Visible" }, "enable", false))
 
     if NoteActivated() then
         local linesToRemove = getLinesInRange(offsets.startOffset, offsets.endOffset)
