@@ -4,15 +4,22 @@
 ---@param title? string
 function Plot(polynomialCoefficients, progressionExponent, title)
     imgui.Begin(title or "Boundary Height vs. Time", imgui_window_flags.AlwaysAutoResize)
-
-    local RESOLUTION = 50
     local tbl = {}
-    for i = 0, RESOLUTION do
-        local progress = getProgress(0, i, RESOLUTION, progressionExponent)
 
-        table.insert(tbl,
-            evaluateCoefficients(polynomialCoefficients, progress))
+    if (polynomialCoefficients == state.GetValue("cachedCoefficients")) then
+        tbl = state.GetValue("cachedPlotvalues")
+    else
+        local RESOLUTION = 50
+        for i = 0, RESOLUTION do
+            local progress = getProgress(0, i, RESOLUTION, progressionExponent)
+
+            table.insert(tbl,
+                evaluateCoefficients(polynomialCoefficients, progress))
+        end
     end
+
+    state.SetValue("cachedCoefficients", polynomialCoefficients)
+    state.SetValue("cachedPlotvalues", tbl)
 
     imgui.PlotLines("", tbl, #tbl, 0,
         polynomialString(polynomialCoefficients, progressionExponent),
