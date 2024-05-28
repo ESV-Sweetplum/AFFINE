@@ -1,4 +1,4 @@
-function TrailFollowMenu()
+function TrailStaticMenu()
     local settings = parameterWorkflow("animation_trail_static", 'msxBounds', 'progressionExponent', 'lineCount',
         'spacing', "boundCoefficients")
 

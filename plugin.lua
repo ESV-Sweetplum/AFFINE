@@ -420,10 +420,14 @@ function getProgress(starting, value, ending, progressionExponent)
     local progressionExponent = progressionExponent or 1
     local baseProgress = (value - starting) / (ending - starting)
     if (progressionExponent >= 1) then
-        return baseProgress ^ progressionExponent
+        return clamp(baseProgress ^ progressionExponent, 0, 1)
     else
-        return 1 - (1 - baseProgress) ^ (1 / progressionExponent)
+        return clamp(1 - (1 - baseProgress) ^ (1 / progressionExponent), 0, 1)
     end
+end
+
+function clamp(value, min, max)
+    return math.max(math.min(value, max), min)
 end
 
 ---Takes a table of coefficients, and returns a string representing the equation.
@@ -471,7 +475,7 @@ function evaluateCoefficients(coefficients, xVal)
     for idx, coefficient in pairs(coefficients) do
         sum = sum + (xVal) ^ (degree - idx + 1) * coefficient
     end
-
+    
     return sum
 end
 
@@ -609,7 +613,7 @@ INPUT_DICTIONARY = {
     end,
     colorList = function (v)
         return InputTextWrapper("Snap Color List", v,
-            "These numbers are the denominator of the snaps. Here are the corresponding values:\n1 = Red\n2 = Blue\n3 = Purple\n4 = Yellow\n5 = White\n6 = Pink\n8 = Orange\n12 = Pink\n16 = Green")
+            "These numbers are the denominator of the snaps. Here are the corresponding values:\n1 = Red\n2 = Blue\n3 = Purple\n4 = Yellow\n5 = White\n6 = Pink\n8 = Orange\n12 = Cyan\n16 = Green")
     end,
     oneSided = function (v)
         return CheckboxWrapper("One-Sided Vibro?", v, "Applies vibrato to strictly one direction relative to the note.")
@@ -618,13 +622,18 @@ INPUT_DICTIONARY = {
 
 CUSTOM_INPUT_DICTIONARY = {
     Int = function (label, v, tooltip, sameLine) return InputIntWrapper(label, v, tooltip) end,
+    Int2 = function (label, v, tooltip, sameLine) return InputInt2Wrapper(label, v, tooltip) end,
+    Int3 = function (label, v, tooltip, sameLine) return InputInt3Wrapper(label, v, tooltip) end,
+    Int4 = function (label, v, tooltip, sameLine) return InputInt4Wrapper(label, v, tooltip) end,
+    Float = function (label, v, tooltip, sameLine) return InputFloatWrapper(label, v, tooltip) end,
+    Float2 = function (label, v, tooltip, sameLine) return InputFloat2Wrapper(label, v, tooltip) end,
+    Float3 = function (label, v, tooltip, sameLine) return InputFloat3Wrapper(label, v, tooltip) end,
+    Float4 = function (label, v, tooltip, sameLine) return InputFloat4Wrapper(label, v, tooltip) end,
     RadioBoolean = function (labels, v, tooltip, sameLine) return RadioBoolean(labels[1], labels[2], v, tooltip) end,
     Checkbox = function (label, v, tooltip, sameLine) return CheckboxWrapper(label, v, tooltip, sameLine) end,
-    Int2 = function (label, v, tooltip, sameLine) return InputInt2Wrapper(label, v, tooltip) end,
-    Float = function (label, v, tooltip, sameLine) return InputFloatWrapper(label, v, tooltip) end
 }
 
----@alias inputType "Int" | "RadioBoolean" | "Checkbox" | "Int2" | "Float"
+---@alias inputType "Int" | "Int2" | "Int3" | "Int4" | "Float" | "Float2" | "Float3" | "Float4" | "RadioBoolean" | "Checkbox"
 
 ---Creates imgui inputs using the given parameter table.
 ---@param parameterTable Parameter[]
@@ -1081,6 +1090,30 @@ end
 ---@return integer[]
 function InputInt2Wrapper(label, v, tooltip)
     _, v = imgui.InputInt2(label, v)
+    Tooltip(tooltip)
+    ---@cast v integer[]
+    return v
+end
+
+---Creates an `InputInt3` element.
+---@param label string
+---@param v integer[]
+---@param tooltip string
+---@return integer[]
+function InputInt3Wrapper(label, v, tooltip)
+    _, v = imgui.InputInt3(label, v)
+    Tooltip(tooltip)
+    ---@cast v integer[]
+    return v
+end
+
+---Creates an `InputInt4` element.
+---@param label string
+---@param v integer[]
+---@param tooltip string
+---@return integer[]
+function InputInt4Wrapper(label, v, tooltip)
+    _, v = imgui.InputInt4(label, v)
     Tooltip(tooltip)
     ---@cast v integer[]
     return v
@@ -1740,6 +1773,121 @@ function placeAutomaticFrame(startTime, low, high, spacing, distance)
     return tableToAffineFrame(msxTable, startTime, 0, spacing)
 end
 
+function TrailStaticMenu()
+    local settings = parameterWorkflow("animation_trail_static", 'msxBounds', 'progressionExponent', 'lineCount',
+        'spacing', "boundCoefficients")
+
+    if RangeActivated() then
+        local currentTime = offsets.startOffset + settings.spacing
+        local iterations = 0
+        local lines = {}
+        local svs = {}
+        local frameLengths = {}
+
+        local preservedMsxValues = {}
+        local nextCheckpoint = 1 / settings.lineCount
+
+        while (currentTime < offsets.endOffset) and (iterations < MAX_ITERATIONS) do
+            local msxTable = {}
+
+            local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset,
+                settings.progressionExponent)
+
+            local msxValue = mapProgress(settings.msxBounds[1],
+                evaluateCoefficients(settings.boundCoefficients, progress),
+                settings.msxBounds[2])
+
+            if (progress >= nextCheckpoint) then
+                nextCheckpoint = nextCheckpoint + 1 / settings.lineCount
+                table.insert(preservedMsxValues, msxValue)
+            end
+
+            msxTable = combineTables(msxTable, preservedMsxValues)
+
+            table.insert(msxTable, msxValue)
+
+            local tbl = tableToAffineFrame(msxTable, currentTime, 0, settings.spacing)
+
+            if (tbl.time > offsets.endOffset) then break end
+
+            timeDiff = math.max(1000 / settings.fps - 2, tbl.time - currentTime)
+
+            table.insert(frameLengths, timeDiff + 2)
+
+            currentTime = currentTime + timeDiff
+
+            lines = combineTables(lines, tbl.lines)
+            svs = combineTables(svs, tbl.svs)
+
+            insertTeleport(svs, currentTime + 1 / INCREMENT, FRAME_SIZE)
+
+            currentTime = currentTime + 2
+            iterations = iterations + 1
+        end
+
+        local stats = getStatisticsFromTable(frameLengths)
+
+        generateAffines(lines, svs, offsets.startOffset, offsets.endOffset, "Static Trail",
+            constructDebugTable(lines, svs, stats))
+        setDebug("Line Count: " .. #lines .. " // SV Count: " .. #svs)
+    end
+
+    Plot(settings.boundCoefficients, settings.progressionExponent)
+end
+
+function TrailFollowMenu()
+    local settings = parameterWorkflow("animation_trail_follow", 'msxBounds', 'progressionExponent', 'lineCount',
+        customParameter("Float", "Proportional Delay", "delay", 0.1)
+        'spacing', "boundCoefficients")
+
+    if RangeActivated() then
+        local currentTime = offsets.startOffset + settings.spacing
+        local iterations = 0
+        local lines = {}
+        local svs = {}
+        local frameLengths = {}
+
+        while (currentTime < offsets.endOffset) and (iterations < MAX_ITERATIONS) do
+            local msxTable = {}
+
+            for i = 1, settings.lineCount do
+                local progress = clamp(getProgress(offsets.startOffset, currentTime, offsets.endOffset,
+                    settings.progressionExponent) - (i - 1) * settings.delay, 0, 1)
+
+                table.insert(msxTable,
+                    mapProgress(settings.msxBounds[1], evaluateCoefficients(settings.boundCoefficients, progress),
+                        settings.msxBounds[2]))
+            end
+
+            local tbl = tableToAffineFrame(msxTable, currentTime, 0, settings.spacing)
+
+            if (tbl.time > offsets.endOffset) then break end
+
+            timeDiff = math.max(1000 / settings.fps - 2, tbl.time - currentTime)
+
+            table.insert(frameLengths, timeDiff + 2)
+
+            currentTime = currentTime + timeDiff
+
+            lines = combineTables(lines, tbl.lines)
+            svs = combineTables(svs, tbl.svs)
+
+            insertTeleport(svs, currentTime + 1 / INCREMENT, FRAME_SIZE)
+
+            currentTime = currentTime + 2
+            iterations = iterations + 1
+        end
+
+        local stats = getStatisticsFromTable(frameLengths)
+
+        generateAffines(lines, svs, offsets.startOffset, offsets.endOffset, "Following Trail",
+            constructDebugTable(lines, svs, stats))
+        setDebug("Line Count: " .. #lines .. " // SV Count: " .. #svs)
+    end
+
+    Plot(settings.boundCoefficients, settings.progressionExponent)
+end
+
 function SpectrumMenu()
     local settings = parameterWorkflow("animation_spectrum", "center", "maxSpread", "distance", "progressionExponent",
         "spacing",
@@ -2050,7 +2198,7 @@ function ConvergeDivergeMenu()
         "spacing", "pathCoefficients",
         customParameter("Checkbox", "Render Below?", "renderBelow", true),
         customParameter("Checkbox", "Render Above?", "renderAbove", true, true),
-        customParameter("Checkbox", "Pre-Filled??", "prefill", false),
+        customParameter("Checkbox", "Pre-Filled?", "prefill", false),
         customParameter("Checkbox", "Terminate Life Cycle?", "terminateEarly", false, true)
     )
 
@@ -2469,71 +2617,75 @@ function draw()
     -- drawSpike(state.WindowSize[1] * 1.5 / 25)
 
     -- IMPORTANT: DO NOT DELETE NEXT LINE BEFORE COMPILING.
+    
 
+LINE_STANDARD_MENU_FUNCTIONS = {
+    StandardSpreadMenu,
+    function () StandardAtNotesMenu(2) end,
+    function () StandardAtNotesMenu(1) end,
+    StandardRainbowMenu
+}
 
-    LINE_STANDARD_MENU_FUNCTIONS = {
-        StandardSpreadMenu,
-        function () StandardAtNotesMenu(2) end,
-        function () StandardAtNotesMenu(1) end,
-        StandardRainbowMenu
-    }
+LINE_FIXED_MENU_LIST = {
+    'Manual',
+    'Automatic',
+    'Random'
+}
 
-    LINE_FIXED_MENU_LIST = {
-        'Manual',
-        'Automatic',
-        'Random'
-    }
+LINE_FIXED_MENU_FUNCTIONS = {
+    FixedManualMenu,
+    FixedAutomaticMenu,
+    FixedRandomMenu
+}
 
-    LINE_FIXED_MENU_FUNCTIONS = {
-        FixedManualMenu,
-        FixedAutomaticMenu,
-        FixedRandomMenu
-    }
+LINE_ANIMATION_MENU_LIST = {
+    'Manual (Basic)',
+    'Incremental',
+    'Boundary (Static)',
+    'Boundary (Dynamic)',
+    'Glitch',
+    'Spectrum',
+    'Expansion / Contraction',
+    'Converge / Diverge',
+    'Trail (Static)',
+    'Trail (Follow)'
+}
 
-    LINE_ANIMATION_MENU_LIST = {
-        'Manual (Basic)',
-        'Incremental',
-        'Boundary (Static)',
-        'Boundary (Dynamic)',
-        'Glitch',
-        'Spectrum',
-        'Expansion / Contraction',
-        'Converge / Diverge'
-    }
+LINE_ANIMATION_MENU_FUNCTIONS = {
+    BasicManualAnimationMenu,
+    IncrementalAnimationMenu,
+    StaticBoundaryMenu,
+    DynamicBoundaryMenu,
+    GlitchMenu,
+    SpectrumMenu,
+    ExpansionContractionMenu,
+    ConvergeDivergeMenu,
+    TrailStaticMenu,
+    TrailFollowMenu
+}
 
-    LINE_ANIMATION_MENU_FUNCTIONS = {
-        BasicManualAnimationMenu,
-        IncrementalAnimationMenu,
-        StaticBoundaryMenu,
-        DynamicBoundaryMenu,
-        GlitchMenu,
-        SpectrumMenu,
-        ExpansionContractionMenu,
-        ConvergeDivergeMenu
-    }
+CREATE_LINE_TAB_FUNCTIONS = {
+    function () CreateMenu("Standard", "Standard Placement", LINE_STANDARD_MENU_LIST, LINE_STANDARD_MENU_FUNCTIONS) end,
+    function () CreateMenu("Fixed", "Fixed Placement", LINE_FIXED_MENU_LIST, LINE_FIXED_MENU_FUNCTIONS) end,
+    function () CreateMenu("Animation", "Animation", LINE_ANIMATION_MENU_LIST, LINE_ANIMATION_MENU_FUNCTIONS) end
+}
 
-    CREATE_LINE_TAB_FUNCTIONS = {
-        function () CreateMenu("Standard", "Standard Placement", LINE_STANDARD_MENU_LIST, LINE_STANDARD_MENU_FUNCTIONS) end,
-        function () CreateMenu("Fixed", "Fixed Placement", LINE_FIXED_MENU_LIST, LINE_FIXED_MENU_FUNCTIONS) end,
-        function () CreateMenu("Animation", "Animation", LINE_ANIMATION_MENU_LIST, LINE_ANIMATION_MENU_FUNCTIONS) end
-    }
+SV_VIBRO_MENU_FUNCTIONS = {
+    linearVibroMenu,
+    polynomialVibroMenu,
+    stackVibroMenu
+}
 
-    SV_VIBRO_MENU_FUNCTIONS = {
-        linearVibroMenu,
-        polynomialVibroMenu,
-        stackVibroMenu
-    }
+CREATE_SV_TAB_FUNCTIONS = {
+    function () CreateMenu("Still Vibro", "Vibro Placement", SV_VIBRO_MENU_LIST, SV_VIBRO_MENU_FUNCTIONS) end
+}
 
-    CREATE_SV_TAB_FUNCTIONS = {
-        function () CreateMenu("Still Vibro", "Vibro Placement", SV_VIBRO_MENU_LIST, SV_VIBRO_MENU_FUNCTIONS) end
-    }
-
-    EDIT_TAB_FUNCTIONS = {
-        AddForefrontTeleportMenu,
-        CopyAndPasteMenu,
-        SetVisibilityMenu,
-        ReverseSVOrderMenu,
-    }
+EDIT_TAB_FUNCTIONS = {
+    AddForefrontTeleportMenu,
+    CopyAndPasteMenu,
+    SetVisibilityMenu,
+    ReverseSVOrderMenu,
+}
 
     retrieveStateVariables("main", settings)
 
