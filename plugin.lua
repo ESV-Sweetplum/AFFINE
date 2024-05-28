@@ -7,7 +7,7 @@ DEFAULT_OFFSET = 0                           -- integer
 DEFAULT_SPACING = 1.1                        -- float
 DEFAULT_MSX_BOUNDS = { 0, 400 }              -- integer[2]
 DEFAULT_DISTANCE = { 15, 15 }                -- integer[2]
-DEFAULT_LINE_COUNT = 10                      -- integer
+DEFAULT_LINE_COUNT = 5                       -- integer
 DEFAULT_LINE_DURATION = 0.5                  -- integer
 DEFAULT_FPS = 91                             -- float
 DEFAULT_CENTER = 200                         -- integer
@@ -1837,7 +1837,7 @@ end
 
 function TrailFollowMenu()
     local settings = parameterWorkflow("animation_trail_follow", 'msxBounds', 'progressionExponent', 'lineCount',
-        customParameter("Float", "Proportional Delay", "delay", 0.1), 'spacing', "boundCoefficients")
+        customParameter("Float", "Proportional Delay", "delay", 0.05), 'spacing', "boundCoefficients")
 
     if RangeActivated() then
         local currentTime = offsets.startOffset + settings.spacing
