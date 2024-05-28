@@ -43,7 +43,7 @@ function TrailFollowMenu()
 
         local stats = getStatisticsFromTable(frameLengths)
 
-        generateAffines(lines, svs, offsets.startOffset, offsets.endOffset, "Trail (Follow)",
+        generateAffines(lines, svs, offsets.startOffset, offsets.endOffset, "Following Trail",
             constructDebugTable(lines, svs, stats))
         setDebug("Line Count: " .. #lines .. " // SV Count: " .. #svs)
     end
