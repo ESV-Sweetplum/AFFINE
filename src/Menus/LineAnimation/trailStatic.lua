@@ -35,7 +35,7 @@ function TrailStaticMenu()
 
             if (tbl.time > offsets.endOffset) then break end
 
-            timeDiff = math.max(1000 / settings.fps - 2, tbl.time - currentTime)
+            timeDiff = tbl.time - currentTime
 
             table.insert(frameLengths, timeDiff + 2)
 

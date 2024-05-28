@@ -1810,7 +1810,7 @@ function TrailStaticMenu()
 
             if (tbl.time > offsets.endOffset) then break end
 
-            timeDiff = math.max(1000 / settings.fps - 2, tbl.time - currentTime)
+            timeDiff = tbl.time - currentTime
 
             table.insert(frameLengths, timeDiff + 2)
 
@@ -1837,8 +1837,7 @@ end
 
 function TrailFollowMenu()
     local settings = parameterWorkflow("animation_trail_follow", 'msxBounds', 'progressionExponent', 'lineCount',
-        customParameter("Float", "Proportional Delay", "delay", 0.1)
-        'spacing', "boundCoefficients")
+        customParameter("Float", "Proportional Delay", "delay", 0.1), 'spacing', "boundCoefficients")
 
     if RangeActivated() then
         local currentTime = offsets.startOffset + settings.spacing
@@ -1863,7 +1862,7 @@ function TrailFollowMenu()
 
             if (tbl.time > offsets.endOffset) then break end
 
-            timeDiff = math.max(1000 / settings.fps - 2, tbl.time - currentTime)
+            timeDiff = tbl.time - currentTime
 
             table.insert(frameLengths, timeDiff + 2)
 
