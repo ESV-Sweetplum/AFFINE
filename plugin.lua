@@ -1572,7 +1572,7 @@ function placeVibratoGroupsByFn(vibroHeightFn, oneSided, fps)
     local selectedTimes = getSelectedOffsets()
     local svs = {}
     for i = 1, #selectedTimes - 1 do
-        svs = combineTables(svs, getVibratoSVsByFn(vibroHeightFn, oneSided, fps, selectedTimes[i], selectedTimes[i + 1]))
+        svs = combineTables(svs, makeVibratoSVsByFn(vibroHeightFn, oneSided, fps, selectedTimes[i], selectedTimes[i + 1]))
     end
 
     actions.PlaceScrollVelocityBatch(cleanSVs(svs, offsets.startOffset + OFFSET_SECURITY_CONSTANT,
@@ -1581,14 +1581,14 @@ function placeVibratoGroupsByFn(vibroHeightFn, oneSided, fps)
     setDebug("SV Count: " .. #svs)
 end
 
----Given a vibrato height function, returns a clean set of vibrato SVs between two values.
+---Given a vibrato height function, returns a clean set of vibrato SVs between two offset values.
 ---@param vibroHeightFn function
 ---@param oneSided boolean
 ---@param fps number
 ---@param startTime number
 ---@param endTime number
----@return TimingPointInfo[]
-function getVibratoSVsByFn(vibroHeightFn, oneSided, fps, startTime, endTime)
+---@return SliderVelocityInfo[]
+function makeVibratoSVsByFn(vibroHeightFn, oneSided, fps, startTime, endTime)
     local currentTime = startTime + OFFSET_SECURITY_CONSTANT
     local svs = {}
     local iterations = 1

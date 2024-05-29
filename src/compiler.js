@@ -3,23 +3,23 @@ const path = require("path");
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-async function compile() {
-  const getFilesRecursively = (directory) => {
-    let files = [];
+function getFilesRecursively(directory) {
+  let files = [];
 
-    const filesInDirectory = fs.readdirSync(directory);
-    for (const file of filesInDirectory) {
-      const absolute = path.join(directory, file);
-      if (fs.statSync(absolute).isDirectory()) {
-        files = [...files, ...getFilesRecursively(absolute)];
-      } else {
-        files.push(absolute);
-      }
+  const filesInDirectory = fs.readdirSync(directory);
+  for (const file of filesInDirectory) {
+    const absolute = path.join(directory, file);
+    if (fs.statSync(absolute).isDirectory()) {
+      files = [...files, ...getFilesRecursively(absolute)];
+    } else {
+      files.push(absolute);
     }
+  }
 
-    return files;
-  };
+  return files;
+};
 
+async function compile() {
   const CONSTANT_FILES = getFilesRecursively("./src/CONSTANTS").map((file) =>
     fs.readFileSync(file, "utf-8")
   );
@@ -76,3 +76,5 @@ async function compile() {
 }
 
 compile();
+
+module.exports = { getFilesRecursively }
