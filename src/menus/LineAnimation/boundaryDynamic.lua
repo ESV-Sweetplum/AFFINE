@@ -2,7 +2,7 @@ function DynamicBoundaryMenu()
     local settings = parameterWorkflow("animation_boundaryDynamic", "msxBounds", 'distance', "progressionExponent",
         "spacing",
         "boundCoefficients",
-        customParameter("RadioBoolean", { "Change Bottom Bound", "Change Top Bound" }, "evalOveer", true))
+        customParameter("RadioBoolean", { "Change Bottom Bound", "Change Top Bound" }, "evalOver", true))
 
     if RangeActivated() then
         local currentTime = offsets.startOffset + settings.spacing

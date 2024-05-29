@@ -36,7 +36,8 @@ LINE_ANIMATION_MENU_LIST = {
     'Expansion / Contraction',
     'Converge / Diverge',
     'Trail (Static)',
-    'Trail (Follow)'
+    'Trail (Follow)',
+    'Wipe'
 }
 
 LINE_ANIMATION_MENU_FUNCTIONS = {
@@ -49,5 +50,6 @@ LINE_ANIMATION_MENU_FUNCTIONS = {
     ExpansionContractionMenu,
     ConvergeDivergeMenu,
     TrailStaticMenu,
-    TrailFollowMenu
+    TrailFollowMenu,
+    WipeMenu
 }
