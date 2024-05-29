@@ -99,11 +99,12 @@ CUSTOM_INPUT_DICTIONARY = {
     Float2 = function (label, v, tooltip, sameLine) return InputFloat2Wrapper(label, v, tooltip) end,
     Float3 = function (label, v, tooltip, sameLine) return InputFloat3Wrapper(label, v, tooltip) end,
     Float4 = function (label, v, tooltip, sameLine) return InputFloat4Wrapper(label, v, tooltip) end,
+    Matrix = function (label, v, tooltip) return InputTextMultilineWrapper(label, v, tooltip) end,
     RadioBoolean = function (labels, v, tooltip, sameLine) return RadioBoolean(labels[1], labels[2], v, tooltip) end,
     Checkbox = function (label, v, tooltip, sameLine) return CheckboxWrapper(label, v, tooltip, sameLine) end,
 }
 
----@alias inputType "Int" | "Int2" | "Int3" | "Int4" | "Float" | "Float2" | "Float3" | "Float4" | "RadioBoolean" | "Checkbox"
+---@alias inputType "Int" | "Int2" | "Int3" | "Int4" | "Float" | "Float2" | "Float3" | "Float4" | "Matrix" |"RadioBoolean" | "Checkbox"
 
 ---Creates imgui inputs using the given parameter table.
 ---@param parameterTable Parameter[]

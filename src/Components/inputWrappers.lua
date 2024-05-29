@@ -36,6 +36,18 @@ function InputTextWrapper(label, v, tooltip)
     return v
 end
 
+---Creates an `InputTextMultiline` element.
+---@param label string
+---@param v string
+---@param tooltip string
+---@return string
+function InputTextMultilineWrapper(label, v, tooltip)
+    _, v = imgui.InputTextMultiline(label, v, 6942)
+    Tooltip(tooltip)
+    ---@cast v string
+    return v
+end
+
 ---Creates an `InputInt2` element.
 ---@param label string
 ---@param v integer[]
