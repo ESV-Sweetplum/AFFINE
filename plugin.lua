@@ -139,6 +139,33 @@ function strToTable(str, nestingIdx)
     return tbl
 end
 
+---Converts a string separated by spaces and new lines into a 2D table.
+---@param str string
+---@return string[][]
+function strToMatrix(str)
+    local finalTbl = {}
+    local initTbl = table.split(str, "[^\r\n]+")
+    for _, substr in pairs(initTbl) do
+        table.insert(finalTbl, table.split(substr, "%S+"))
+    end
+
+    return finalTbl
+end
+
+---Returns two variables corresponding to row and column count of a matrix.
+---@param mtrx any[][]
+---@return integer
+---@return integer
+function matrixSz(mtrx)
+    local rows, columns = 0, #mtrx
+
+    for _, tbl in pairs(mtrx) do
+        rows = math.max(rows, #tbl)
+    end
+
+    return rows, columns
+end
+
 ---Debug table constructor for placing AFFINE frames.
 ---@param lines TimingPointInfo[]
 ---@param svs SliderVelocityInfo[]
@@ -629,11 +656,12 @@ CUSTOM_INPUT_DICTIONARY = {
     Float2 = function (label, v, tooltip, sameLine) return InputFloat2Wrapper(label, v, tooltip) end,
     Float3 = function (label, v, tooltip, sameLine) return InputFloat3Wrapper(label, v, tooltip) end,
     Float4 = function (label, v, tooltip, sameLine) return InputFloat4Wrapper(label, v, tooltip) end,
+    Matrix = function (label, v, tooltip) return InputTextMultilineWrapper(label, v, tooltip) end,
     RadioBoolean = function (labels, v, tooltip, sameLine) return RadioBoolean(labels[1], labels[2], v, tooltip) end,
     Checkbox = function (label, v, tooltip, sameLine) return CheckboxWrapper(label, v, tooltip, sameLine) end,
 }
 
----@alias inputType "Int" | "Int2" | "Int3" | "Int4" | "Float" | "Float2" | "Float3" | "Float4" | "RadioBoolean" | "Checkbox"
+---@alias inputType "Int" | "Int2" | "Int3" | "Int4" | "Float" | "Float2" | "Float3" | "Float4" | "Matrix" |"RadioBoolean" | "Checkbox"
 
 ---Creates imgui inputs using the given parameter table.
 ---@param parameterTable Parameter[]
@@ -1078,6 +1106,18 @@ end
 ---@return string
 function InputTextWrapper(label, v, tooltip)
     _, v = imgui.InputText(label, v, 6942)
+    Tooltip(tooltip)
+    ---@cast v string
+    return v
+end
+
+---Creates an `InputTextMultiline` element.
+---@param label string
+---@param v string
+---@param tooltip string
+---@return string
+function InputTextMultilineWrapper(label, v, tooltip)
+    _, v = imgui.InputTextMultiline(label, v, 6942)
     Tooltip(tooltip)
     ---@cast v string
     return v
@@ -1969,72 +2009,6 @@ function placeSpectrumFrame(startTime, center, maxSpread, lineDistance, spacing,
     end
 end
 
-function BasicManualAnimationMenu()
-    local settings = parameterWorkflow("animation_manual", 'msxList1', 'msxList2', 'progressionTable', 'fps',
-        'spacing')
-
-    if RangeActivated() then
-        startMsxTable = table.split(settings.msxList1, "%S+")
-        endMsxTable = table.split(settings.msxList2, "%S+")
-        progressionTable = table.split(settings.progressionTable, "%S+")
-
-        if (#startMsxTable ~= #endMsxTable) then
-            print("The start and end msx values are not of equal length.")
-            return;
-        end
-
-        if (#endMsxTable ~= #progressionTable) then
-            print("The msx table and progression table are not of equal length.")
-            return;
-        end
-
-        local currentTime = offsets.startOffset + settings.spacing
-        local iterations = 0
-        local lines = {}
-        local svs = {}
-        local frameLengths = {}
-
-        while (currentTime < offsets.endOffset) and (iterations < MAX_ITERATIONS) do
-            local msxTable = {}
-
-            for i = 1, #endMsxTable do
-                local progressionExponent = progressionTable[1]
-                if (#progressionTable >= 2) and (#endMsxTable == #progressionTable) then
-                    progressionExponent = progressionTable[i]
-                end
-                local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset,
-                    progressionExponent)
-
-                table.insert(msxTable, mapProgress(startMsxTable[i], progress, endMsxTable[i]))
-            end
-
-            local tbl = tableToAffineFrame(msxTable, currentTime, 0, settings.spacing)
-
-            if (tbl.time > offsets.endOffset) then break end
-
-            timeDiff = math.max(1000 / settings.fps - 2, tbl.time - currentTime)
-
-            table.insert(frameLengths, timeDiff + 2)
-
-            currentTime = currentTime + timeDiff
-
-            lines = combineTables(lines, tbl.lines)
-            svs = combineTables(svs, tbl.svs)
-
-            insertTeleport(svs, currentTime + 1 / INCREMENT, FRAME_SIZE)
-
-            currentTime = currentTime + 2
-            iterations = iterations + 1
-        end
-
-        local stats = getStatisticsFromTable(frameLengths)
-
-        generateAffines(lines, svs, offsets.startOffset, offsets.endOffset, "Manual Animation",
-            constructDebugTable(lines, svs, stats))
-        setDebug("Line Count: " .. #lines .. " // SV Count: " .. #svs)
-    end
-end
-
 function IncrementalAnimationMenu()
     local settings = parameterWorkflow("animation_incremental", 'msxList', 'spacing',
         customParameter("RadioBoolean", { "12341234", "1234321" }, "bounce", false),
@@ -2348,7 +2322,7 @@ function DynamicBoundaryMenu()
     local settings = parameterWorkflow("animation_boundaryDynamic", "msxBounds", 'distance', "progressionExponent",
         "spacing",
         "boundCoefficients",
-        customParameter("RadioBoolean", { "Change Bottom Bound", "Change Top Bound" }, "evalOveer", true))
+        customParameter("RadioBoolean", { "Change Bottom Bound", "Change Top Bound" }, "evalOver", true))
 
     if RangeActivated() then
         local currentTime = offsets.startOffset + settings.spacing
@@ -2410,6 +2384,72 @@ function placeDynamicFrame(startTime, min, max, lineDistance, spacing, polynomia
     end
 
     return tableToAffineFrame(msxTable, startTime, 0, spacing)
+end
+
+function BasicManualAnimationMenu()
+    local settings = parameterWorkflow("animation_manual", 'msxList1', 'msxList2', 'progressionTable', 'fps',
+        'spacing')
+
+    if RangeActivated() then
+        startMsxTable = table.split(settings.msxList1, "%S+")
+        endMsxTable = table.split(settings.msxList2, "%S+")
+        progressionTable = table.split(settings.progressionTable, "%S+")
+
+        if (#startMsxTable ~= #endMsxTable) then
+            print("The start and end msx values are not of equal length.")
+            return;
+        end
+
+        if (#endMsxTable ~= #progressionTable) then
+            print("The msx table and progression table are not of equal length.")
+            return;
+        end
+
+        local currentTime = offsets.startOffset + settings.spacing
+        local iterations = 0
+        local lines = {}
+        local svs = {}
+        local frameLengths = {}
+
+        while (currentTime < offsets.endOffset) and (iterations < MAX_ITERATIONS) do
+            local msxTable = {}
+
+            for i = 1, #endMsxTable do
+                local progressionExponent = progressionTable[1]
+                if (#progressionTable >= 2) and (#endMsxTable == #progressionTable) then
+                    progressionExponent = progressionTable[i]
+                end
+                local progress = getProgress(offsets.startOffset, currentTime, offsets.endOffset,
+                    progressionExponent)
+
+                table.insert(msxTable, mapProgress(startMsxTable[i], progress, endMsxTable[i]))
+            end
+
+            local tbl = tableToAffineFrame(msxTable, currentTime, 0, settings.spacing)
+
+            if (tbl.time > offsets.endOffset) then break end
+
+            timeDiff = math.max(1000 / settings.fps - 2, tbl.time - currentTime)
+
+            table.insert(frameLengths, timeDiff + 2)
+
+            currentTime = currentTime + timeDiff
+
+            lines = combineTables(lines, tbl.lines)
+            svs = combineTables(svs, tbl.svs)
+
+            insertTeleport(svs, currentTime + 1 / INCREMENT, FRAME_SIZE)
+
+            currentTime = currentTime + 2
+            iterations = iterations + 1
+        end
+
+        local stats = getStatisticsFromTable(frameLengths)
+
+        generateAffines(lines, svs, offsets.startOffset, offsets.endOffset, "Manual Animation",
+            constructDebugTable(lines, svs, stats))
+        setDebug("Line Count: " .. #lines .. " // SV Count: " .. #svs)
+    end
 end
 
 function SetVisibilityMenu()
@@ -2647,7 +2687,8 @@ LINE_ANIMATION_MENU_LIST = {
     'Expansion / Contraction',
     'Converge / Diverge',
     'Trail (Static)',
-    'Trail (Follow)'
+    'Trail (Follow)',
+    'Wipe'
 }
 
 LINE_ANIMATION_MENU_FUNCTIONS = {
@@ -2660,7 +2701,8 @@ LINE_ANIMATION_MENU_FUNCTIONS = {
     ExpansionContractionMenu,
     ConvergeDivergeMenu,
     TrailStaticMenu,
-    TrailFollowMenu
+    TrailFollowMenu,
+    WipeMenu
 }
 
 CREATE_LINE_TAB_FUNCTIONS = {
