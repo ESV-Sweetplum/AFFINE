@@ -18,7 +18,7 @@ DEFAULT_COLOR_LIST = '1 8 4 16 12 2 3 6'     -- integer[any]
 
 INCREMENT = 64                               -- integer
 MAX_ITERATIONS = 1000                        -- integer
-FRAME_SIZE = 500                             -- integer
+FRAME_SIZE = 690                             -- integer
 
 SPLITSCROLL_MODE = true                      -- boolean
 OFFSET_SECURITY_CONSTANT = 2                 -- integer
