@@ -2400,7 +2400,7 @@ function BasicManualAnimationMenu()
             return;
         end
 
-        if (#endMsxTable ~= #progressionTable) then
+        if (#endMsxTable ~= #progressionTable) and (#progressionTable > 1) then
             print("The msx table and progression table are not of equal length.")
             return;
         end
@@ -2415,7 +2415,7 @@ function BasicManualAnimationMenu()
             local msxTable = {}
 
             for i = 1, #endMsxTable do
-                local progressionExponent = progressionTable[1]
+                local progressionExponent = tonumber(progressionTable[1])
                 if (#progressionTable >= 2) and (#endMsxTable == #progressionTable) then
                     progressionExponent = progressionTable[i]
                 end
@@ -2688,7 +2688,6 @@ LINE_ANIMATION_MENU_LIST = {
     'Converge / Diverge',
     'Trail (Static)',
     'Trail (Follow)',
-    'Wipe'
 }
 
 LINE_ANIMATION_MENU_FUNCTIONS = {
@@ -2701,8 +2700,7 @@ LINE_ANIMATION_MENU_FUNCTIONS = {
     ExpansionContractionMenu,
     ConvergeDivergeMenu,
     TrailStaticMenu,
-    TrailFollowMenu,
-    WipeMenu
+    TrailFollowMenu
 }
 
 CREATE_LINE_TAB_FUNCTIONS = {

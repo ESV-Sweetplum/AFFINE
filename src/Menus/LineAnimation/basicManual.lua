@@ -12,7 +12,7 @@ function BasicManualAnimationMenu()
             return;
         end
 
-        if (#endMsxTable ~= #progressionTable) then
+        if (#endMsxTable ~= #progressionTable) and (#progressionTable > 1) then
             print("The msx table and progression table are not of equal length.")
             return;
         end
