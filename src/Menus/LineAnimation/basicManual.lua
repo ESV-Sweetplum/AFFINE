@@ -27,7 +27,7 @@ function BasicManualAnimationMenu()
             local msxTable = {}
 
             for i = 1, #endMsxTable do
-                local progressionExponent = progressionTable[1]
+                local progressionExponent = tonumber(progressionTable[1])
                 if (#progressionTable >= 2) and (#endMsxTable == #progressionTable) then
                     progressionExponent = progressionTable[i]
                 end
