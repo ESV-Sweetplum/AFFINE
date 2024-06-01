@@ -15,6 +15,7 @@ DEFAULT_PROGRESSION_EXPONENT = 1             -- float
 DEFAULT_BOUND_COEFFICIENTS = { 0, -4, 4, 0 } -- integer[4]
 DEFAULT_PATH_COEFFICIENTS = { -1, 3, -3, 1 } -- integer[4]
 DEFAULT_COLOR_LIST = '1 8 4 16 12 2 3 6'     -- integer[any]
+DEFAULT_INTENSITY = 20                       -- integer
 
 INCREMENT = 64                               -- integer
 MAX_ITERATIONS = 1000                        -- integer

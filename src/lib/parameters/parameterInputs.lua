@@ -87,6 +87,9 @@ INPUT_DICTIONARY = {
     end,
     oneSided = function (v)
         return CheckboxWrapper("One-Sided Vibro?", v, "Applies vibrato to strictly one direction relative to the note.")
+    end,
+    intensity = function (v)
+        return SliderIntWrapper("Intensity", v, { 0, 100 }, "Determines the intensity of the exponential.")
     end
 }
 
@@ -99,6 +102,7 @@ CUSTOM_INPUT_DICTIONARY = {
     Float2 = function (label, v, tooltip, sameLine) return InputFloat2Wrapper(label, v, tooltip) end,
     Float3 = function (label, v, tooltip, sameLine) return InputFloat3Wrapper(label, v, tooltip) end,
     Float4 = function (label, v, tooltip, sameLine) return InputFloat4Wrapper(label, v, tooltip) end,
+    SliderInt = function (label, v, limits, tooltip, sameLine) return SliderIntWrapper(label, v, limits, tooltip) end,
     Matrix = function (label, v, tooltip) return InputTextMultilineWrapper(label, v, tooltip) end,
     RadioBoolean = function (labels, v, tooltip, sameLine) return RadioBoolean(labels[1], labels[2], v, tooltip) end,
     Checkbox = function (label, v, tooltip, sameLine) return CheckboxWrapper(label, v, tooltip, sameLine) end,

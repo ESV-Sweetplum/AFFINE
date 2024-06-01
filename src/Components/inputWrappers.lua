@@ -132,3 +132,16 @@ function CheckboxWrapper(label, v, tooltip, sameLine)
     ---@cast v boolean
     return v
 end
+
+---Creates an `SliderInt` element.
+---@param label string
+---@param v integer
+---@param limits integer[]
+---@param tooltip" string
+---@return integer
+function SliderIntWrapper(label, v, limits, tooltip)
+    _, v = imgui.SliderInt(label, v, limits[1], limits[2])
+    Tooltip(tooltip)
+    ---@cast v integer
+    return v
+end
