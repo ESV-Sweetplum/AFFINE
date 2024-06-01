@@ -79,5 +79,5 @@ function ConvergeDivergeMenu()
             constructDebugTable(lines, svs, stats))
         setDebug("Line Count: " .. #lines .. " // SV Count: " .. #svs)
     end
-    Plot(settings.pathCoefficients, settings.progressionExponent, "Line Path Over Duration of Life Cycle")
+    PolynomialPlot(settings.pathCoefficients, settings.progressionExponent, "Line Path Over Duration of Life Cycle")
 end

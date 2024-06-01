@@ -45,7 +45,7 @@ function StaticBoundaryMenu()
         setDebug("Line Count: " .. #lines .. " // SV Count: " .. #svs)
     end
 
-    Plot(settings.boundCoefficients, settings.progressionExponent)
+    PolynomialPlot(settings.boundCoefficients, settings.progressionExponent)
 end
 
 function placeStaticFrame(startTime, min, max, lineDistance, spacing, boundary, evalUnder)
