@@ -1,3 +1,4 @@
+---@enum SV_VIBRO_MENU_LIST
 SV_VIBRO_MENU_LIST = {
     "Linear",
     "Polynomial",
@@ -6,6 +7,7 @@ SV_VIBRO_MENU_LIST = {
     "Stack"
 }
 
+---@enum SV_VIBRO_MENU_FUNCTIONS
 SV_VIBRO_MENU_FUNCTIONS = {
     linearVibroMenu,
     polynomialVibroMenu,

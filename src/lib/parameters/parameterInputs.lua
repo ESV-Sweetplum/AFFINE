@@ -1,3 +1,4 @@
+---@enum INPUT_DICTIONARY
 INPUT_DICTIONARY = {
     msxList = function (v)
         return InputTextWrapper("MSX List", v,
@@ -93,6 +94,7 @@ INPUT_DICTIONARY = {
     end
 }
 
+---@enum CUSTOM_INPUT_DICTIONARY
 CUSTOM_INPUT_DICTIONARY = {
     Int = function (label, v, tooltip, sameLine) return InputIntWrapper(label, v, tooltip) end,
     Int2 = function (label, v, tooltip, sameLine) return InputInt2Wrapper(label, v, tooltip) end,

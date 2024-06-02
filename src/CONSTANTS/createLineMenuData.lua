@@ -1,3 +1,4 @@
+---@enum LINE_STANDARD_MENU_LIST
 LINE_STANDARD_MENU_LIST = {
     'Spread',
     'At Notes (Preserve Location)',
@@ -5,6 +6,7 @@ LINE_STANDARD_MENU_LIST = {
     "Rainbow"
 }
 
+---@enum LINE_STANDARD_MENU_FUNCTIONS
 LINE_STANDARD_MENU_FUNCTIONS = {
     StandardSpreadMenu,
     function () StandardAtNotesMenu(2) end,
@@ -13,12 +15,14 @@ LINE_STANDARD_MENU_FUNCTIONS = {
 }
 
 
+---@enum LINE_FIXED_MENU_LIST
 LINE_FIXED_MENU_LIST = {
     'Manual',
     'Automatic',
     'Random'
 }
 
+---@enum LINE_FIXED_MENU_FUNCTIONS
 LINE_FIXED_MENU_FUNCTIONS = {
     FixedManualMenu,
     FixedAutomaticMenu,
@@ -26,6 +30,7 @@ LINE_FIXED_MENU_FUNCTIONS = {
 }
 
 
+---@enum LINE_ANIMATION_MENU_LIST
 LINE_ANIMATION_MENU_LIST = {
     'Manual (Basic)',
     'Incremental',
@@ -39,6 +44,7 @@ LINE_ANIMATION_MENU_LIST = {
     'Trail (Follow)',
 }
 
+---@enum LINE_ANIMATION_MENU_FUNCTIONS
 LINE_ANIMATION_MENU_FUNCTIONS = {
     BasicManualAnimationMenu,
     IncrementalAnimationMenu,
