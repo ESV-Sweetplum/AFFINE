@@ -104,7 +104,7 @@ CUSTOM_INPUT_DICTIONARY = {
     Float4 = function (label, v, tooltip, sameLine) return InputFloat4Wrapper(label, v, tooltip) end,
     SliderInt = function (label, v, limits, tooltip, sameLine) return SliderIntWrapper(label, v, limits, tooltip) end,
     Matrix = function (label, v, tooltip) return InputTextMultilineWrapper(label, v, tooltip) end,
-    RadioBoolean = function (labels, v, tooltip, sameLine) return RadioBoolean(labels[1], labels[2], v, tooltip) end,
+    RadioBoolean = function (labels, v, tooltip, sameLine) return RadioBoolean(labels[1], labels[2], v) end,
     Checkbox = function (label, v, tooltip, sameLine) return CheckboxWrapper(label, v, tooltip, sameLine) end,
 }
 

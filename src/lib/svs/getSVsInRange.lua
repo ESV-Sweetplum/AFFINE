@@ -1,6 +1,6 @@
 ---Returns all ScrollVelocities within a certain temporal range.
----@param lower number
----@param upper number
+---@param lower number # Lower bound of the constraint.
+---@param upper number # Upper bound of the constraint.
 ---@return SliderVelocityInfo[]
 function getSVsInRange(lower, upper)
     local base = map.ScrollVelocities

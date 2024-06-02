@@ -1,29 +1,29 @@
 local RESOLUTION = 50
 
----Creates a new window with a plot
----@param polynomialCoefficients number[]
----@param progressionExponent number
----@param title? string
-function PolynomialPlot(polynomialCoefficients, progressionExponent, title)
+---Graphs a polynomial given the coefficients.
+---@param plyCoeff [number, number, number, number] # The coefficients of the polynomial, in identical order. Modeled after standard form ax^3+bx^2+cx+d.
+---@param prgExp number # Changes how the progress of animation is calculated.
+---@param title? string # Title of the plot window.
+function PolynomialPlot(plyCoeff, prgExp, title)
     imgui.Begin(title or "Boundary Height vs. Time", imgui_window_flags.AlwaysAutoResize)
     local tbl = {}
 
-    if (polynomialCoefficients == state.GetValue("cachedCoefficients")) then
+    if (plyCoeff == state.GetValue("cachedCoefficients")) then
         tbl = state.GetValue("cachedPlotValues")
     else
         for i = 0, RESOLUTION do
-            local progress = getProgress(0, i, RESOLUTION, progressionExponent)
+            local progress = getProgress(0, i, RESOLUTION, prgExp)
 
             table.insert(tbl,
-                evaluateCoefficients(polynomialCoefficients, progress))
+                evaluateCoefficients(plyCoeff, progress))
         end
     end
 
-    state.SetValue("cachedCoefficients", polynomialCoefficients)
+    state.SetValue("cachedCoefficients", plyCoeff)
     state.SetValue("cachedPlotValues", tbl)
 
     imgui.PlotLines("Polynomial Plot", tbl, #tbl, 0,
-        polynomialString(polynomialCoefficients, progressionExponent),
+        polynomialString(plyCoeff, prgExp),
         0, 1,
         { 250, 150 })
 
@@ -33,7 +33,7 @@ end
 ---Plots a sinusoidal graph given cycle counts and phase shift.
 ---@param nx [number, number] # Start and End cycle counts. The sine function will have `nx[2]` cycles in total.
 ---@param phi number # Phase shift represented as a number in [0,1).
----@param title string # Title of the plot window.
+---@param title? string # Title of the plot window.
 function SinusoidalPlot(nx, phi, title)
     imgui.Begin(title or "Boundary Height vs. Time", imgui_window_flags.AlwaysAutoResize)
 
@@ -54,8 +54,12 @@ function SinusoidalPlot(nx, phi, title)
     imgui.End()
 end
 
-function Plot(fn, label, windowName)
-    imgui.Begin(windowName or "Boundary Height vs. Time", imgui_window_flags.AlwaysAutoResize)
+---Plots a function.
+---@param fn fun(v: number): number # The function to plot. It should take in a number `x` and output a number `f(x)`.
+---@param label string # The label within the plot.
+---@param title string # Title of the plot window.
+function Plot(fn, label, title)
+    imgui.Begin(title or "Boundary Height vs. Time", imgui_window_flags.AlwaysAutoResize)
 
     local tbl = {}
     local min, max = 0, 0
@@ -67,7 +71,7 @@ function Plot(fn, label, windowName)
         max = math.max(y, max)
     end
 
-    imgui.PlotLines(windowName .. " Plot", tbl, #tbl, 0,
+    imgui.PlotLines(title .. " Plot", tbl, #tbl, 0,
         label,
         min, max,
         { 250, 150 })

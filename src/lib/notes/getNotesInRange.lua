@@ -1,6 +1,6 @@
 ---Returns all HitObjects within a certain temporal range.
----@param lower number
----@param upper number
+---@param lower number # Lower bound of the constraint.
+---@param upper number # Upper bound of the constraint.
 ---@return HitObjectInfo[]
 function getNotesInRange(lower, upper)
     local base = map.HitObjects

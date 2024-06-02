@@ -1,5 +1,5 @@
 ---Creates a tooltip hoverable element.
----@param text string
+---@param text string # The text of the tooltip during hovering.
 function Tooltip(text)
     imgui.SameLine(0, 4)
     imgui.TextDisabled("(?)")

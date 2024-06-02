@@ -1,6 +1,6 @@
 ---Returns all timing points within a temporal boundary.
----@param lower number
----@param upper number
+---@param lower number # Lower bound of the constraint.
+---@param upper number # Upper bound of the constraint.
 ---@return TimingPointInfo[]
 function getLinesInRange(lower, upper)
     local base = map.TimingPoints

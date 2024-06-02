@@ -1,11 +1,11 @@
----Finds closest bookmark with StartTime less than time.
----@param time number
----@param lower number
----@param upper number
+---Finds closest bookmark with `StartTime` less than `time`. If the bookmark isn't within the constraint defined by `[lower, upper]`, then no bookmark is returned.
+---@param time number # The time in which to locate the nearest bookmark before this.
+---@param lower number # Lower bound of the constraint.
+---@param upper number # Upper bound of the constraint.
 ---@return BookmarkInfo
 function findBookmark(time, lower, upper)
-    local lower = lower or 0
-    local upper = upper or 1e69
+    lower = lower or 0
+    upper = upper or 1e69
     local bookmarks = map.Bookmarks
 
     if (#bookmarks == 0) then return {} end

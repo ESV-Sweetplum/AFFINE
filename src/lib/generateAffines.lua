@@ -1,8 +1,8 @@
 ---Places given svs and lines, and cleans both.
 ---@param lines TimingPointInfo[]
 ---@param svs SliderVelocityInfo[]
----@param lower number
----@param upper number
+---@param lower number # Lower bound of the constraint.
+---@param upper number # Upper bound of the constraint.
 ---@param affineType string
 ---@param debugData? table
 function generateAffines(lines, svs, lower, upper, affineType, debugData)

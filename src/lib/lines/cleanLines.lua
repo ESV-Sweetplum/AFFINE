@@ -1,7 +1,7 @@
 ---Removes lines above or below the specified boundary. Then, adds an extra line at the nearest 1/1 snap to maintain snap coloring.
----@param lines TimingPointInfo[]
----@param lower number
----@param upper number
+---@param lines TimingPointInfo[] # A table of lines to clean.
+---@param lower number # Lower boundary of the constraint.
+---@param upper number # Upper boundary of the constraint.
 ---@return TimingPointInfo[]
 function cleanLines(lines, lower, upper)
     local lastLineTime = upper

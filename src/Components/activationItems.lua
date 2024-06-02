@@ -1,24 +1,39 @@
-function activationButton(text)
-    text = text or "Place"
-    return imgui.Button(text .. " Lines")
+---@diagnostic disable: return-type-mismatch
+---Creates an `imgui.Button` with the action "{action} {object}s.".
+---@param action? string # The action the button will perform (e.g. `Place`, `Remove`, etc.)
+---@param object? string # The object group to perform it on (e.g. `Lines`, `SVs`, etc.)
+---@return boolean
+function activationButton(action, object)
+    action = action or "Place"
+    object = object or "Lines"
+    return imgui.Button(action .. " " .. object)
 end
 
-function RangeActivated(text, item)
-    text = text or "Place"
-    item = item or "Lines"
+---Returns a boolean if a range is selected, and a corresponding button is activated.
+---@param action? string # The action the button will perform (e.g. `Place`, `Remove`, etc.)
+---@param object? string # The object group to perform it on (e.g. `Lines`, `SVs`, etc.)
+---@return boolean
+function RangeActivated(action, object)
+    action = action or "Place"
+    object = object or "Lines"
     if rangeSelected() then
-        return activationButton(text) or (utils.IsKeyPressed(keys.A) and not utils.IsKeyDown(keys.LeftControl))
+        return activationButton(action) or (utils.IsKeyPressed(keys.A) and not utils.IsKeyDown(keys.LeftControl))
     else
-        return imgui.Text("Select a Region to " .. text .. " " .. item .. ".")
+        imgui.Text("Select a Region to " .. action .. " " .. object .. ".")
+        return false
     end
 end
 
-function NoteActivated(text, item)
-    text = text or "Place"
-    item = item or "Lines"
+---Returns a boolean if a note is selected, and a corresponding button is activated.
+---@param action? string # The action the button will perform (e.g. `Place`, `Remove`, etc.)
+---@param object? string # The object group to perform it on (e.g. `Lines`, `SVs`, etc.)
+---@return boolean
+function NoteActivated(action, object)
+    action = action or "Place"
+    object = object or "Lines"
     if noteSelected() then
-        return activationButton(text) or (utils.IsKeyPressed(keys.A) and not utils.IsKeyDown(keys.LeftControl))
+        return activationButton(action) or (utils.IsKeyPressed(keys.A) and not utils.IsKeyDown(keys.LeftControl))
     else
-        return imgui.Text("Select a Note to " .. text .. " " .. item .. ".")
+        return imgui.Text("Select a Note to " .. action .. " " .. object .. ".")
     end
 end

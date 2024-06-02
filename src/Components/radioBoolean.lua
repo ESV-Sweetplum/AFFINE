@@ -1,10 +1,9 @@
 ---Creates two radio buttons, one for true and one for false.
----@param labelFalse string
----@param labelTrue string
----@param v boolean
----@param tooltip string
+---@param labelFalse string # Label for the radio button corresponding to `false`.
+---@param labelTrue string # Label for the radio button corresponding to `true`.
+---@param v boolean # The value of the current variable.
 ---@return boolean
-function RadioBoolean(labelFalse, labelTrue, v, tooltip)
+function RadioBoolean(labelFalse, labelTrue, v)
     if imgui.RadioButton(labelFalse, not v) then
         v = false
     end
