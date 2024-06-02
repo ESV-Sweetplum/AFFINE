@@ -1,6 +1,6 @@
 ---Takes a table of coefficients, and returns a string representing the equation.
----@param coefficients number[]
----@param power number
+---@param coefficients number[] # A table of coefficients of a degree `n` polynomial. For a table `{a,b,c,d}`, represents the polynomial ax^3+bx^2+cx+d.
+---@param power number # Represents the power to raise the input variable to. Is used to represent the `progressionExponent`.
 ---@return string
 function polynomialString(coefficients, power)
     local explanatoryVariable = "t"

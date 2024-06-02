@@ -1,7 +1,7 @@
 ---Takes a color and a time, and returns timing lines that make that time that color.
----@param color number
----@param time number
----@param hidden boolean
+---@param color number # The snap value of the color, in `1/color`. 1 represents red, 2 represents blue, etc.
+---@param time number # The time to apply this coloring to.
+---@param hidden boolean # Determines if the timing lines generated will be hidden during gameplay.
 ---@return TimingPointInfo[]
 function applyColorToTime(color, time, hidden)
     local EPSILON = 0.3

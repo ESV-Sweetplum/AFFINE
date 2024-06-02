@@ -1,10 +1,10 @@
 ---Places given svs and lines, and cleans both.
----@param lines TimingPointInfo[]
----@param svs SliderVelocityInfo[]
+---@param lines TimingPointInfo[] # The lines to place.
+---@param svs SliderVelocityInfo[] # The svs to place.
 ---@param lower number # Lower bound of the constraint.
 ---@param upper number # Upper bound of the constraint.
----@param affineType string
----@param debugData? table
+---@param affineType string # The name of the effect being placed.
+---@param debugData? table # Information about the AFFINE frame dataset.
 function generateAffines(lines, svs, lower, upper, affineType, debugData)
     if (not upper or upper == lower) then
         ---@diagnostic disable-next-line: cast-local-type

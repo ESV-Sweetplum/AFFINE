@@ -1,5 +1,5 @@
 ---Gets the snap color from a given time.
----@param time number
+---@param time number # The time to reference.
 ---@return number
 function colorFromTime(time)
     local timingPoint = map.GetTimingPointAt(time)

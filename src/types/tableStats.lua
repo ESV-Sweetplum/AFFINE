@@ -1,4 +1,4 @@
----@class TableStats
----@field mean number
----@field variance number
----@field stdDev number
+---@class TableStats # Statistical analysis of a numerical table is stored here.
+---@field mean number # The mean of the table.
+---@field variance number # The variance of the table `S^2`.
+---@field stdDev number # THe standard deviation of the table `S`.

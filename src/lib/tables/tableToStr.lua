@@ -1,5 +1,9 @@
 local separatorTable = { " ", "!", "@", "#", "$", "%", "^", "&" }
 
+---Encodes a table into a string.
+---@param tbl table # The table to encode.
+---@param nestingIdx? number # The depth of the current tabular search.
+---@return string
 function tableToStr(tbl, nestingIdx)
     local str = ""
     local nestingIdx = nestingIdx or 0

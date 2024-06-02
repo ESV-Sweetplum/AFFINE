@@ -1,6 +1,6 @@
 ---Returns true if the table contains the specified element.
----@param table table
----@param element any
+---@param table table # The table to search.
+---@param element any # The element to find.
 ---@return boolean
 ---@diagnostic disable-next-line: duplicate-set-field
 function table.contains(table, element)

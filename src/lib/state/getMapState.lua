@@ -1,3 +1,6 @@
+---Gets the stored data within a map.
+---@param default? any # The default value if it returns nothing.
+---@return table
 function getMapState(default)
     default = default or {}
     if (not map.Bookmarks[1]) then return default end

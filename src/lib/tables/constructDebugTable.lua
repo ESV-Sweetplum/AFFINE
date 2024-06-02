@@ -1,7 +1,7 @@
 ---Debug table constructor for placing AFFINE frames.
----@param lines TimingPointInfo[]
----@param svs SliderVelocityInfo[]
----@param stats? TableStats
+---@param lines TimingPointInfo[] # The lines placed a batch.
+---@param svs SliderVelocityInfo[] # The svs placed a batch.
+---@param stats? TableStats # Statistics about the AFFINE frame.
 ---@return table
 function constructDebugTable(lines, svs, stats)
     local tbl = {

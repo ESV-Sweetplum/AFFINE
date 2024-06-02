@@ -1,6 +1,6 @@
----Joins two tables together, with no nesting.
----@param t1 table
----@param t2 table
+---Joins two table entries together into one table.
+---@param t1 table # The first table.
+---@param t2 table # The second table.
 ---@return table
 function combineTables(t1, t2)
     for i = 1, #t2 do

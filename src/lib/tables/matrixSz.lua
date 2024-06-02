@@ -1,5 +1,5 @@
 ---Returns two variables corresponding to row and column count of a matrix.
----@param mtrx any[][]
+---@param mtrx any[][] # The matrix to measure.
 ---@return integer
 ---@return integer
 function matrixSz(mtrx)

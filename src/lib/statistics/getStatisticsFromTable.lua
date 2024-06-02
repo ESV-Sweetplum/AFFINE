@@ -1,5 +1,5 @@
 ---Gets statistical analysis of a numerical table.
----@param table number[]
+---@param table number[] # The dataset to operate on.
 ---@return TableStats
 function getStatisticsFromTable(table)
     local stdDev = getStdDev(table)

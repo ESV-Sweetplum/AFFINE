@@ -1,5 +1,5 @@
 ---Removes SVs outside of range, places 0.00x SV at the beginning, and places a 1.00x SV at the end.
----@param svs SliderVelocityInfo[]
+---@param svs SliderVelocityInfo[] # The sv table to clean.
 ---@param lower number # Lower bound of the constraint.
 ---@param upper number # Upper bound of the constraint.
 ---@return SliderVelocityInfo[]

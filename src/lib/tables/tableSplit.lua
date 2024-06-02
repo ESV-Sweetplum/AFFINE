@@ -1,6 +1,6 @@
 ---Takes a string, and splits it using a predicate. Similar to Array.split().
----@param str string
----@param predicate string
+---@param str string # The string to split.
+---@param predicate string # The search group to split by.
 ---@return table
 function table.split(str, predicate)
     t = {}

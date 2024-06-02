@@ -1,3 +1,7 @@
+---Saves a table into the map.
+---@param table table # The information to store.
+---@param place? boolean # Whether or not to place the bookmark.
+---@return BookmarkInfo
 function saveMapState(table, place)
     if (map.Bookmarks[1]) then
         if (map.Bookmarks[1].note:find("DATA: ")) and (map.Bookmarks[1].StartTime == -69420) then

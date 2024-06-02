@@ -1,6 +1,6 @@
 ---Gets the statistical variance
----@param table number[]
----@param mean? number
+---@param table number[] # The dataset to operate on.
+---@param mean? number # The mean of the set. Used for optimizing.
 ---@return number
 function getVariance(table, mean)
     if (not mean) then mean = getMean(table) end
