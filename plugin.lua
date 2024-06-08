@@ -6,7 +6,7 @@ DEFAULT_DELAY = 1                            -- integer
 DEFAULT_OFFSET = 0                           -- integer
 DEFAULT_SPACING = 1.1                        -- float
 DEFAULT_MSX_BOUNDS = { 0, 400 }              -- integer[2]
-DEFAULT_DISTANCE = { 15, 15 }                -- integer[2]
+DEFAULT_DISTANCE = { 25, 15 }                -- integer[2]
 DEFAULT_LINE_COUNT = 5                       -- integer
 DEFAULT_LINE_DURATION = 0.5                  -- integer
 DEFAULT_FPS = 91                             -- float
@@ -16,6 +16,7 @@ DEFAULT_PROGRESSION_EXPONENT = 1             -- float
 DEFAULT_BOUND_COEFFICIENTS = { 0, -4, 4, 0 } -- integer[4]
 DEFAULT_PATH_COEFFICIENTS = { -1, 3, -3, 1 } -- integer[4]
 DEFAULT_COLOR_LIST = '1 8 4 16 12 2 3 6'     -- integer[any]
+DEFAULT_INTENSITY = 20                       -- integer
 
 INCREMENT = 64                               -- integer
 MAX_ITERATIONS = 1000                        -- integer
@@ -26,6 +27,7 @@ OFFSET_SECURITY_CONSTANT = 2                 -- integer
 
 -- END DEFAULT SETTINGS (DONT DELETE THIS LINE)
 
+---@enum LINE_STANDARD_MENU_LIST
 LINE_STANDARD_MENU_LIST = {
     'Spread',
     'At Notes (Preserve Location)',
@@ -33,1401 +35,41 @@ LINE_STANDARD_MENU_LIST = {
     "Rainbow"
 }
 
+---@enum CREATE_LINE_TAB_LIST
 CREATE_LINE_TAB_LIST = {
     'Standard',
     'Fixed',
     'Animation (LAGGY)'
 }
 
+---@enum SV_VIBRO_MENU_LIST
 SV_VIBRO_MENU_LIST = {
     "Linear",
     "Polynomial",
+    "Sinusoidal",
+    "Ramping Cycles",
     "Stack"
 }
 
+---@enum CREATE_SV_TAB_LIST
 CREATE_SV_TAB_LIST = {
     "Still Vibro"
 }
 
+---@enum DELETION_TYPE_LIST
 DELETION_TYPE_LIST = {
     'Timing Lines + Scroll Velocities',
     'Timing Lines Only',
     'Scroll Velocities Only',
 }
 
+---@enum EDIT_TAB_LIST
 EDIT_TAB_LIST = {
     "Add Forefront Teleport",
     "Copy + Paste",
     "Set Line Visibility",
     "Reverse SV Order"
 }
-
-local separatorTable = { " ", "!", "@", "#", "$", "%", "^", "&" }
-
-function tableToStr(tbl, nestingIdx)
-    local str = ""
-    local nestingIdx = nestingIdx or 0
-
-    for k, v in pairs(tbl) do
-        local value
-
-        if (type(v) == "table") then
-            value = "{" .. tableToStr(v, nestingIdx + 1) .. "}"
-        else
-            value = v
-        end
-        if (type(k) == "number") then
-            str = str .. value .. separatorTable[nestingIdx + 1]
-        else
-            str = str .. k .. "=" .. value .. separatorTable[nestingIdx + 1]
-        end
-    end
-    return str:sub(1, str:len() - 1)
-end
-
----Takes a string, and splits it using a predicate. Similar to Array.split().
----@param str string
----@param predicate string
----@return table
-function table.split(str, predicate)
-    t = {}
-
-    for i in string.gmatch(str, predicate) do
-        t[#t + 1] = i
-    end
-
-    return t
-end
-
----Returns true if the table contains the specified element.
----@param table table
----@param element any
----@return boolean
----@diagnostic disable-next-line: duplicate-set-field
-function table.contains(table, element)
-    for _, value in pairs(table) do
-        if value == element then
-            return true
-        end
-    end
-    return false
-end
-
-local separatorTable = { " ", "!", "@", "#", "$", "%", "^", "&" }
-
-function strToTable(str, nestingIdx)
-    local tbl = {}
-    local nestingIdx = nestingIdx or 0
-
-    for kvPair in str:gmatch("[^" .. separatorTable[nestingIdx + 1] .. "]+") do
-        if kvPair:match("^{.+}$") then
-            table.insert(tbl, strToTable(kvPair:sub(2, kvPair:len() - 1), nestingIdx + 1))
-        else
-            if (kvPair:find("^(%w+)=(%S+)$")) then
-                k, v = kvPair:match("^(%w+)=(%S+)$")
-                if v:match("^{.+}$") then
-                    tbl[k] = strToTable(v:sub(2, v:len() - 1), nestingIdx + 1)
-                else
-                    tbl[k] = v
-                end
-            else
-                table.insert(tbl, kvPair)
-            end
-        end
-    end
-
-    return tbl
-end
-
----Converts a string separated by spaces and new lines into a 2D table.
----@param str string
----@return string[][]
-function strToMatrix(str)
-    local finalTbl = {}
-    local initTbl = table.split(str, "[^\r\n]+")
-    for _, substr in pairs(initTbl) do
-        table.insert(finalTbl, table.split(substr, "%S+"))
-    end
-
-    return finalTbl
-end
-
----Returns two variables corresponding to row and column count of a matrix.
----@param mtrx any[][]
----@return integer
----@return integer
-function matrixSz(mtrx)
-    local rows, columns = 0, #mtrx
-
-    for _, tbl in pairs(mtrx) do
-        rows = math.max(rows, #tbl)
-    end
-
-    return rows, columns
-end
-
----Debug table constructor for placing AFFINE frames.
----@param lines TimingPointInfo[]
----@param svs SliderVelocityInfo[]
----@param stats? TableStats
----@return table
-function constructDebugTable(lines, svs, stats)
-    local tbl = {
-        L = #lines,
-        S = #svs
-    }
-
-    if (stats) then
-        tbl.mspfMean = string.format("%.2f", stats.mean)
-        tbl.mspfStdDev = string.format("%.2f", stats.stdDev)
-    end
-
-    return tbl
-end
-
----Joins two tables together, with no nesting.
----@param t1 table
----@param t2 table
----@return table
-function combineTables(t1, t2)
-    for i = 1, #t2 do
-        t1[#t1 + 1] = t2[i]
-    end
-    return t1
-end
-
----Generates two svs for a teleport.
----@param time number
----@param dist number
----@param endSV number
----@return SliderVelocityInfo[]
-function teleport(time, dist, endSV)
-    return {
-        sv(time, INCREMENT * dist),
-        sv(time + (1 / INCREMENT), endSV)
-    }
-end
-
----Adds a teleport sv to an existing table of svs.
----@param svs SliderVelocityInfo[]
----@param time number
----@param dist number
----@param remainingSV? number
----@return SliderVelocityInfo[]
-function insertTeleport(svs, time, dist, remainingSV)
-    return combineTables(svs, teleport(time, dist, remainingSV or 0))
-end
-
----@diagnostic disable: return-type-mismatch
----Creates a SliderVelocity. To place it, you must use an `action`.
----@param time number
----@param multiplier number
----@return SliderVelocityInfo
-function sv(time, multiplier)
-    return utils.CreateScrollVelocity(time, multiplier)
-end
-
----@diagnostic disable: undefined-field
-function mostRecentSV(time)
-    if (map.GetScrollVelocityAt(time)) then
-        return map.GetScrollVelocityAt(time).Multiplier
-    end
-    return 1
-end
-
----Returns all ScrollVelocities within a certain temporal range.
----@param lower number
----@param upper number
----@return SliderVelocityInfo[]
-function getSVsInRange(lower, upper)
-    local base = map.ScrollVelocities
-
-    local tbl = {}
-
-    for _, v in pairs(base) do
-        if (v.StartTime >= lower) and (v.StartTime <= upper) then
-            table.insert(tbl, v)
-        end
-    end
-
-    return tbl
-end
-
----Removes SVs outside of range, places 0.00x SV at the beginning, and places a 1.00x SV at the end.
----@param svs SliderVelocityInfo[]
----@param lower number
----@param upper number
----@return SliderVelocityInfo[]
-function cleanSVs(svs, lower, upper)
-    local tbl = {}
-
-    for _, currentSV in pairs(svs) do
-        if (currentSV.StartTime >= lower and currentSV.StartTime <= upper) then
-            table.insert(tbl, currentSV)
-        end
-    end
-
-    table.insert(tbl, sv(lower, 0))
-    table.insert(tbl, sv(upper, 1))
-
-    return tbl
-end
-
----Gets the statistical variance
----@param table number[]
----@param mean? number
----@return number
-function getVariance(table, mean)
-    if (not mean) then mean = getMean(table) end
-
-    local sum = 0
-    for _, v in pairs(table) do
-        sum = sum + (v - mean) ^ 2
-    end
-
-    return sum / (#table - 1)
-end
-
----Gets the statistical standard deviation from a numerical table.
----@param table number[]
----@return number
-function getStdDev(table)
-    local mean = getMean(table)
-    local variance = getVariance(table, mean)
-    return variance ^ 0.5
-end
-
----Gets statistical analysis of a numerical table.
----@param table number[]
----@return TableStats
-function getStatisticsFromTable(table)
-    local stdDev = getStdDev(table)
-
-    local tbl = {
-        mean = getMean(table),
-        variance = stdDev ^ 2,
-        stdDev = stdDev
-    }
-
-    return tbl
-end
-
----Gets the statistical mean of a numerical table.
----@param table number[]
----@return number
-function getMean(table)
-    local sum = 0
-
-    for _, v in pairs(table) do
-        sum = sum + v
-    end
-
-    return sum / #table
-end
-
-function saveStateVariables(menu, variables)
-    for key in pairs(variables) do
-        state.SetValue(menu .. key, variables[key])
-    end
-end
-
-function saveMapState(table, place)
-    if (map.Bookmarks[1]) then
-        if (map.Bookmarks[1].note:find("DATA: ")) and (map.Bookmarks[1].StartTime == -69420) then
-            actions.RemoveBookmark(map.Bookmarks[1])
-        end
-    end
-    local bm = bookmark(-69420, "DATA: " .. tableToStr(table))
-    if (place == false) then return bm end
-    actions.AddBookmarkBatch({ bm })
-    return bm
-end
-
-function retrieveStateVariables(menu, variables)
-    for key in pairs(variables) do
-        if (state.GetValue(menu .. key) ~= nil) then
-            variables[key] = state.GetValue(menu .. key)
-        end
-    end
-end
-
-function getMapState(default)
-    default = default or {}
-    if (not map.Bookmarks[1]) then return default end
-    if (not string.find(map.Bookmarks[1].note, "DATA: ") or not map.Bookmarks[1].StartTime == -69420) then return default end
-
-    local str = map.Bookmarks[1].note:sub(7, map.Bookmarks[1].note:len())
-
-    return strToTable(str)
-end
-
----Simplifies the workflow to find and maintain snap colors.
----@param time number
----@param hidden? boolean
----@return TimingPointInfo[]
-function keepColorLine(time, hidden)
-    color = colorFromTime(time)
-    return applyColorToTime(color, time, hidden or false)
-end
-
----Gets the snap color from a given time.
----@param time number
----@return number
-function colorFromTime(time)
-    local timingPoint = map.GetTimingPointAt(time)
-    if (not timingPoint) then return 1 end
-    barToBarDistance = (60000 / timingPoint.Bpm) or 69
-    local timeAboveBar = (time - timingPoint.StartTime) % barToBarDistance
-
-    if (timeAboveBar < barToBarDistance / 17) then return 1 end
-    if ((barToBarDistance - (time - timingPoint.StartTime)) % barToBarDistance < barToBarDistance / 17) then return 1 end
-
-    if (timeAboveBar > (barToBarDistance / 2)) then
-        approximateSnap = barToBarDistance / ((barToBarDistance - (time - timingPoint.StartTime)) % barToBarDistance)
-    else
-        approximateSnap = barToBarDistance / timeAboveBar
-    end
-
-    return approximateSnap -- ROUNDING
-end
-
----Takes a color and a time, and returns timing lines that make that time that color.
----@param color number
----@param time number
----@param hidden boolean
----@return TimingPointInfo[]
-function applyColorToTime(color, time, hidden)
-    local EPSILON = 0.3
-
-    local lines = {}
-
-    ---@diagnostic disable-next-line: undefined-field
-    local bpm = map.GetTimingPointAt(time).Bpm
-
-    local timingDist = 4
-
-    if (math.abs(color - 1) <= EPSILON) then
-        table.insert(lines, line(time, bpm, hidden))
-    else
-        table.insert(lines, line(time - timingDist / 2, 60000 / (timingDist * color / 2), hidden))
-        table.insert(lines, line(time + timingDist / 2, bpm, hidden))
-    end
-
-    return lines
-end
-
----Returns true if a note is selected.
----@return boolean
-function noteSelected()
-    return offsets.startOffset ~= -1
-end
-
----Returns true if two or more notes are selected, with differing offsets.
----@return boolean
-function rangeSelected()
-    return offsets.endOffset ~= -1
-end
-
----When given a progression value (0-1), returns the numerical distance along the progress line.
----@param starting number
----@param progress number
----@param ending number
----@return number
-function mapProgress(starting, progress, ending)
-    return progress * (ending - starting) + starting
-end
-
----Gets the percentage from the starting value.
----@param starting number
----@param value number
----@param ending number
----@param progressionExponent? number
----@return number
-function getProgress(starting, value, ending, progressionExponent)
-    local progressionExponent = progressionExponent or 1
-    local baseProgress = (value - starting) / (ending - starting)
-    if (progressionExponent >= 1) then
-        return clamp(baseProgress ^ progressionExponent, 0, 1)
-    else
-        return clamp(1 - (1 - baseProgress) ^ (1 / progressionExponent), 0, 1)
-    end
-end
-
-function clamp(value, min, max)
-    return math.max(math.min(value, max), min)
-end
-
----Takes a table of coefficients, and returns a string representing the equation.
----@param coefficients number[]
----@param power number
----@return string
-function polynomialString(coefficients, power)
-    local explanatoryVariable = "t"
-
-    local str = 'Equation: y = '
-    local degree = #coefficients - 1
-    for idx, coefficient in pairs(coefficients) do
-        if (coefficient == 0) then goto continue end
-        effectiveDegree = (degree - idx + 1) * power
-        sign = "+"
-        if (coefficient < 0) then sign = "-" end
-        if (idx == 1) then
-            if (coefficient < 0) then signText = "-" else signText = "" end
-        else
-            signText = " " .. sign .. " "
-        end
-        coefficientText = math.abs(coefficient)
-        if (coefficientText == 1 and effectiveDegree ~= 0) then coefficientText = "" end
-        if (effectiveDegree == 0) then
-            str = str .. signText .. coefficientText
-        elseif (effectiveDegree == 1) then
-            str = str .. signText .. coefficientText .. explanatoryVariable
-        else
-            str = str .. signText .. coefficientText .. explanatoryVariable .. "^" .. effectiveDegree
-        end
-        ::continue::
-    end
-
-    return str
-end
-
----Takes a table of coefficients, and returns a number corresponding to a y-value of a polynomial.
----@param coefficients number[]
----@param xVal number
----@return number
-function evaluateCoefficients(coefficients, xVal)
-    local sum = 0
-    local degree = #coefficients - 1
-
-    for idx, coefficient in pairs(coefficients) do
-        sum = sum + (xVal) ^ (degree - idx + 1) * coefficient
-    end
-    
-    return sum
-end
-
----Saves parameters for a certain menu.
----@param menu string
----@param parameterTable Parameter[]
-function saveParameters(menu, parameterTable)
-    for idx, tbl in ipairs(parameterTable) do
-        state.setValue(menu .. idx .. tbl.key, tbl.value)
-    end
-end
-
----Gets parameters for a certain menu.
----@param menu string
----@param parameterTable Parameter[]
-function retrieveParameters(menu, parameterTable)
-    for idx, tbl in ipairs(parameterTable) do
-        if (state.GetValue(menu .. idx .. tbl.key) ~= nil) then
-            parameterTable[idx].value = state.GetValue(menu .. idx .. tbl.key)
-        end
-    end
-end
-
----Outputs settings based on inputted parameters.
----@param parameterTable Parameter[]
----@return table
-function parametersToSettings(parameterTable)
-    local settings = {}
-
-    for _, tbl in ipairs(parameterTable) do
-        settings[tbl.key] = tbl.value
-    end
-
-    return settings
-end
-
----Provide a window name and parameter options, and this workflow will automatically manage state, generate input fields, and handle setting conversion.
----@param windowName string
----@param ... string | table
-function parameterWorkflow(windowName, ...)
-    local parameterTable = constructParameters(...)
-
-    retrieveParameters(windowName, parameterTable)
-
-    parameterInputs(parameterTable)
-    local settings = parametersToSettings(parameterTable)
-
-    saveParameters(windowName, parameterTable)
-
-    return settings
-end
-
-INPUT_DICTIONARY = {
-    msxList = function (v)
-        return InputTextWrapper("MSX List", v,
-            "List of MSX values to place. For each number given, a timing line will be placed at that number MSX above the receptor.")
-    end,
-    msxList1 = function (v)
-        return InputTextWrapper("Start MSX List", v,
-            "List of MSX values to place. For each number given, a timing line will be placed at that number MSX above the receptor. These timing lines represent the start of the animation.")
-    end,
-    msxList2 = function (v)
-        return InputTextWrapper("End MSX List", v,
-            "List of MSX values to place. For each number given, a timing line will be placed at that number MSX above the receptor. These timing lines represent the end of the animation.")
-    end,
-    msxBounds = function (v)
-        return InputInt2Wrapper("Lower/Upper MSX", v,
-            "The lowest MSX and highest MSX values timing lines can reach. Anything outside of these bounds will be ignored.")
-    end,
-    msxBounds1 = function (v)
-        return InputInt2Wrapper("Start Lower/Upper MSX", v,
-            "The lowest MSX and highest MSX values timing lines can reach, at the start of the animation.")
-    end,
-    msxBounds2 = function (v)
-        return InputInt2Wrapper("End Lower/Upper MSX", v,
-            "The lowest MSX and highest MSX values timing lines can reach, at the end of the animation.")
-    end,
-    offset = function (v)
-        return InputIntWrapper("MSX Offset", v,
-            "Adds this MSX value to all MSX values in the MSX List above.")
-    end,
-    delay = function (v)
-        return InputIntWrapper("MS Delay", v,
-            "MS Delay waits for this value of milliseconds to place the timing lines. Could be useful if you have conflicting SVs.")
-    end,
-    center = function (v)
-        return InputIntWrapper("Center MSX", v,
-            "The center of the spectrum, an MSX distance above the receptor.")
-    end,
-    maxSpread = function (v)
-        return InputIntWrapper("Max MSX Spread", v,
-            "The maximum distance away from the center that a timing line can reach.")
-    end,
-    spacing = function (v)
-        return InputFloatWrapper("MS Spacing", v,
-            "The MS distance between two timing lines. Recommended to keep this below 2.")
-    end,
-    debug = function (v)
-        if v ~= '' then
-            imgui.Text(v)
-            return v
-        end
-    end,
-    distance = function (v)
-        return InputInt2Wrapper('Distance Between Lines', v,
-            "Represents the distance between two adjacent timing lines, measured in MSX. If in Expansion/Contraction, the two numbers represent the start and end distance of the animation. If not in Expansion/Contraction, the two numbers represent the start and end distance of the frame.")
-    end,
-    lineCount = function (v)
-        return InputIntWrapper("Line Count", v,
-            "The number of timing lines to display simultaneously.")
-    end,
-    lineDuration = function (v)
-        return InputFloatWrapper("Line Duration", v,
-            "Each line created possesses a cloned lifecycle. The value of this parameter is equal to the percentage of the animation in which the lifecycle occurs.")
-    end,
-    progressionExponent = function (v)
-        return InputFloatWrapper("Progression Exponent", v,
-            "Adjust this to change how the animation progresses over time. The higher the number, the slower the animation takes to start, but it ramps up much faster. If you aren't familiar with exponential graphs, keep this at 1.")
-    end,
-    progressionTable = function (v)
-        return InputTextWrapper("Progression Table", v,
-            "Adjust this to change how the animation progresses over time. The higher the number, the slower the animation takes to start, but it ramps up much faster. If only one value is given, it will apply to all lines. Otherwise, it will apply to its associated line.")
-    end,
-    fps = function (v)
-        return InputFloatWrapper("Animation FPS", v,
-            "Maximum FPS of the animation. Note that if there are too many timing lines, the animation (not game) FPS will go down.")
-    end,
-    boundCoefficients = function (v)
-        return InputFloat4Wrapper("Bound Coefficients", v,
-            "The boundary follows a curve, described by these coefficients. You can see what the boundary height vs. time graph looks like on the plot.")
-    end,
-    pathCoefficients = function (v)
-        return InputFloat4Wrapper("Path Coefficients", v,
-            "Lines generated follow this temporal curve before disappearing. You can see what the height vs. time graph looks like on the plot.")
-    end,
-    colorList = function (v)
-        return InputTextWrapper("Snap Color List", v,
-            "These numbers are the denominator of the snaps. Here are the corresponding values:\n1 = Red\n2 = Blue\n3 = Purple\n4 = Yellow\n5 = White\n6 = Pink\n8 = Orange\n12 = Cyan\n16 = Green")
-    end,
-    oneSided = function (v)
-        return CheckboxWrapper("One-Sided Vibro?", v, "Applies vibrato to strictly one direction relative to the note.")
-    end
-}
-
-CUSTOM_INPUT_DICTIONARY = {
-    Int = function (label, v, tooltip, sameLine) return InputIntWrapper(label, v, tooltip) end,
-    Int2 = function (label, v, tooltip, sameLine) return InputInt2Wrapper(label, v, tooltip) end,
-    Int3 = function (label, v, tooltip, sameLine) return InputInt3Wrapper(label, v, tooltip) end,
-    Int4 = function (label, v, tooltip, sameLine) return InputInt4Wrapper(label, v, tooltip) end,
-    Float = function (label, v, tooltip, sameLine) return InputFloatWrapper(label, v, tooltip) end,
-    Float2 = function (label, v, tooltip, sameLine) return InputFloat2Wrapper(label, v, tooltip) end,
-    Float3 = function (label, v, tooltip, sameLine) return InputFloat3Wrapper(label, v, tooltip) end,
-    Float4 = function (label, v, tooltip, sameLine) return InputFloat4Wrapper(label, v, tooltip) end,
-    Matrix = function (label, v, tooltip) return InputTextMultilineWrapper(label, v, tooltip) end,
-    RadioBoolean = function (labels, v, tooltip, sameLine) return RadioBoolean(labels[1], labels[2], v, tooltip) end,
-    Checkbox = function (label, v, tooltip, sameLine) return CheckboxWrapper(label, v, tooltip, sameLine) end,
-}
-
----@alias inputType "Int" | "Int2" | "Int3" | "Int4" | "Float" | "Float2" | "Float3" | "Float4" | "Matrix" |"RadioBoolean" | "Checkbox"
-
----Creates imgui inputs using the given parameter table.
----@param parameterTable Parameter[]
-function parameterInputs(parameterTable)
-    for _, tbl in ipairs(parameterTable) do
-        if (tbl.inputType ~= nil) then
-            tbl.value = CUSTOM_INPUT_DICTIONARY[tbl.inputType](tbl.label, tbl.value, tbl.tooltip, tbl.sameLine or false)
-        else
-            tbl.value = INPUT_DICTIONARY[tbl.key](tbl.value)
-        end
-    end
-end
-
----Function wrapper for custom parameters.
----@param inputType inputType
----@param label string | string[]
----@param key string
----@param value any
----@param sameLine? boolean
----@return table
-function customParameter(inputType, label, key, value, sameLine)
-    return {
-        inputType = inputType,
-        label = label,
-        key = key,
-        value = value,
-        sameLine = sameLine or false
-    }
-end
-
-DEFAULT_DICTIONARY = {
-    msxBounds = DEFAULT_MSX_BOUNDS,
-    msxBounds1 = DEFAULT_MSX_BOUNDS,
-    msxBounds2 = DEFAULT_MSX_BOUNDS,
-    msxList = DEFAULT_MSX_LIST,
-    msxList1 = DEFAULT_MSX_LIST,
-    msxList2 = DEFAULT_MSX_LIST,
-    offset = DEFAULT_OFFSET,
-    spacing = DEFAULT_SPACING,
-    delay = DEFAULT_DELAY,
-    distance = DEFAULT_DISTANCE,
-    lineCount = DEFAULT_LINE_COUNT,
-    lineDuration = DEFAULT_LINE_DURATION,
-    progressionExponent = DEFAULT_PROGRESSION_EXPONENT,
-    progressionTable = tostring(DEFAULT_PROGRESSION_EXPONENT),
-    boundCoefficients = DEFAULT_BOUND_COEFFICIENTS,
-    pathCoefficients = DEFAULT_PATH_COEFFICIENTS,
-    fps = DEFAULT_FPS,
-    center = DEFAULT_CENTER,
-    maxSpread = DEFAULT_MAX_SPREAD,
-    colorList = DEFAULT_COLOR_LIST,
-    oneSided = false
-}
-
----Given a set of input names, creates an ordered table of key value pairs (normal table isn't used to preserve order).
----@param ... string | table
----@return Parameter[]
-function constructParameters(...)
-    local parameterTable = {}
-
-    for _, v in ipairs({ ... }) do
-        if (type(v) == "table") then
-            table.insert(parameterTable, {
-                inputType = v.inputType,
-                key = v.key,
-                value = v.value,
-                label = v.label,
-                sameLine = v.sameLine or false,
-                tooltip = v.tooltip or ""
-            })
-            goto continue
-        end
-        table.insert(parameterTable, {
-            key = v,
-            value = DEFAULT_DICTIONARY[v]
-        })
-        ::continue::
-    end
-
-    return parameterTable
-end
-
----Gets the first and last note offsets.
----@return {startOffset: integer, endOffset: integer}
-function getStartAndEndNoteOffsets()
-    local offsets = {}
-
-    if (#state.SelectedHitObjects == 0) then
-        return { startOffset = -1, endOffset = -1 }
-    end
-
-    for _, hitObject in pairs(state.SelectedHitObjects) do
-        if (table.contains(offsets, hitObject.StartTime)) then goto continue end
-        table.insert(offsets, hitObject.StartTime)
-        ::continue::
-    end
-
-    if (#offsets == 1) then
-        return { startOffset = offsets[1], endOffset = -1 }
-    end
-
-    return { startOffset = math.min(table.unpack(offsets)), endOffset = math.max(table.unpack(offsets)) }
-end
-
----Gets all selected note offsets, with no duplicate values.
----@return integer[]
-function getSelectedOffsets()
-    local offsets = {}
-
-    if (#state.SelectedHitObjects == 0) then
-        return {}
-    end
-
-    for _, hitObject in pairs(state.SelectedHitObjects) do
-        if (table.contains(offsets, hitObject.StartTime)) then goto continue end
-        table.insert(offsets, hitObject.StartTime)
-        ::continue::
-    end
-
-    return offsets
-end
-
----@diagnostic disable: return-type-mismatch
---- Creates a HitObject. To place it, you must use an `action`.
----@param startTime integer
----@param lane integer
----@param endTime? integer
----@param hitsound? any
----@param editorLayer? integer
----@return HitObjectInfo
-function note(startTime, lane, endTime, hitsound, editorLayer)
-    return utils.CreateHitObject(startTime, lane, endTime or 0, hitsound or 0, editorLayer or 0)
-end
-
----Returns all HitObjects within a certain temporal range.
----@param lower number
----@param upper number
----@return HitObjectInfo[]
-function getNotesInRange(lower, upper)
-    local base = map.HitObjects
-
-    local tbl = {}
-
-    for _, v in pairs(base) do
-        if (v.StartTime >= lower) and (v.StartTime <= upper) then
-            table.insert(tbl, v)
-        end
-    end
-
-    return tbl
-end
-
----Takes a table of strings, and returns an AFFINE frame.
----@param svTable string[]
----@param time number
----@param msxOffset number
----@param spacing number
----@return AffineFrame
-function tableToAffineFrame(svTable, time, msxOffset, spacing)
-    local lines = {}
-    local svs = {}
-
-    for _, msx in pairs(svTable) do
-        local speed = INCREMENT * (msx + msxOffset)
-
-        table.insert(lines, line(time))
-        table.insert(svs, sv(time, speed * -1))
-        table.insert(svs, sv(time - (1 / INCREMENT), speed))
-        table.insert(svs, sv(time + (1 / INCREMENT), 0))
-
-        time = time + spacing
-    end
-
-    local tbl = {
-        lines = lines,
-        svs = svs,
-        time = time
-    }
-    return tbl
-end
-
----@diagnostic disable: return-type-mismatch
---- Creates a TimingPoint. To place it, you must use an `action`.
----@param time number
----@param bpm? number
----@param hidden? boolean
----@return TimingPointInfo
-function line(time, bpm, hidden)
-    if (hidden == nil) then hidden = false end
-    local data = map.GetTimingPointAt(time)
-
-    if (not data) then
-        data = {
-            Bpm = map.GetCommonBpm(),
-            Signature = time_signature.Quadruple,
-            Hidden = false
-        }
-    end
-
-    return utils.CreateTimingPoint(time, bpm or data.Bpm, data.Signature, hidden)
-end
-
----Returns all timing points within a temporal boundary.
----@param lower number
----@param upper number
----@return TimingPointInfo[]
-function getLinesInRange(lower, upper)
-    local base = map.TimingPoints
-
-    local tbl = {}
-
-    for _, v in pairs(base) do
-        if (v.StartTime >= lower) and (v.StartTime <= upper) then
-            table.insert(tbl, v)
-        end
-    end
-
-    return tbl
-end
-
----Removes lines above or below the specified boundary. Then, adds an extra line at the nearest 1/1 snap to maintain snap coloring.
----@param lines TimingPointInfo[]
----@param lower number
----@param upper number
----@return TimingPointInfo[]
-function cleanLines(lines, lower, upper)
-    local lastLineTime = upper
-    if (#lines > 0) then
-        lastLineTime = math.max(lines[#lines].StartTime, upper)
-    end
-
-    local tbl = {}
-
-    local lineDictionary = {}
-
-    for _, currentLine in pairs(lines) do
-        if (table.contains(lineDictionary, currentLine.StartTime)) then goto continue end
-        if (currentLine.StartTime >= lower and currentLine.StartTime <= upper) then
-            table.insert(tbl, currentLine)
-            table.insert(lineDictionary, currentLine.StartTime)
-        end
-        ::continue::
-    end
-
-    table.insert(tbl, line(map.GetNearestSnapTimeFromTime(true, 1, lastLineTime) - 2))
-    table.insert(tbl, line(map.GetNearestSnapTimeFromTime(true, 1, lastLineTime)))
-
-    return tbl
-end
-
----Places given svs and lines, and cleans both.
----@param lines TimingPointInfo[]
----@param svs SliderVelocityInfo[]
----@param lower number
----@param upper number
----@param affineType string
----@param debugData? table
-function generateAffines(lines, svs, lower, upper, affineType, debugData)
-    if (not upper or upper == lower) then
-        ---@diagnostic disable-next-line: cast-local-type
-        upper = map.GetNearestSnapTimeFromTime(true, 1, lower);
-    end
-
-    lines = cleanLines(lines, lower, upper)
-    svs = cleanSVs(svs, lower, upper)
-
-    local debugString = ""
-    if (debugData) then
-        for k, v in pairs(debugData) do
-            debugString = debugString .. " | " .. k .. ": " .. v
-        end
-    end
-
-    local bookmarks = {
-        utils.CreateBookmark(lower, affineType .. " Start" .. debugString),
-        utils.CreateBookmark(upper, affineType .. " End")
-    }
-
-    local newGlobalTable = {
-        label = affineType:gsub(" ", ""),
-        lower = lower,
-        upper = upper,
-        numLines = #lines,
-        numSVs = (debugData and debugData.S) and debugData.S or #svs,
-    } ---@type AffineSaveTable
-
-    table.insert(globalData, newGlobalTable)
-
-    table.insert(bookmarks, saveMapState(globalData, false))
-
-    actions.PerformBatch({
-        utils.CreateEditorAction(action_type.AddTimingPointBatch, lines),
-        utils.CreateEditorAction(action_type.AddScrollVelocityBatch, svs),
-        utils.CreateEditorAction(action_type.AddBookmarkBatch, bookmarks),
-    })
-end
-
----Returns all bookmarks within a temporal boundary.
----@param lower number
----@param upper number
----@return BookmarkInfo[]
-function getBookmarksInRange(lower, upper)
-    local base = map.Bookmarks
-
-    local tbl = {}
-
-    for _, v in pairs(base) do
-        if (v.StartTime >= lower) and (v.StartTime <= upper) then
-            table.insert(tbl, v)
-        end
-    end
-
-    return tbl
-end
-
----Finds closest bookmark with StartTime less than time.
----@param time number
----@param lower number
----@param upper number
----@return BookmarkInfo
-function findBookmark(time, lower, upper)
-    local lower = lower or 0
-    local upper = upper or 1e69
-    local bookmarks = map.Bookmarks
-
-    if (#bookmarks == 0) then return {} end
-    if (#bookmarks == 1) then return bookmarks[1] end
-
-    for i = 1, #bookmarks do
-        if bookmarks[i].StartTime > time then
-            if (bookmarks[i].StartTime < lower or bookmarks[i].StartTime > upper) then return {} end
-            return bookmarks[i - 1]
-        end
-    end
-    if (bookmarks[#bookmarks].StartTime < lower or bookmarks[#bookmarks].StartTime > upper) then return {} end
-    return bookmarks[#bookmarks]
-end
-
----@diagnostic disable: return-type-mismatch
---- Creates a Bookmark. To place it, you must use an `action`.
----@param time integer
----@param note string
----@return BookmarkInfo
-function bookmark(time, note)
-    return utils.CreateBookmark(time, note)
-end
-
----Creates a tooltip hoverable element.
----@param text string
-function Tooltip(text)
-    imgui.SameLine(0, 4)
-    imgui.TextDisabled("(?)")
-    if not imgui.IsItemHovered() then return end
-    imgui.BeginTooltip()
-    imgui.PushTextWrapPos(imgui.GetFontSize() * 20)
-    imgui.Text(text)
-    imgui.PopTextWrapPos()
-    imgui.EndTooltip()
-end
-
----Creates two radio buttons, one for true and one for false.
----@param labelFalse string
----@param labelTrue string
----@param v boolean
----@param tooltip string
----@return boolean
-function RadioBoolean(labelFalse, labelTrue, v, tooltip)
-    if imgui.RadioButton(labelFalse, not v) then
-        v = false
-    end
-
-    imgui.SameLine(0, 7.5)
-
-    if imgui.RadioButton(labelTrue, v) then
-        v = true
-    end
-
-    return v
-end
-
----Creates a new window with a plot
----@param polynomialCoefficients number[]
----@param progressionExponent number
----@param title? string
-function Plot(polynomialCoefficients, progressionExponent, title)
-    imgui.Begin(title or "Boundary Height vs. Time", imgui_window_flags.AlwaysAutoResize)
-    local tbl = {}
-
-    if (polynomialCoefficients == state.GetValue("cachedCoefficients")) then
-        tbl = state.GetValue("cachedPlotValues")
-    else
-        local RESOLUTION = 50
-        for i = 0, RESOLUTION do
-            local progress = getProgress(0, i, RESOLUTION, progressionExponent)
-
-            table.insert(tbl,
-                evaluateCoefficients(polynomialCoefficients, progress))
-        end
-    end
-
-    state.SetValue("cachedCoefficients", polynomialCoefficients)
-    state.SetValue("cachedPlotValues", tbl)
-
-    imgui.PlotLines("", tbl, #tbl, 0,
-        polynomialString(polynomialCoefficients, progressionExponent),
-        0, 1,
-        { 250, 150 })
-
-    imgui.End()
-end
-
----@diagnostic disable: cast-local-type
-
----Creates an `InputInt` element.
----@param label string
----@param v integer
----@param tooltip string
----@return integer
-function InputIntWrapper(label, v, tooltip)
-    _, v = imgui.InputInt(label, v, 0, 0)
-    Tooltip(tooltip)
-    ---@cast v integer
-    return v
-end
-
----Creates an `InputFloat` element.
----@param label string
----@param v number
----@param tooltip string
----@return number
-function InputFloatWrapper(label, v, tooltip)
-    _, v = imgui.InputFloat(label, v, 0, 0, "%.2f")
-    Tooltip(tooltip)
-    ---@cast v number
-    return v
-end
-
----Creates an `InputText` element.
----@param label string
----@param v string
----@param tooltip string
----@return string
-function InputTextWrapper(label, v, tooltip)
-    _, v = imgui.InputText(label, v, 6942)
-    Tooltip(tooltip)
-    ---@cast v string
-    return v
-end
-
----Creates an `InputTextMultiline` element.
----@param label string
----@param v string
----@param tooltip string
----@return string
-function InputTextMultilineWrapper(label, v, tooltip)
-    _, v = imgui.InputTextMultiline(label, v, 6942)
-    Tooltip(tooltip)
-    ---@cast v string
-    return v
-end
-
----Creates an `InputInt2` element.
----@param label string
----@param v integer[]
----@param tooltip string
----@return integer[]
-function InputInt2Wrapper(label, v, tooltip)
-    _, v = imgui.InputInt2(label, v)
-    Tooltip(tooltip)
-    ---@cast v integer[]
-    return v
-end
-
----Creates an `InputInt3` element.
----@param label string
----@param v integer[]
----@param tooltip string
----@return integer[]
-function InputInt3Wrapper(label, v, tooltip)
-    _, v = imgui.InputInt3(label, v)
-    Tooltip(tooltip)
-    ---@cast v integer[]
-    return v
-end
-
----Creates an `InputInt4` element.
----@param label string
----@param v integer[]
----@param tooltip string
----@return integer[]
-function InputInt4Wrapper(label, v, tooltip)
-    _, v = imgui.InputInt4(label, v)
-    Tooltip(tooltip)
-    ---@cast v integer[]
-    return v
-end
-
----Creates an `InputFloat2` element.
----@param label string
----@param v number[]
----@param tooltip string
----@return number[]
-function InputFloat2Wrapper(label, v, tooltip)
-    _, v = imgui.InputFloat2(label, v, "%.2f")
-    Tooltip(tooltip)
-    ---@cast v number[]
-    return v
-end
-
----Creates an `InputFloat3` element.
----@param label string
----@param v number[]
----@param tooltip string
----@return number[]
-function InputFloat3Wrapper(label, v, tooltip)
-    _, v = imgui.InputFloat3(label, v, "%.2f")
-    Tooltip(tooltip)
-    ---@cast v number[]
-    return v
-end
-
----Creates an `InputFloat4` element.
----@param label string
----@param v number[]
----@param tooltip string
----@return number[]
-function InputFloat4Wrapper(label, v, tooltip)
-    _, v = imgui.InputFloat4(label, v, "%.2f")
-    Tooltip(tooltip)
-    ---@cast v number[]
-    return v
-end
-
----Creates an `Checkbox` element.
----@param label string
----@param v boolean
----@param tooltip string
----@return boolean
-function CheckboxWrapper(label, v, tooltip, sameLine)
-    if (sameLine) then imgui.SameLine(0, 7.5) end
-    _, v = imgui.Checkbox(label, v)
-    Tooltip(tooltip)
-    ---@cast v boolean
-    return v
-end
-
----@diagnostic disable: undefined-field, need-check-nil
-function drawSpike(xPos)
-    local spikeSize = 25
-
-    local color = rgbaToUint(255, 255, 255, 255)
-    local o = imgui.GetOverlayDrawList()
-    local sz = state.WindowSize
-
-    o.AddTriangleFilled({ xPos, sz[2] }, { xPos + sz[1] / spikeSize, sz[2] },
-        { xPos + sz[1] / (2 * spikeSize), sz[2] - sz[1] / spikeSize }, color)
-end
-
----@diagnostic disable: need-check-nil, undefined-field
-function relativePoint(point, xChange, yChange)
-    return { point[1] + xChange, point[2] + yChange }
-end
-
-function drawCapybara2(yPos)
-    local o = imgui.GetOverlayDrawList()
-    local sz = state.WindowSize
-
-    local topLeftCapyPoint = { 0, sz[2] - 165 - yPos } -- originally -200
-    local p1 = relativePoint(topLeftCapyPoint, 0, 95)
-    local p2 = relativePoint(topLeftCapyPoint, 0, 165)
-    local p3 = relativePoint(topLeftCapyPoint, 58, 82)
-    local p3b = relativePoint(topLeftCapyPoint, 108, 82)
-    local p4 = relativePoint(topLeftCapyPoint, 58, 165)
-    local p5 = relativePoint(topLeftCapyPoint, 66, 29)
-    local p6 = relativePoint(topLeftCapyPoint, 105, 10)
-    local p7 = relativePoint(topLeftCapyPoint, 122, 126)
-    local p7b = relativePoint(topLeftCapyPoint, 133, 107)
-    local p8 = relativePoint(topLeftCapyPoint, 138, 11)
-    local p9 = relativePoint(topLeftCapyPoint, 145, 82)
-    local p10 = relativePoint(topLeftCapyPoint, 167, 82)
-    local p10b = relativePoint(topLeftCapyPoint, 172, 80)
-    local p11 = relativePoint(topLeftCapyPoint, 172, 50)
-    local p12 = relativePoint(topLeftCapyPoint, 179, 76)
-    local p12b = relativePoint(topLeftCapyPoint, 176, 78)
-    local p12c = relativePoint(topLeftCapyPoint, 176, 70)
-    local p13 = relativePoint(topLeftCapyPoint, 185, 50)
-
-    local p14 = relativePoint(topLeftCapyPoint, 113, 10)
-    local p15 = relativePoint(topLeftCapyPoint, 116, 0)
-    local p16 = relativePoint(topLeftCapyPoint, 125, 2)
-    local p17 = relativePoint(topLeftCapyPoint, 129, 11)
-    local p17b = relativePoint(topLeftCapyPoint, 125, 11)
-
-    local p18 = relativePoint(topLeftCapyPoint, 91, 0)
-    local p19 = relativePoint(topLeftCapyPoint, 97, 0)
-    local p20 = relativePoint(topLeftCapyPoint, 102, 1)
-    local p21 = relativePoint(topLeftCapyPoint, 107, 11)
-    local p22 = relativePoint(topLeftCapyPoint, 107, 19)
-    local p23 = relativePoint(topLeftCapyPoint, 103, 24)
-    local p24 = relativePoint(topLeftCapyPoint, 94, 17)
-    local p25 = relativePoint(topLeftCapyPoint, 88, 9)
-
-    local p26 = relativePoint(topLeftCapyPoint, 123, 33)
-    local p27 = relativePoint(topLeftCapyPoint, 132, 30)
-    local p28 = relativePoint(topLeftCapyPoint, 138, 38)
-    local p29 = relativePoint(topLeftCapyPoint, 128, 40)
-
-    local p30 = relativePoint(topLeftCapyPoint, 102, 133)
-    local p31 = relativePoint(topLeftCapyPoint, 105, 165)
-    local p32 = relativePoint(topLeftCapyPoint, 113, 165)
-
-    local p33 = relativePoint(topLeftCapyPoint, 102, 131)
-    local p34 = relativePoint(topLeftCapyPoint, 82, 138)
-    local p35 = relativePoint(topLeftCapyPoint, 85, 165)
-    local p36 = relativePoint(topLeftCapyPoint, 93, 165)
-
-    local p37 = relativePoint(topLeftCapyPoint, 50, 80)
-    local p38 = relativePoint(topLeftCapyPoint, 80, 40)
-    local p39 = relativePoint(topLeftCapyPoint, 115, 30)
-    local p40 = relativePoint(topLeftCapyPoint, 40, 92)
-    local p41 = relativePoint(topLeftCapyPoint, 80, 53)
-    local p42 = relativePoint(topLeftCapyPoint, 107, 43)
-    local p43 = relativePoint(topLeftCapyPoint, 40, 104)
-    local p44 = relativePoint(topLeftCapyPoint, 70, 56)
-    local p45 = relativePoint(topLeftCapyPoint, 100, 53)
-    local p46 = relativePoint(topLeftCapyPoint, 45, 134)
-    local p47 = relativePoint(topLeftCapyPoint, 50, 80)
-    local p48 = relativePoint(topLeftCapyPoint, 70, 87)
-    local p49 = relativePoint(topLeftCapyPoint, 54, 104)
-    local p50 = relativePoint(topLeftCapyPoint, 50, 156)
-    local p51 = relativePoint(topLeftCapyPoint, 79, 113)
-    local p52 = relativePoint(topLeftCapyPoint, 55, 24)
-    local p53 = relativePoint(topLeftCapyPoint, 85, 25)
-    local p54 = relativePoint(topLeftCapyPoint, 91, 16)
-    local p55 = relativePoint(topLeftCapyPoint, 45, 33)
-    local p56 = relativePoint(topLeftCapyPoint, 75, 36)
-    local p57 = relativePoint(topLeftCapyPoint, 81, 22)
-    local p58 = relativePoint(topLeftCapyPoint, 45, 43)
-    local p59 = relativePoint(topLeftCapyPoint, 73, 38)
-    local p60 = relativePoint(topLeftCapyPoint, 61, 32)
-    local p61 = relativePoint(topLeftCapyPoint, 33, 55)
-    local p62 = relativePoint(topLeftCapyPoint, 73, 45)
-    local p63 = relativePoint(topLeftCapyPoint, 55, 36)
-    local p64 = relativePoint(topLeftCapyPoint, 32, 95)
-    local p65 = relativePoint(topLeftCapyPoint, 53, 42)
-    local p66 = relativePoint(topLeftCapyPoint, 15, 75)
-    local p67 = relativePoint(topLeftCapyPoint, 0, 125)
-    local p68 = relativePoint(topLeftCapyPoint, 53, 62)
-    local p69 = relativePoint(topLeftCapyPoint, 0, 85)
-    local p70 = relativePoint(topLeftCapyPoint, 0, 165)
-    local p71 = relativePoint(topLeftCapyPoint, 29, 112)
-    local p72 = relativePoint(topLeftCapyPoint, 0, 105)
-
-    local p73 = relativePoint(topLeftCapyPoint, 73, 70)
-    local p74 = relativePoint(topLeftCapyPoint, 80, 74)
-    local p75 = relativePoint(topLeftCapyPoint, 92, 64)
-    local p76 = relativePoint(topLeftCapyPoint, 60, 103)
-    local p77 = relativePoint(topLeftCapyPoint, 67, 83)
-    local p78 = relativePoint(topLeftCapyPoint, 89, 74)
-    local p79 = relativePoint(topLeftCapyPoint, 53, 138)
-    local p80 = relativePoint(topLeftCapyPoint, 48, 120)
-    local p81 = relativePoint(topLeftCapyPoint, 73, 120)
-    local p82 = relativePoint(topLeftCapyPoint, 46, 128)
-    local p83 = relativePoint(topLeftCapyPoint, 48, 165)
-    local p84 = relativePoint(topLeftCapyPoint, 74, 150)
-    local p85 = relativePoint(topLeftCapyPoint, 61, 128)
-    local p86 = relativePoint(topLeftCapyPoint, 83, 100)
-    local p87 = relativePoint(topLeftCapyPoint, 90, 143)
-    local p88 = relativePoint(topLeftCapyPoint, 73, 143)
-    local p89 = relativePoint(topLeftCapyPoint, 120, 107)
-    local p90 = relativePoint(topLeftCapyPoint, 116, 133)
-    local p91 = relativePoint(topLeftCapyPoint, 106, 63)
-    local p92 = relativePoint(topLeftCapyPoint, 126, 73)
-    local p93 = relativePoint(topLeftCapyPoint, 127, 53)
-    local p94 = relativePoint(topLeftCapyPoint, 91, 98)
-    local p95 = relativePoint(topLeftCapyPoint, 101, 76)
-    local p96 = relativePoint(topLeftCapyPoint, 114, 99)
-    local p97 = relativePoint(topLeftCapyPoint, 126, 63)
-    local p98 = relativePoint(topLeftCapyPoint, 156, 73)
-    local p99 = relativePoint(topLeftCapyPoint, 127, 53)
-
-    local color1 = rgbaToUint(250, 250, 225, 255)
-    local color2 = rgbaToUint(240, 180, 140, 255)
-    local color3 = rgbaToUint(195, 90, 120, 255)
-    local color4 = rgbaToUint(115, 5, 65, 255)
-
-    local color5 = rgbaToUint(100, 5, 45, 255)
-    local color6 = rgbaToUint(200, 115, 135, 255)
-    local color7 = rgbaToUint(175, 10, 70, 255)
-    local color8 = rgbaToUint(200, 90, 110, 255)
-    local color9 = rgbaToUint(125, 10, 75, 255)
-    local color10 = rgbaToUint(220, 130, 125, 255)
-
-    o.AddQuadFilled(p18, p19, p24, p25, color4)
-    o.AddQuadFilled(p19, p20, p21, p22, color1)
-    o.AddQuadFilled(p19, p22, p23, p24, color4)
-
-    o.AddQuadFilled(p14, p15, p16, p17, color4)
-    o.AddTriangleFilled(p17b, p16, p17, color1)
-
-    o.AddQuadFilled(p1, p2, p4, p3, color3)
-    o.AddQuadFilled(p1, p3, p6, p5, color3)
-    o.AddQuadFilled(p3, p4, p7, p9, color2)
-    o.AddQuadFilled(p3, p6, p11, p10, color2)
-    o.AddQuadFilled(p6, p8, p13, p11, color1)
-    o.AddQuadFilled(p13, p12, p10, p11, color6)
-    o.AddTriangleFilled(p10b, p12b, p12c, color7)
-
-    o.AddTriangleFilled(p9, p7b, p3b, color8)
-
-    o.AddQuadFilled(p26, p27, p28, p29, color5)
-
-    o.AddQuadFilled(p7, p30, p31, p32, color5)
-    o.AddQuadFilled(p33, p34, p35, p36, color5)
-
-    o.AddTriangleFilled(p37, p38, p39, color8)
-    o.AddTriangleFilled(p40, p41, p42, color8)
-    o.AddTriangleFilled(p43, p44, p45, color8)
-    o.AddTriangleFilled(p46, p47, p48, color8)
-    o.AddTriangleFilled(p49, p50, p51, color2)
-
-    o.AddTriangleFilled(p52, p53, p54, color9)
-    o.AddTriangleFilled(p55, p56, p57, color9)
-    o.AddTriangleFilled(p58, p59, p60, color9)
-    o.AddTriangleFilled(p61, p62, p63, color9)
-    o.AddTriangleFilled(p64, p65, p66, color9)
-    o.AddTriangleFilled(p67, p68, p69, color9)
-    o.AddTriangleFilled(p70, p71, p72, color9)
-
-    o.AddTriangleFilled(p73, p74, p75, color10)
-    o.AddTriangleFilled(p76, p77, p78, color10)
-    o.AddTriangleFilled(p79, p80, p81, color10)
-    o.AddTriangleFilled(p82, p83, p84, color10)
-    o.AddTriangleFilled(p85, p86, p87, color10)
-    o.AddTriangleFilled(p88, p89, p90, color10)
-    o.AddTriangleFilled(p91, p92, p93, color10)
-    o.AddTriangleFilled(p94, p95, p96, color10)
-    o.AddTriangleFilled(p97, p98, p99, color10)
-end
-
-function rgbaToUint(r, g, b, a) return a * 16 ^ 6 + b * 16 ^ 4 + g * 16 ^ 2 + r end
-
-function activationButton(text)
-    text = text or "Place"
-    return imgui.Button(text .. " Lines")
-end
-
-function RangeActivated(text, item)
-    text = text or "Place"
-    item = item or "Lines"
-    if rangeSelected() then
-        return activationButton(text) or (utils.IsKeyPressed(keys.A) and not utils.IsKeyDown(keys.LeftControl))
-    else
-        return imgui.Text("Select a Region to " .. text .. " " .. item .. ".")
-    end
-end
-
-function NoteActivated(text, item)
-    text = text or "Place"
-    item = item or "Lines"
-    if noteSelected() then
-        return activationButton(text) or (utils.IsKeyPressed(keys.A) and not utils.IsKeyDown(keys.LeftControl))
-    else
-        return imgui.Text("Select a Note to " .. text .. " " .. item .. ".")
-    end
-end
 
 function ManualDeleteTab()
     local settings = {
@@ -1571,6 +213,49 @@ function placeVibratoSVsByTbl(tbl, fps)
         offsets.endOffset - OFFSET_SECURITY_CONSTANT))
 
     setDebug("SV Count: " .. #svs)
+end
+
+---@diagnostic disable: undefined-field
+function sinusoidalVibroMenu()
+    local settings = parameterWorkflow("sinusoidalVibro", "msxBounds",
+        customParameter("Float", "# of Cycles", "cycleCount", 1),
+        customParameter("Float", "Phase Shift", "phaseShift", 0),
+        "fps",
+        "progressionExponent", "oneSided")
+
+    if RangeActivated() then
+        local vibroHeightFn = function (v)
+            local x = getProgress(offsets.startOffset, v, offsets.endOffset, settings.progressionExponent)
+            local fx = mapProgress(settings.msxBounds[1], x, settings.msxBounds[2])
+            return fx * math.sin(2 * math.pi * (settings.cycleCount * x + settings.phaseShift))
+        end
+
+        placeVibratoGroupsByFn(vibroHeightFn, settings.oneSided, settings.fps)
+    end
+
+    SinusoidalPlot({ settings.cycleCount, settings.cycleCount }, settings.phaseShift)
+end
+
+---@diagnostic disable: undefined-field
+function rampCycleVibroMenu()
+    local settings = parameterWorkflow("rampCycleVibro", "msxBounds",
+        customParameter("Float2", "# of Cycles", "cycleCount", { 1, 2 }),
+        customParameter("Float", "Phase Shift", "phaseShift", 0),
+        "fps",
+        "progressionExponent", "oneSided")
+
+    if RangeActivated() then
+        local vibroHeightFn = function (v)
+            local x = getProgress(offsets.startOffset, v, offsets.endOffset, settings.progressionExponent)
+            local fx = mapProgress(settings.msxBounds[1], x, settings.msxBounds[2])
+            local ix = settings.cycleCount[1] * x + (settings.cycleCount[2] - settings.cycleCount[1]) / 2 * (x ^ 2)
+            return fx * math.sin(2 * math.pi * (ix + settings.phaseShift))
+        end
+
+        placeVibratoGroupsByFn(vibroHeightFn, settings.oneSided, settings.fps)
+    end
+
+    SinusoidalPlot(settings.cycleCount, settings.phaseShift)
 end
 
 ---@diagnostic disable: undefined-field
@@ -1872,7 +557,7 @@ function TrailStaticMenu()
         setDebug("Line Count: " .. #lines .. " // SV Count: " .. #svs)
     end
 
-    Plot(settings.boundCoefficients, settings.progressionExponent)
+    PolynomialPlot(settings.boundCoefficients, settings.progressionExponent)
 end
 
 function TrailFollowMenu()
@@ -1924,7 +609,7 @@ function TrailFollowMenu()
         setDebug("Line Count: " .. #lines .. " // SV Count: " .. #svs)
     end
 
-    Plot(settings.boundCoefficients, settings.progressionExponent)
+    PolynomialPlot(settings.boundCoefficients, settings.progressionExponent)
 end
 
 function SpectrumMenu()
@@ -1974,7 +659,7 @@ function SpectrumMenu()
             constructDebugTable(lines, svs, stats))
         setDebug("Line Count: " .. #lines .. " // SV Count: " .. #svs)
     end
-    Plot(settings.boundCoefficients, settings.progressionExponent)
+    PolynomialPlot(settings.boundCoefficients, settings.progressionExponent)
 end
 
 function placeSpectrumFrame(startTime, center, maxSpread, lineDistance, spacing, boundary, inverse)
@@ -2246,7 +931,7 @@ function ConvergeDivergeMenu()
             constructDebugTable(lines, svs, stats))
         setDebug("Line Count: " .. #lines .. " // SV Count: " .. #svs)
     end
-    Plot(settings.pathCoefficients, settings.progressionExponent, "Line Path Over Duration of Life Cycle")
+    PolynomialPlot(settings.pathCoefficients, settings.progressionExponent, "Line Path Over Duration of Life Cycle")
 end
 
 function StaticBoundaryMenu()
@@ -2296,7 +981,7 @@ function StaticBoundaryMenu()
         setDebug("Line Count: " .. #lines .. " // SV Count: " .. #svs)
     end
 
-    Plot(settings.boundCoefficients, settings.progressionExponent)
+    PolynomialPlot(settings.boundCoefficients, settings.progressionExponent)
 end
 
 function placeStaticFrame(startTime, min, max, lineDistance, spacing, boundary, evalUnder)
@@ -2364,7 +1049,7 @@ function DynamicBoundaryMenu()
             constructDebugTable(lines, svs, stats))
         setDebug("Line Count: " .. #lines .. " // SV Count: " .. #svs)
     end
-    Plot(settings.boundCoefficients, settings.progressionExponent)
+    PolynomialPlot(settings.boundCoefficients, settings.progressionExponent)
 end
 
 function placeDynamicFrame(startTime, min, max, lineDistance, spacing, polynomialHeight, evalOver)
@@ -2630,6 +1315,1489 @@ function AddForefrontTeleportMenu()
     end
 end
 
+local separatorTable = { " ", "!", "@", "#", "$", "%", "^", "&" }
+
+---Encodes a table into a string.
+---@param tbl table # The table to encode.
+---@param nestingIdx? number # The depth of the current tabular search.
+---@return string
+function tableToStr(tbl, nestingIdx)
+    local str = ""
+    local nestingIdx = nestingIdx or 0
+
+    for k, v in pairs(tbl) do
+        local value
+
+        if (type(v) == "table") then
+            value = "{" .. tableToStr(v, nestingIdx + 1) .. "}"
+        else
+            value = v
+        end
+        if (type(k) == "number") then
+            str = str .. value .. separatorTable[nestingIdx + 1]
+        else
+            str = str .. k .. "=" .. value .. separatorTable[nestingIdx + 1]
+        end
+    end
+    return str:sub(1, str:len() - 1)
+end
+
+---Takes a string, and splits it using a predicate. Similar to Array.split().
+---@param str string # The string to split.
+---@param predicate string # The search group to split by.
+---@return table
+function table.split(str, predicate)
+    t = {}
+
+    for i in string.gmatch(str, predicate) do
+        t[#t + 1] = i
+    end
+
+    return t
+end
+
+---Returns true if the table contains the specified element.
+---@param table table # The table to search.
+---@param element any # The element to find.
+---@return boolean
+---@diagnostic disable-next-line: duplicate-set-field
+function table.contains(table, element)
+    for _, value in pairs(table) do
+        if value == element then
+            return true
+        end
+    end
+    return false
+end
+
+local separatorTable = { " ", "!", "@", "#", "$", "%", "^", "&" }
+
+---Transforms an encoded string into a table.
+---@param str string # The string to convert.
+---@param nestingIdx? number # The current depth of the tabular search.
+---@return table
+function strToTable(str, nestingIdx)
+    local tbl = {}
+    local nestingIdx = nestingIdx or 0
+
+    for kvPair in str:gmatch("[^" .. separatorTable[nestingIdx + 1] .. "]+") do
+        if kvPair:match("^{.+}$") then
+            table.insert(tbl, strToTable(kvPair:sub(2, kvPair:len() - 1), nestingIdx + 1))
+        else
+            if (kvPair:find("^(%w+)=(%S+)$")) then
+                k, v = kvPair:match("^(%w+)=(%S+)$")
+                if v:match("^{.+}$") then
+                    tbl[k] = strToTable(v:sub(2, v:len() - 1), nestingIdx + 1)
+                else
+                    tbl[k] = v
+                end
+            else
+                table.insert(tbl, kvPair)
+            end
+        end
+    end
+
+    return tbl
+end
+
+---Converts a string separated by spaces and new lines into a 2D table.
+---@param str string # The string to transform.
+---@return string[][]
+function strToMatrix(str)
+    local finalTbl = {}
+    local initTbl = table.split(str, "[^\r\n]+")
+    for _, substr in pairs(initTbl) do
+        table.insert(finalTbl, table.split(substr, "%S+"))
+    end
+
+    return finalTbl
+end
+
+---Returns two variables corresponding to row and column count of a matrix.
+---@param mtrx any[][] # The matrix to measure.
+---@return integer
+---@return integer
+function matrixSz(mtrx)
+    local rows, columns = 0, #mtrx
+
+    for _, tbl in pairs(mtrx) do
+        rows = math.max(rows, #tbl)
+    end
+
+    return rows, columns
+end
+
+---Debug table constructor for placing AFFINE frames.
+---@param lines TimingPointInfo[] # The lines placed a batch.
+---@param svs SliderVelocityInfo[] # The svs placed a batch.
+---@param stats? TableStats # Statistics about the AFFINE frame.
+---@return table
+function constructDebugTable(lines, svs, stats)
+    local tbl = {
+        L = #lines,
+        S = #svs
+    }
+
+    if (stats) then
+        tbl.mspfMean = string.format("%.2f", stats.mean)
+        tbl.mspfStdDev = string.format("%.2f", stats.stdDev)
+    end
+
+    return tbl
+end
+
+---Joins two table entries together into one table.
+---@param t1 table # The first table.
+---@param t2 table # The second table.
+---@return table
+function combineTables(t1, t2)
+    for i = 1, #t2 do
+        t1[#t1 + 1] = t2[i]
+    end
+    return t1
+end
+
+---Generates two svs for a teleport.
+---@param time number # The time of the teleport.
+---@param dist number # The distance of the teleport, in msx.
+---@param endSV? number # The sv multiplier to use after the teleport is finished.
+---@return SliderVelocityInfo[]
+function teleport(time, dist, endSV)
+    endSV = endSV or 1
+    return {
+        sv(time, INCREMENT * dist),
+        sv(time + (1 / INCREMENT), endSV)
+    }
+end
+
+---Adds a teleport sv to an existing table of svs.
+---@param svs SliderVelocityInfo[] # The table of svs to add to.
+---@param time number # The time of the teleport.
+---@param dist number # The distance of the teleport, in msx.
+---@param endSV? number # The sv multiplier to use after the teleport is finished.
+---@return SliderVelocityInfo[]
+function insertTeleport(svs, time, dist, endSV)
+    return combineTables(svs, teleport(time, dist, endSV or 0))
+end
+
+---@diagnostic disable: return-type-mismatch
+---Creates a SliderVelocity. To place it, you must use an `action`.
+---@param time number # The time to place the SV.
+---@param multiplier number # The speed multiplier that gets applied onto the gameplay.
+---@return SliderVelocityInfo
+function sv(time, multiplier)
+    return utils.CreateScrollVelocity(time, multiplier)
+end
+
+---@diagnostic disable: undefined-field
+---Gets the multiplier of the most recent SV at a `time`.
+---@param time number # The time to search at.
+---@return number
+function mostRecentSV(time)
+    if (map.GetScrollVelocityAt(time)) then
+        return map.GetScrollVelocityAt(time).Multiplier
+    end
+    return 1
+end
+
+---Returns all ScrollVelocities within a certain temporal range.
+---@param lower number # Lower bound of the constraint.
+---@param upper number # Upper bound of the constraint.
+---@return SliderVelocityInfo[]
+function getSVsInRange(lower, upper)
+    local base = map.ScrollVelocities
+
+    local tbl = {}
+
+    for _, v in pairs(base) do
+        if (v.StartTime >= lower) and (v.StartTime <= upper) then
+            table.insert(tbl, v)
+        end
+    end
+
+    return tbl
+end
+
+---Removes SVs outside of range, places 0.00x SV at the beginning, and places a 1.00x SV at the end.
+---@param svs SliderVelocityInfo[] # The sv table to clean.
+---@param lower number # Lower bound of the constraint.
+---@param upper number # Upper bound of the constraint.
+---@return SliderVelocityInfo[]
+function cleanSVs(svs, lower, upper)
+    local tbl = {}
+
+    for _, currentSV in pairs(svs) do
+        if (currentSV.StartTime >= lower and currentSV.StartTime <= upper) then
+            table.insert(tbl, currentSV)
+        end
+    end
+
+    table.insert(tbl, sv(lower, 0))
+    table.insert(tbl, sv(upper, 1))
+
+    return tbl
+end
+
+---Gets the statistical variance
+---@param table number[] # The dataset to operate on.
+---@param mean? number # The mean of the set. Used for optimizing.
+---@return number
+function getVariance(table, mean)
+    if (not mean) then mean = getMean(table) end
+
+    local sum = 0
+    for _, v in pairs(table) do
+        sum = sum + (v - mean) ^ 2
+    end
+
+    return sum / (#table - 1)
+end
+
+---Gets the statistical standard deviation from a numerical table.
+---@param table number[] # The dataset to operate on.
+---@return number
+function getStdDev(table)
+    local mean = getMean(table)
+    local variance = getVariance(table, mean)
+    return variance ^ 0.5
+end
+
+---Gets statistical analysis of a numerical table.
+---@param table number[] # The dataset to operate on.
+---@return TableStats
+function getStatisticsFromTable(table)
+    local stdDev = getStdDev(table)
+
+    local tbl = {
+        mean = getMean(table),
+        variance = stdDev ^ 2,
+        stdDev = stdDev
+    }
+
+    return tbl
+end
+
+---Gets the statistical mean of a numerical table.
+---@param table number[] # The dataset to operate on.
+---@return number
+function getMean(table)
+    local sum = 0
+
+    for _, v in pairs(table) do
+        sum = sum + v
+    end
+
+    return sum / #table
+end
+
+---Saves all stateinformation about a table within state.
+---@param menu string # The name of the menu.
+---@param variables table # The table to save into state.
+function saveStateVariables(menu, variables)
+    for key in pairs(variables) do
+        state.SetValue(menu .. key, variables[key])
+    end
+end
+
+---Saves a table into the map.
+---@param table table # The information to store.
+---@param place? boolean # Whether or not to place the bookmark.
+---@return BookmarkInfo
+function saveMapState(table, place)
+    if (map.Bookmarks[1]) then
+        if (map.Bookmarks[1].note:find("DATA: ")) and (map.Bookmarks[1].StartTime == -69420) then
+            actions.RemoveBookmark(map.Bookmarks[1])
+        end
+    end
+    local bm = bookmark(-69420, "DATA: " .. tableToStr(table))
+    if (place == false) then return bm end
+    actions.AddBookmarkBatch({ bm })
+    return bm
+end
+
+---Gets all state stored information about a table.
+---@param menu string # The name of the menu.
+---@param variables table # The table to pull information for.
+function retrieveStateVariables(menu, variables)
+    for key in pairs(variables) do
+        if (state.GetValue(menu .. key) ~= nil) then
+            variables[key] = state.GetValue(menu .. key)
+        end
+    end
+end
+
+---Gets the stored data within a map.
+---@param default? any # The default value if it returns nothing.
+---@return table
+function getMapState(default)
+    default = default or {}
+    if (not map.Bookmarks[1]) then return default end
+    if (not string.find(map.Bookmarks[1].note, "DATA: ") or not map.Bookmarks[1].StartTime == -69420) then return default end
+
+    local str = map.Bookmarks[1].note:sub(7, map.Bookmarks[1].note:len())
+
+    return strToTable(str)
+end
+
+---Simplifies the workflow to find and maintain snap colors.
+---@param time number # The time to apply the color maintaining to.
+---@param hidden? boolean # Determines if the timing lines generated will be visible during gameplay.
+---@return TimingPointInfo[]
+function keepColorLine(time, hidden)
+    color = colorFromTime(time)
+    return applyColorToTime(color, time, hidden or false)
+end
+
+---Gets the snap color from a given time.
+---@param time number # The time to reference.
+---@return number
+function colorFromTime(time)
+    local timingPoint = map.GetTimingPointAt(time)
+    if (not timingPoint) then return 1 end
+    barToBarDistance = (60000 / timingPoint.Bpm) or 69
+    local timeAboveBar = (time - timingPoint.StartTime) % barToBarDistance
+
+    if (timeAboveBar < barToBarDistance / 17) then return 1 end
+    if ((barToBarDistance - (time - timingPoint.StartTime)) % barToBarDistance < barToBarDistance / 17) then return 1 end
+
+    if (timeAboveBar > (barToBarDistance / 2)) then
+        approximateSnap = barToBarDistance / ((barToBarDistance - (time - timingPoint.StartTime)) % barToBarDistance)
+    else
+        approximateSnap = barToBarDistance / timeAboveBar
+    end
+
+    return approximateSnap -- ROUNDING
+end
+
+---Takes a color and a time, and returns timing lines that make that time that color.
+---@param color number # The snap value of the color, in `1/color`. 1 represents red, 2 represents blue, etc.
+---@param time number # The time to apply this coloring to.
+---@param hidden boolean # Determines if the timing lines generated will be hidden during gameplay.
+---@return TimingPointInfo[]
+function applyColorToTime(color, time, hidden)
+    local EPSILON = 0.3
+
+    local lines = {}
+
+    ---@diagnostic disable-next-line: undefined-field
+    local bpm = map.GetTimingPointAt(time).Bpm
+
+    local timingDist = 4
+
+    if (math.abs(color - 1) <= EPSILON) then
+        table.insert(lines, line(time, bpm, hidden))
+    else
+        table.insert(lines, line(time - timingDist / 2, 60000 / (timingDist * color / 2), hidden))
+        table.insert(lines, line(time + timingDist / 2, bpm, hidden))
+    end
+
+    return lines
+end
+
+---Returns true if a note is selected.
+---@return boolean
+function noteSelected()
+    return offsets.startOffset ~= -1
+end
+
+---Returns true if two or more notes are selected, with differing offsets.
+---@return boolean
+function rangeSelected()
+    return offsets.endOffset ~= -1
+end
+
+---When given a progression value in [0,1], returns the numerical distance along the progress line.
+---@param starting number # The start of the progression bar.
+---@param progress number # The progress of the value.
+---@param ending number # The end of the progression bar.
+---@return number
+function mapProgress(starting, progress, ending)
+    return progress * (ending - starting) + starting
+end
+
+---Gets the progress from the starting value, to the ending value. Returns a number in [0,1] assuming `starting` < `value` < `ending`.
+---@param starting number # The start of the progression bar.
+---@param value number # The current value within the progression bar.
+---@param ending number # The end of the progression bar.
+---@param progressionExponent? number # Determines then movement within the progression bar.
+---@return number
+function getProgress(starting, value, ending, progressionExponent)
+    local progressionExponent = progressionExponent or 1
+    local baseProgress = (value - starting) / (ending - starting)
+    if (progressionExponent >= 1) then
+        return clamp(baseProgress ^ progressionExponent, 0, 1)
+    else
+        return clamp(1 - (1 - baseProgress) ^ (1 / progressionExponent), 0, 1)
+    end
+end
+
+---Restricts a value between two numbers.
+---@param value number # The value to restrict.
+---@param min number # The minimum the value must be.
+---@param max number # The maximum the value must be.
+---@return number
+function clamp(value, min, max)
+    return math.max(math.min(value, max), min)
+end
+
+---Takes a table of coefficients, and returns a string representing the equation.
+---@param coefficients number[] # A table of coefficients of a degree `n` polynomial. For a table `{a,b,c,d}`, represents the polynomial ax^3+bx^2+cx+d.
+---@param power number # Represents the power to raise the input variable to. Is used to represent the `progressionExponent`.
+---@return string
+function polynomialString(coefficients, power)
+    local explanatoryVariable = "t"
+
+    local str = 'Equation: y = '
+    local degree = #coefficients - 1
+    for idx, coefficient in pairs(coefficients) do
+        if (coefficient == 0) then goto continue end
+        effectiveDegree = (degree - idx + 1) * power
+        sign = "+"
+        if (coefficient < 0) then sign = "-" end
+        if (idx == 1) then
+            if (coefficient < 0) then signText = "-" else signText = "" end
+        else
+            signText = " " .. sign .. " "
+        end
+        coefficientText = math.abs(coefficient)
+        if (coefficientText == 1 and effectiveDegree ~= 0) then coefficientText = "" end
+        if (effectiveDegree == 0) then
+            str = str .. signText .. coefficientText
+        elseif (effectiveDegree == 1) then
+            str = str .. signText .. coefficientText .. explanatoryVariable
+        else
+            str = str .. signText .. coefficientText .. explanatoryVariable .. "^" .. effectiveDegree
+        end
+        ::continue::
+    end
+
+    return str
+end
+
+---Takes a table of coefficients, and returns a number corresponding to a y-value of a polynomial.
+---@param coefficients number[] # A table of coefficients of a degree `n` polynomial. For a table `{a,b,c,d}`, represents the polynomial ax^3+bx^2+cx+d.
+---@param xVal number # The `x` value to evaluate this polynomial at.
+---@return number
+function evaluateCoefficients(coefficients, xVal)
+    local sum = 0
+    local degree = #coefficients - 1
+
+    for idx, coefficient in pairs(coefficients) do
+        sum = sum + (xVal) ^ (degree - idx + 1) * coefficient
+    end
+
+    return sum
+end
+
+---Saves parameters for a certain menu.
+---@param menu string # The name of the menu.
+---@param parameterTable Parameter[] # The parameter table to save.
+function saveParameters(menu, parameterTable)
+    for idx, tbl in ipairs(parameterTable) do
+        state.setValue(menu .. idx .. tbl.key, tbl.value)
+    end
+end
+
+---Gets parameters for a certain menu.
+---@param menu string # The name of the menu.
+---@param parameterTable Parameter[] # The parameter table to write to.
+function retrieveParameters(menu, parameterTable)
+    for idx, tbl in ipairs(parameterTable) do
+        if (state.GetValue(menu .. idx .. tbl.key) ~= nil) then
+            parameterTable[idx].value = state.GetValue(menu .. idx .. tbl.key)
+        end
+    end
+end
+
+---Provide a menu name and parameter options, and this workflow will automatically manage state, generate input fields, and handle setting conversion.
+---@param name string # The name of the current menu. Used for separating state between menus.
+---@param ... string | table # The name of the given setting, or a table representing a custom parameter.
+---@return table
+function parameterWorkflow(name, ...)
+    local parameterTable = constructParameters(...)
+
+    retrieveParameters(name, parameterTable)
+
+    parameterInputs(parameterTable)
+    local settings = parametersToSettings(parameterTable)
+
+    saveParameters(name, parameterTable)
+
+    return settings
+end
+
+---Outputs settings based on inputted parameters.
+---@param parameterTable Parameter[]
+---@return table
+function parametersToSettings(parameterTable)
+    local settings = {}
+
+    for _, tbl in ipairs(parameterTable) do
+        settings[tbl.key] = tbl.value
+    end
+
+    return settings
+end
+
+---@enum INPUT_DICTIONARY
+INPUT_DICTIONARY = {
+    msxList = function (v)
+        return InputTextWrapper("MSX List", v,
+            "List of MSX values to place. For each number given, a timing line will be placed at that number MSX above the receptor.")
+    end,
+    msxList1 = function (v)
+        return InputTextWrapper("Start MSX List", v,
+            "List of MSX values to place. For each number given, a timing line will be placed at that number MSX above the receptor. These timing lines represent the start of the animation.")
+    end,
+    msxList2 = function (v)
+        return InputTextWrapper("End MSX List", v,
+            "List of MSX values to place. For each number given, a timing line will be placed at that number MSX above the receptor. These timing lines represent the end of the animation.")
+    end,
+    msxBounds = function (v)
+        return InputInt2Wrapper("Lower/Upper MSX", v,
+            "The lowest MSX and highest MSX values timing lines can reach. Anything outside of these bounds will be ignored.")
+    end,
+    msxBounds1 = function (v)
+        return InputInt2Wrapper("Start Lower/Upper MSX", v,
+            "The lowest MSX and highest MSX values timing lines can reach, at the start of the animation.")
+    end,
+    msxBounds2 = function (v)
+        return InputInt2Wrapper("End Lower/Upper MSX", v,
+            "The lowest MSX and highest MSX values timing lines can reach, at the end of the animation.")
+    end,
+    offset = function (v)
+        return InputIntWrapper("MSX Offset", v,
+            "Adds this MSX value to all MSX values in the MSX List above.")
+    end,
+    delay = function (v)
+        return InputIntWrapper("MS Delay", v,
+            "MS Delay waits for this value of milliseconds to place the timing lines. Could be useful if you have conflicting SVs.")
+    end,
+    center = function (v)
+        return InputIntWrapper("Center MSX", v,
+            "The center of the spectrum, an MSX distance above the receptor.")
+    end,
+    maxSpread = function (v)
+        return InputIntWrapper("Max MSX Spread", v,
+            "The maximum distance away from the center that a timing line can reach.")
+    end,
+    spacing = function (v)
+        return InputFloatWrapper("MS Spacing", v,
+            "The MS distance between two timing lines. Recommended to keep this below 2.")
+    end,
+    debug = function (v)
+        if v ~= '' then
+            imgui.Text(v)
+            return v
+        end
+    end,
+    distance = function (v)
+        return InputInt2Wrapper('Distance Between Lines', v,
+            "Represents the distance between two adjacent timing lines, measured in MSX. If in Expansion/Contraction, the two numbers represent the start and end distance of the animation. If not in Expansion/Contraction, the two numbers represent the start and end distance of the frame.")
+    end,
+    lineCount = function (v)
+        return InputIntWrapper("Line Count", v,
+            "The number of timing lines to display simultaneously.")
+    end,
+    lineDuration = function (v)
+        return InputFloatWrapper("Line Duration", v,
+            "Each line created possesses a cloned lifecycle. The value of this parameter is equal to the percentage of the animation in which the lifecycle occurs.")
+    end,
+    progressionExponent = function (v)
+        return InputFloatWrapper("Progression Exponent", v,
+            "Adjust this to change how the animation progresses over time. The higher the number, the slower the animation takes to start, but it ramps up much faster. If you aren't familiar with exponential graphs, keep this at 1.")
+    end,
+    progressionTable = function (v)
+        return InputTextWrapper("Progression Table", v,
+            "Adjust this to change how the animation progresses over time. The higher the number, the slower the animation takes to start, but it ramps up much faster. If only one value is given, it will apply to all lines. Otherwise, it will apply to its associated line.")
+    end,
+    fps = function (v)
+        return InputFloatWrapper("Animation FPS", v,
+            "Maximum FPS of the animation. Note that if there are too many timing lines, the animation (not game) FPS will go down.")
+    end,
+    boundCoefficients = function (v)
+        return InputFloat4Wrapper("Bound Coefficients", v,
+            "The boundary follows a curve, described by these coefficients. You can see what the boundary height vs. time graph looks like on the plot.")
+    end,
+    pathCoefficients = function (v)
+        return InputFloat4Wrapper("Path Coefficients", v,
+            "Lines generated follow this temporal curve before disappearing. You can see what the height vs. time graph looks like on the plot.")
+    end,
+    colorList = function (v)
+        return InputTextWrapper("Snap Color List", v,
+            "These numbers are the denominator of the snaps. Here are the corresponding values:\n1 = Red\n2 = Blue\n3 = Purple\n4 = Yellow\n5 = White\n6 = Pink\n8 = Orange\n12 = Cyan\n16 = Green")
+    end,
+    oneSided = function (v)
+        return CheckboxWrapper("One-Sided Vibro?", v, "Applies vibrato to strictly one direction relative to the note.")
+    end,
+    intensity = function (v)
+        return SliderIntWrapper("Intensity", v, { 0, 100 }, "Determines the intensity of the exponential.")
+    end
+}
+
+---@enum CUSTOM_INPUT_DICTIONARY
+CUSTOM_INPUT_DICTIONARY = {
+    Int = function (label, v, tooltip, sameLine) return InputIntWrapper(label, v, tooltip) end,
+    Int2 = function (label, v, tooltip, sameLine) return InputInt2Wrapper(label, v, tooltip) end,
+    Int3 = function (label, v, tooltip, sameLine) return InputInt3Wrapper(label, v, tooltip) end,
+    Int4 = function (label, v, tooltip, sameLine) return InputInt4Wrapper(label, v, tooltip) end,
+    Float = function (label, v, tooltip, sameLine) return InputFloatWrapper(label, v, tooltip) end,
+    Float2 = function (label, v, tooltip, sameLine) return InputFloat2Wrapper(label, v, tooltip) end,
+    Float3 = function (label, v, tooltip, sameLine) return InputFloat3Wrapper(label, v, tooltip) end,
+    Float4 = function (label, v, tooltip, sameLine) return InputFloat4Wrapper(label, v, tooltip) end,
+    SliderInt = function (label, v, limits, tooltip, sameLine) return SliderIntWrapper(label, v, limits, tooltip) end,
+    Matrix = function (label, v, tooltip) return InputTextMultilineWrapper(label, v, tooltip) end,
+    RadioBoolean = function (labels, v, tooltip, sameLine) return RadioBoolean(labels[1], labels[2], v) end,
+    Checkbox = function (label, v, tooltip, sameLine) return CheckboxWrapper(label, v, tooltip, sameLine) end,
+}
+
+---@alias inputType "Int" | "Int2" | "Int3" | "Int4" | "Float" | "Float2" | "Float3" | "Float4" | "Matrix" |"RadioBoolean" | "Checkbox"
+
+---Creates imgui inputs using the given parameter table.
+---@param parameterTable Parameter[]
+function parameterInputs(parameterTable)
+    for _, tbl in ipairs(parameterTable) do
+        if (tbl.inputType ~= nil) then
+            tbl.value = CUSTOM_INPUT_DICTIONARY[tbl.inputType](tbl.label, tbl.value, tbl.tooltip, tbl.sameLine or false)
+        else
+            tbl.value = INPUT_DICTIONARY[tbl.key](tbl.value)
+        end
+    end
+end
+
+---Function wrapper for custom parameters.
+---@param inputType inputType # The name of the data type used for the input.
+---@param label string | string[] # The label of the input.
+---@param key string # The variable name that will be used as a key in the `settings` table.
+---@param value any # The initial value of this input.
+---@param sameLine? boolean # Determines whether or not this input is on the same line as the previous input.
+---@return table
+function customParameter(inputType, label, key, value, sameLine)
+    return {
+        inputType = inputType,
+        label = label,
+        key = key,
+        value = value,
+        sameLine = sameLine or false
+    }
+end
+
+---@enum DEFAULT_DICTIONARY
+DEFAULT_DICTIONARY = {
+    msxBounds = DEFAULT_MSX_BOUNDS,
+    msxBounds1 = DEFAULT_MSX_BOUNDS,
+    msxBounds2 = DEFAULT_MSX_BOUNDS,
+    msxList = DEFAULT_MSX_LIST,
+    msxList1 = DEFAULT_MSX_LIST,
+    msxList2 = DEFAULT_MSX_LIST,
+    offset = DEFAULT_OFFSET,
+    spacing = DEFAULT_SPACING,
+    delay = DEFAULT_DELAY,
+    distance = DEFAULT_DISTANCE,
+    lineCount = DEFAULT_LINE_COUNT,
+    lineDuration = DEFAULT_LINE_DURATION,
+    progressionExponent = DEFAULT_PROGRESSION_EXPONENT,
+    progressionTable = tostring(DEFAULT_PROGRESSION_EXPONENT),
+    boundCoefficients = DEFAULT_BOUND_COEFFICIENTS,
+    pathCoefficients = DEFAULT_PATH_COEFFICIENTS,
+    fps = DEFAULT_FPS,
+    center = DEFAULT_CENTER,
+    maxSpread = DEFAULT_MAX_SPREAD,
+    colorList = DEFAULT_COLOR_LIST,
+    oneSided = false
+}
+
+---Given a set of input names, creates an ordered table of key value pairs (normal table isn't used to preserve order).
+---@param ... string | table
+---@return Parameter[]
+function constructParameters(...)
+    local parameterTable = {}
+
+    for _, v in ipairs({ ... }) do
+        if (type(v) == "table") then
+            table.insert(parameterTable, {
+                inputType = v.inputType,
+                key = v.key,
+                value = v.value,
+                label = v.label,
+                sameLine = v.sameLine or false,
+                tooltip = v.tooltip or ""
+            })
+            goto continue
+        end
+        table.insert(parameterTable, {
+            key = v,
+            value = DEFAULT_DICTIONARY[v]
+        })
+        ::continue::
+    end
+
+    return parameterTable
+end
+
+---Gets the first and last note offsets.
+---@return {startOffset: integer, endOffset: integer}
+function getStartAndEndNoteOffsets()
+    local offsets = {}
+
+    if (#state.SelectedHitObjects == 0) then
+        return { startOffset = -1, endOffset = -1 }
+    end
+
+    for _, hitObject in pairs(state.SelectedHitObjects) do
+        if (table.contains(offsets, hitObject.StartTime)) then goto continue end
+        table.insert(offsets, hitObject.StartTime)
+        ::continue::
+    end
+
+    if (#offsets == 1) then
+        return { startOffset = offsets[1], endOffset = -1 }
+    end
+
+    return { startOffset = math.min(table.unpack(offsets)), endOffset = math.max(table.unpack(offsets)) }
+end
+
+---Gets all selected note offsets, with no duplicate values.
+---@return integer[]
+function getSelectedOffsets()
+    local offsets = {}
+
+    if (#state.SelectedHitObjects == 0) then
+        return {}
+    end
+
+    for _, hitObject in pairs(state.SelectedHitObjects) do
+        if (table.contains(offsets, hitObject.StartTime)) then goto continue end
+        table.insert(offsets, hitObject.StartTime)
+        ::continue::
+    end
+
+    return offsets
+end
+
+---@diagnostic disable: return-type-mismatch
+--- Creates a HitObject. To place it, you must use an `action`.
+---@param startTime integer # The start time of the note.
+---@param lane integer # The lane the note is located in. For 4K, must be in [1,4], and for 7K, must be in [1,7].
+---@param endTime? integer # The end time of the note. Optional parameter only defined for long notes.
+---@param hitsound? any # Not supported, only done for the wrapper.
+---@param editorLayer? integer # Not supported, only done for the wrapper.
+---@return HitObjectInfo
+function note(startTime, lane, endTime, hitsound, editorLayer)
+    return utils.CreateHitObject(startTime, lane, endTime or 0, hitsound or 0, editorLayer or 0)
+end
+
+---Returns all HitObjects within a certain temporal range.
+---@param lower number # Lower bound of the constraint.
+---@param upper number # Upper bound of the constraint.
+---@return HitObjectInfo[]
+function getNotesInRange(lower, upper)
+    local base = map.HitObjects
+
+    local tbl = {}
+
+    for _, v in pairs(base) do
+        if (v.StartTime >= lower) and (v.StartTime <= upper) then
+            table.insert(tbl, v)
+        end
+    end
+
+    return tbl
+end
+
+---Takes a table of strings, and returns an AFFINE frame.
+---@param svTable string[]
+---@param time number
+---@param msxOffset number
+---@param spacing number
+---@return AffineFrame
+function tableToAffineFrame(svTable, time, msxOffset, spacing)
+    local lines = {}
+    local svs = {}
+
+    for _, msx in pairs(svTable) do
+        local speed = INCREMENT * (msx + msxOffset)
+
+        table.insert(lines, line(time))
+        table.insert(svs, sv(time, speed * -1))
+        table.insert(svs, sv(time - (1 / INCREMENT), speed))
+        table.insert(svs, sv(time + (1 / INCREMENT), 0))
+
+        time = time + spacing
+    end
+
+    local tbl = {
+        lines = lines,
+        svs = svs,
+        time = time
+    }
+    return tbl
+end
+
+---@diagnostic disable: return-type-mismatch
+--- Creates a TimingPoint. To place it, you must use an `action`.
+---@param time number # The time of the line.
+---@param bpm? number # The bpm of the line.
+---@param hidden? boolean # Determines if the line (and future lines generated by it) are visible in gameplay.
+---@param signature? number # Number of 1/1 snaps that must go by before a timing line is rendered. Analogous to `Signature`/4 in music.
+---@return TimingPointInfo
+function line(time, bpm, hidden, signature)
+    if (hidden == nil) then hidden = false end
+    local data = map.GetTimingPointAt(time)
+
+    if (not data) then
+        data = {
+            Bpm = map.GetCommonBpm(),
+            Signature = time_signature.Quadruple,
+            Hidden = false
+        }
+    end
+
+    return utils.CreateTimingPoint(time, bpm or data.Bpm, signature or data.Signature, hidden)
+end
+
+---Returns all timing points within a temporal boundary.
+---@param lower number # Lower bound of the constraint.
+---@param upper number # Upper bound of the constraint.
+---@return TimingPointInfo[]
+function getLinesInRange(lower, upper)
+    local base = map.TimingPoints
+
+    local tbl = {}
+
+    for _, v in pairs(base) do
+        if (v.StartTime >= lower) and (v.StartTime <= upper) then
+            table.insert(tbl, v)
+        end
+    end
+
+    return tbl
+end
+
+---Removes lines above or below the specified boundary. Then, adds an extra line at the nearest 1/1 snap to maintain snap coloring.
+---@param lines TimingPointInfo[] # A table of lines to clean.
+---@param lower number # Lower boundary of the constraint.
+---@param upper number # Upper boundary of the constraint.
+---@return TimingPointInfo[]
+function cleanLines(lines, lower, upper)
+    local lastLineTime = upper
+    if (#lines > 0) then
+        lastLineTime = math.max(lines[#lines].StartTime, upper)
+    end
+
+    local tbl = {}
+
+    local lineDictionary = {}
+
+    for _, currentLine in pairs(lines) do
+        if (table.contains(lineDictionary, currentLine.StartTime)) then goto continue end
+        if (currentLine.StartTime >= lower and currentLine.StartTime <= upper) then
+            table.insert(tbl, currentLine)
+            table.insert(lineDictionary, currentLine.StartTime)
+        end
+        ::continue::
+    end
+
+    table.insert(tbl, line(map.GetNearestSnapTimeFromTime(true, 1, lastLineTime) - 2))
+    table.insert(tbl, line(map.GetNearestSnapTimeFromTime(true, 1, lastLineTime)))
+
+    return tbl
+end
+
+---Places given svs and lines, and cleans both.
+---@param lines TimingPointInfo[] # The lines to place.
+---@param svs SliderVelocityInfo[] # The svs to place.
+---@param lower number # Lower bound of the constraint.
+---@param upper number # Upper bound of the constraint.
+---@param affineType string # The name of the effect being placed.
+---@param debugData? table # Information about the AFFINE frame dataset.
+function generateAffines(lines, svs, lower, upper, affineType, debugData)
+    if (not upper or upper == lower) then
+        ---@diagnostic disable-next-line: cast-local-type
+        upper = map.GetNearestSnapTimeFromTime(true, 1, lower);
+    end
+
+    lines = cleanLines(lines, lower, upper)
+    svs = cleanSVs(svs, lower, upper)
+
+    local debugString = ""
+    if (debugData) then
+        for k, v in pairs(debugData) do
+            debugString = debugString .. " | " .. k .. ": " .. v
+        end
+    end
+
+    local bookmarks = {
+        utils.CreateBookmark(lower, affineType .. " Start" .. debugString),
+        utils.CreateBookmark(upper, affineType .. " End")
+    }
+
+    local newGlobalTable = {
+        label = affineType:gsub(" ", ""),
+        lower = lower,
+        upper = upper,
+        numLines = #lines,
+        numSVs = (debugData and debugData.S) and debugData.S or #svs,
+    } ---@type AffineSaveTable
+
+    table.insert(globalData, newGlobalTable)
+
+    table.insert(bookmarks, saveMapState(globalData, false))
+
+    actions.PerformBatch({
+        utils.CreateEditorAction(action_type.AddTimingPointBatch, lines),
+        utils.CreateEditorAction(action_type.AddScrollVelocityBatch, svs),
+        utils.CreateEditorAction(action_type.AddBookmarkBatch, bookmarks),
+    })
+end
+
+---Returns all bookmarks within a temporal boundary.
+---@param lower number # Lower bound of the constraint.
+---@param upper number # Upper bound of the constraint.
+---@return BookmarkInfo[]
+function getBookmarksInRange(lower, upper)
+    local base = map.Bookmarks
+
+    local tbl = {}
+
+    for _, v in pairs(base) do
+        if (v.StartTime >= lower) and (v.StartTime <= upper) then
+            table.insert(tbl, v)
+        end
+    end
+
+    return tbl
+end
+
+---Finds closest bookmark with `StartTime` less than `time`. If the bookmark isn't within the constraint defined by `[lower, upper]`, then no bookmark is returned.
+---@param time number # The time in which to locate the nearest bookmark before this.
+---@param lower number # Lower bound of the constraint.
+---@param upper number # Upper bound of the constraint.
+---@return BookmarkInfo
+function findBookmark(time, lower, upper)
+    lower = lower or 0
+    upper = upper or 1e69
+    local bookmarks = map.Bookmarks
+
+    if (#bookmarks == 0) then return {} end
+    if (#bookmarks == 1) then return bookmarks[1] end
+
+    for i = 1, #bookmarks do
+        if bookmarks[i].StartTime > time then
+            if (bookmarks[i].StartTime < lower or bookmarks[i].StartTime > upper) then return {} end
+            return bookmarks[i - 1]
+        end
+    end
+    if (bookmarks[#bookmarks].StartTime < lower or bookmarks[#bookmarks].StartTime > upper) then return {} end
+    return bookmarks[#bookmarks]
+end
+
+---@diagnostic disable: return-type-mismatch
+--- Creates a Bookmark. To place it, you must use an `action`.
+---@param time integer # The time of the bookmark.
+---@param note string # The contents of the bookmark.
+---@return BookmarkInfo
+function bookmark(time, note)
+    return utils.CreateBookmark(time, note)
+end
+
+---Creates a tooltip hoverable element.
+---@param text string # The text of the tooltip during hovering.
+function Tooltip(text)
+    imgui.SameLine(0, 4)
+    imgui.TextDisabled("(?)")
+    if not imgui.IsItemHovered() then return end
+    imgui.BeginTooltip()
+    imgui.PushTextWrapPos(imgui.GetFontSize() * 20)
+    imgui.Text(text)
+    imgui.PopTextWrapPos()
+    imgui.EndTooltip()
+end
+
+---Creates two radio buttons, one for true and one for false.
+---@param labelFalse string # Label for the radio button corresponding to `false`.
+---@param labelTrue string # Label for the radio button corresponding to `true`.
+---@param v boolean # The value of the current variable.
+---@return boolean
+function RadioBoolean(labelFalse, labelTrue, v)
+    if imgui.RadioButton(labelFalse, not v) then
+        v = false
+    end
+
+    imgui.SameLine(0, 7.5)
+
+    if imgui.RadioButton(labelTrue, v) then
+        v = true
+    end
+
+    return v
+end
+
+local RESOLUTION = 50
+
+---Graphs a polynomial given the coefficients.
+---@param plyCoeff [number, number, number, number] # The coefficients of the polynomial, in identical order. Modeled after standard form ax^3+bx^2+cx+d.
+---@param prgExp number # Changes how the progress of animation is calculated.
+---@param title? string # Title of the plot window.
+function PolynomialPlot(plyCoeff, prgExp, title)
+    imgui.Begin(title or "Boundary Height vs. Time", imgui_window_flags.AlwaysAutoResize)
+    local tbl = {}
+
+    if (plyCoeff == state.GetValue("cachedCoefficients")) then
+        tbl = state.GetValue("cachedPlotValues")
+    else
+        for i = 0, RESOLUTION do
+            local progress = getProgress(0, i, RESOLUTION, prgExp)
+
+            table.insert(tbl,
+                evaluateCoefficients(plyCoeff, progress))
+        end
+    end
+
+    state.SetValue("cachedCoefficients", plyCoeff)
+    state.SetValue("cachedPlotValues", tbl)
+
+    imgui.PlotLines("Polynomial Plot", tbl, #tbl, 0,
+        polynomialString(plyCoeff, prgExp),
+        0, 1,
+        { 250, 150 })
+
+    imgui.End()
+end
+
+---Plots a sinusoidal graph given cycle counts and phase shift.
+---@param nx [number, number] # Start and End cycle counts. The sine function will have `nx[2]` cycles in total.
+---@param phi number # Phase shift represented as a number in [0,1).
+---@param title? string # Title of the plot window.
+function SinusoidalPlot(nx, phi, title)
+    imgui.Begin(title or "Boundary Height vs. Time", imgui_window_flags.AlwaysAutoResize)
+
+    local tbl = {}
+
+    for i = 0, RESOLUTION do
+        local x = i / RESOLUTION
+        local fn = function (v) return nx[1] + (nx[2] - nx[1]) * v end
+
+        table.insert(tbl, math.sin(2 * math.pi * (x * fn(x) + phi)))
+    end
+
+    imgui.PlotLines("Sinusoidal Plot", tbl, #tbl, 0,
+        "",
+        -1, 1,
+        { 250, 150 })
+
+    imgui.End()
+end
+
+---Plots a function.
+---@param fn fun(v: number): number # The function to plot. It should take in a number `x` and output a number `f(x)`.
+---@param label string # The label within the plot.
+---@param title string # Title of the plot window.
+function Plot(fn, label, title)
+    imgui.Begin(title or "Boundary Height vs. Time", imgui_window_flags.AlwaysAutoResize)
+
+    local tbl = {}
+    local min, max = 0, 0
+
+    for i = 0, RESOLUTION do
+        local y = fn(i / RESOLUTION)
+        table.insert(tbl, y)
+        min = math.min(y, min)
+        max = math.max(y, max)
+    end
+
+    imgui.PlotLines(title .. " Plot", tbl, #tbl, 0,
+        label,
+        min, max,
+        { 250, 150 })
+
+    imgui.End()
+end
+
+---@diagnostic disable: cast-local-type
+
+---Creates an `InputInt` element.
+---@param label string
+---@param v integer
+---@param tooltip string
+---@return integer
+function InputIntWrapper(label, v, tooltip)
+    _, v = imgui.InputInt(label, v, 0, 0)
+    Tooltip(tooltip)
+    ---@cast v integer
+    return v
+end
+
+---Creates an `InputFloat` element.
+---@param label string
+---@param v number
+---@param tooltip string
+---@return number
+function InputFloatWrapper(label, v, tooltip)
+    _, v = imgui.InputFloat(label, v, 0, 0, "%.2f")
+    Tooltip(tooltip)
+    ---@cast v number
+    return v
+end
+
+---Creates an `InputText` element.
+---@param label string
+---@param v string
+---@param tooltip string
+---@return string
+function InputTextWrapper(label, v, tooltip)
+    _, v = imgui.InputText(label, v, 6942)
+    Tooltip(tooltip)
+    ---@cast v string
+    return v
+end
+
+---Creates an `InputTextMultiline` element.
+---@param label string
+---@param v string
+---@param tooltip string
+---@return string
+function InputTextMultilineWrapper(label, v, tooltip)
+    _, v = imgui.InputTextMultiline(label, v, 6942)
+    Tooltip(tooltip)
+    ---@cast v string
+    return v
+end
+
+---Creates an `InputInt2` element.
+---@param label string
+---@param v integer[]
+---@param tooltip string
+---@return integer[]
+function InputInt2Wrapper(label, v, tooltip)
+    _, v = imgui.InputInt2(label, v)
+    Tooltip(tooltip)
+    ---@cast v integer[]
+    return v
+end
+
+---Creates an `InputInt3` element.
+---@param label string
+---@param v integer[]
+---@param tooltip string
+---@return integer[]
+function InputInt3Wrapper(label, v, tooltip)
+    _, v = imgui.InputInt3(label, v)
+    Tooltip(tooltip)
+    ---@cast v integer[]
+    return v
+end
+
+---Creates an `InputInt4` element.
+---@param label string
+---@param v integer[]
+---@param tooltip string
+---@return integer[]
+function InputInt4Wrapper(label, v, tooltip)
+    _, v = imgui.InputInt4(label, v)
+    Tooltip(tooltip)
+    ---@cast v integer[]
+    return v
+end
+
+---Creates an `InputFloat2` element.
+---@param label string
+---@param v number[]
+---@param tooltip string
+---@return number[]
+function InputFloat2Wrapper(label, v, tooltip)
+    _, v = imgui.InputFloat2(label, v, "%.2f")
+    Tooltip(tooltip)
+    ---@cast v number[]
+    return v
+end
+
+---Creates an `InputFloat3` element.
+---@param label string
+---@param v number[]
+---@param tooltip string
+---@return number[]
+function InputFloat3Wrapper(label, v, tooltip)
+    _, v = imgui.InputFloat3(label, v, "%.2f")
+    Tooltip(tooltip)
+    ---@cast v number[]
+    return v
+end
+
+---Creates an `InputFloat4` element.
+---@param label string
+---@param v number[]
+---@param tooltip string
+---@return number[]
+function InputFloat4Wrapper(label, v, tooltip)
+    _, v = imgui.InputFloat4(label, v, "%.2f")
+    Tooltip(tooltip)
+    ---@cast v number[]
+    return v
+end
+
+---Creates an `Checkbox` element.
+---@param label string
+---@param v boolean
+---@param tooltip string
+---@return boolean
+function CheckboxWrapper(label, v, tooltip, sameLine)
+    if (sameLine) then imgui.SameLine(0, 7.5) end
+    _, v = imgui.Checkbox(label, v)
+    Tooltip(tooltip)
+    ---@cast v boolean
+    return v
+end
+
+---Creates an `SliderInt` element.
+---@param label string
+---@param v integer
+---@param limits integer[]
+---@param tooltip" string
+---@return integer
+function SliderIntWrapper(label, v, limits, tooltip)
+    _, v = imgui.SliderInt(label, v, limits[1], limits[2])
+    Tooltip(tooltip)
+    ---@cast v integer
+    return v
+end
+
+---@diagnostic disable: undefined-field, need-check-nil
+function drawSpike(xPos)
+    local spikeSize = 25
+
+    local color = rgbaToUint(255, 255, 255, 255)
+    local o = imgui.GetOverlayDrawList()
+    local sz = state.WindowSize
+
+    o.AddTriangleFilled({ xPos, sz[2] }, { xPos + sz[1] / spikeSize, sz[2] },
+        { xPos + sz[1] / (2 * spikeSize), sz[2] - sz[1] / spikeSize }, color)
+end
+
+---@diagnostic disable: need-check-nil, undefined-field
+function relativePoint(point, xChange, yChange)
+    return { point[1] + xChange, point[2] + yChange }
+end
+
+function drawCapybara2(yPos)
+    local o = imgui.GetOverlayDrawList()
+    local sz = state.WindowSize
+
+    local topLeftCapyPoint = { 0, sz[2] - 165 - yPos } -- originally -200
+    local p1 = relativePoint(topLeftCapyPoint, 0, 95)
+    local p2 = relativePoint(topLeftCapyPoint, 0, 165)
+    local p3 = relativePoint(topLeftCapyPoint, 58, 82)
+    local p3b = relativePoint(topLeftCapyPoint, 108, 82)
+    local p4 = relativePoint(topLeftCapyPoint, 58, 165)
+    local p5 = relativePoint(topLeftCapyPoint, 66, 29)
+    local p6 = relativePoint(topLeftCapyPoint, 105, 10)
+    local p7 = relativePoint(topLeftCapyPoint, 122, 126)
+    local p7b = relativePoint(topLeftCapyPoint, 133, 107)
+    local p8 = relativePoint(topLeftCapyPoint, 138, 11)
+    local p9 = relativePoint(topLeftCapyPoint, 145, 82)
+    local p10 = relativePoint(topLeftCapyPoint, 167, 82)
+    local p10b = relativePoint(topLeftCapyPoint, 172, 80)
+    local p11 = relativePoint(topLeftCapyPoint, 172, 50)
+    local p12 = relativePoint(topLeftCapyPoint, 179, 76)
+    local p12b = relativePoint(topLeftCapyPoint, 176, 78)
+    local p12c = relativePoint(topLeftCapyPoint, 176, 70)
+    local p13 = relativePoint(topLeftCapyPoint, 185, 50)
+
+    local p14 = relativePoint(topLeftCapyPoint, 113, 10)
+    local p15 = relativePoint(topLeftCapyPoint, 116, 0)
+    local p16 = relativePoint(topLeftCapyPoint, 125, 2)
+    local p17 = relativePoint(topLeftCapyPoint, 129, 11)
+    local p17b = relativePoint(topLeftCapyPoint, 125, 11)
+
+    local p18 = relativePoint(topLeftCapyPoint, 91, 0)
+    local p19 = relativePoint(topLeftCapyPoint, 97, 0)
+    local p20 = relativePoint(topLeftCapyPoint, 102, 1)
+    local p21 = relativePoint(topLeftCapyPoint, 107, 11)
+    local p22 = relativePoint(topLeftCapyPoint, 107, 19)
+    local p23 = relativePoint(topLeftCapyPoint, 103, 24)
+    local p24 = relativePoint(topLeftCapyPoint, 94, 17)
+    local p25 = relativePoint(topLeftCapyPoint, 88, 9)
+
+    local p26 = relativePoint(topLeftCapyPoint, 123, 33)
+    local p27 = relativePoint(topLeftCapyPoint, 132, 30)
+    local p28 = relativePoint(topLeftCapyPoint, 138, 38)
+    local p29 = relativePoint(topLeftCapyPoint, 128, 40)
+
+    local p30 = relativePoint(topLeftCapyPoint, 102, 133)
+    local p31 = relativePoint(topLeftCapyPoint, 105, 165)
+    local p32 = relativePoint(topLeftCapyPoint, 113, 165)
+
+    local p33 = relativePoint(topLeftCapyPoint, 102, 131)
+    local p34 = relativePoint(topLeftCapyPoint, 82, 138)
+    local p35 = relativePoint(topLeftCapyPoint, 85, 165)
+    local p36 = relativePoint(topLeftCapyPoint, 93, 165)
+
+    local p37 = relativePoint(topLeftCapyPoint, 50, 80)
+    local p38 = relativePoint(topLeftCapyPoint, 80, 40)
+    local p39 = relativePoint(topLeftCapyPoint, 115, 30)
+    local p40 = relativePoint(topLeftCapyPoint, 40, 92)
+    local p41 = relativePoint(topLeftCapyPoint, 80, 53)
+    local p42 = relativePoint(topLeftCapyPoint, 107, 43)
+    local p43 = relativePoint(topLeftCapyPoint, 40, 104)
+    local p44 = relativePoint(topLeftCapyPoint, 70, 56)
+    local p45 = relativePoint(topLeftCapyPoint, 100, 53)
+    local p46 = relativePoint(topLeftCapyPoint, 45, 134)
+    local p47 = relativePoint(topLeftCapyPoint, 50, 80)
+    local p48 = relativePoint(topLeftCapyPoint, 70, 87)
+    local p49 = relativePoint(topLeftCapyPoint, 54, 104)
+    local p50 = relativePoint(topLeftCapyPoint, 50, 156)
+    local p51 = relativePoint(topLeftCapyPoint, 79, 113)
+    local p52 = relativePoint(topLeftCapyPoint, 55, 24)
+    local p53 = relativePoint(topLeftCapyPoint, 85, 25)
+    local p54 = relativePoint(topLeftCapyPoint, 91, 16)
+    local p55 = relativePoint(topLeftCapyPoint, 45, 33)
+    local p56 = relativePoint(topLeftCapyPoint, 75, 36)
+    local p57 = relativePoint(topLeftCapyPoint, 81, 22)
+    local p58 = relativePoint(topLeftCapyPoint, 45, 43)
+    local p59 = relativePoint(topLeftCapyPoint, 73, 38)
+    local p60 = relativePoint(topLeftCapyPoint, 61, 32)
+    local p61 = relativePoint(topLeftCapyPoint, 33, 55)
+    local p62 = relativePoint(topLeftCapyPoint, 73, 45)
+    local p63 = relativePoint(topLeftCapyPoint, 55, 36)
+    local p64 = relativePoint(topLeftCapyPoint, 32, 95)
+    local p65 = relativePoint(topLeftCapyPoint, 53, 42)
+    local p66 = relativePoint(topLeftCapyPoint, 15, 75)
+    local p67 = relativePoint(topLeftCapyPoint, 0, 125)
+    local p68 = relativePoint(topLeftCapyPoint, 53, 62)
+    local p69 = relativePoint(topLeftCapyPoint, 0, 85)
+    local p70 = relativePoint(topLeftCapyPoint, 0, 165)
+    local p71 = relativePoint(topLeftCapyPoint, 29, 112)
+    local p72 = relativePoint(topLeftCapyPoint, 0, 105)
+
+    local p73 = relativePoint(topLeftCapyPoint, 73, 70)
+    local p74 = relativePoint(topLeftCapyPoint, 80, 74)
+    local p75 = relativePoint(topLeftCapyPoint, 92, 64)
+    local p76 = relativePoint(topLeftCapyPoint, 60, 103)
+    local p77 = relativePoint(topLeftCapyPoint, 67, 83)
+    local p78 = relativePoint(topLeftCapyPoint, 89, 74)
+    local p79 = relativePoint(topLeftCapyPoint, 53, 138)
+    local p80 = relativePoint(topLeftCapyPoint, 48, 120)
+    local p81 = relativePoint(topLeftCapyPoint, 73, 120)
+    local p82 = relativePoint(topLeftCapyPoint, 46, 128)
+    local p83 = relativePoint(topLeftCapyPoint, 48, 165)
+    local p84 = relativePoint(topLeftCapyPoint, 74, 150)
+    local p85 = relativePoint(topLeftCapyPoint, 61, 128)
+    local p86 = relativePoint(topLeftCapyPoint, 83, 100)
+    local p87 = relativePoint(topLeftCapyPoint, 90, 143)
+    local p88 = relativePoint(topLeftCapyPoint, 73, 143)
+    local p89 = relativePoint(topLeftCapyPoint, 120, 107)
+    local p90 = relativePoint(topLeftCapyPoint, 116, 133)
+    local p91 = relativePoint(topLeftCapyPoint, 106, 63)
+    local p92 = relativePoint(topLeftCapyPoint, 126, 73)
+    local p93 = relativePoint(topLeftCapyPoint, 127, 53)
+    local p94 = relativePoint(topLeftCapyPoint, 91, 98)
+    local p95 = relativePoint(topLeftCapyPoint, 101, 76)
+    local p96 = relativePoint(topLeftCapyPoint, 114, 99)
+    local p97 = relativePoint(topLeftCapyPoint, 126, 63)
+    local p98 = relativePoint(topLeftCapyPoint, 156, 73)
+    local p99 = relativePoint(topLeftCapyPoint, 127, 53)
+
+    local color1 = rgbaToUint(250, 250, 225, 255)
+    local color2 = rgbaToUint(240, 180, 140, 255)
+    local color3 = rgbaToUint(195, 90, 120, 255)
+    local color4 = rgbaToUint(115, 5, 65, 255)
+
+    local color5 = rgbaToUint(100, 5, 45, 255)
+    local color6 = rgbaToUint(200, 115, 135, 255)
+    local color7 = rgbaToUint(175, 10, 70, 255)
+    local color8 = rgbaToUint(200, 90, 110, 255)
+    local color9 = rgbaToUint(125, 10, 75, 255)
+    local color10 = rgbaToUint(220, 130, 125, 255)
+
+    o.AddQuadFilled(p18, p19, p24, p25, color4)
+    o.AddQuadFilled(p19, p20, p21, p22, color1)
+    o.AddQuadFilled(p19, p22, p23, p24, color4)
+
+    o.AddQuadFilled(p14, p15, p16, p17, color4)
+    o.AddTriangleFilled(p17b, p16, p17, color1)
+
+    o.AddQuadFilled(p1, p2, p4, p3, color3)
+    o.AddQuadFilled(p1, p3, p6, p5, color3)
+    o.AddQuadFilled(p3, p4, p7, p9, color2)
+    o.AddQuadFilled(p3, p6, p11, p10, color2)
+    o.AddQuadFilled(p6, p8, p13, p11, color1)
+    o.AddQuadFilled(p13, p12, p10, p11, color6)
+    o.AddTriangleFilled(p10b, p12b, p12c, color7)
+
+    o.AddTriangleFilled(p9, p7b, p3b, color8)
+
+    o.AddQuadFilled(p26, p27, p28, p29, color5)
+
+    o.AddQuadFilled(p7, p30, p31, p32, color5)
+    o.AddQuadFilled(p33, p34, p35, p36, color5)
+
+    o.AddTriangleFilled(p37, p38, p39, color8)
+    o.AddTriangleFilled(p40, p41, p42, color8)
+    o.AddTriangleFilled(p43, p44, p45, color8)
+    o.AddTriangleFilled(p46, p47, p48, color8)
+    o.AddTriangleFilled(p49, p50, p51, color2)
+
+    o.AddTriangleFilled(p52, p53, p54, color9)
+    o.AddTriangleFilled(p55, p56, p57, color9)
+    o.AddTriangleFilled(p58, p59, p60, color9)
+    o.AddTriangleFilled(p61, p62, p63, color9)
+    o.AddTriangleFilled(p64, p65, p66, color9)
+    o.AddTriangleFilled(p67, p68, p69, color9)
+    o.AddTriangleFilled(p70, p71, p72, color9)
+
+    o.AddTriangleFilled(p73, p74, p75, color10)
+    o.AddTriangleFilled(p76, p77, p78, color10)
+    o.AddTriangleFilled(p79, p80, p81, color10)
+    o.AddTriangleFilled(p82, p83, p84, color10)
+    o.AddTriangleFilled(p85, p86, p87, color10)
+    o.AddTriangleFilled(p88, p89, p90, color10)
+    o.AddTriangleFilled(p91, p92, p93, color10)
+    o.AddTriangleFilled(p94, p95, p96, color10)
+    o.AddTriangleFilled(p97, p98, p99, color10)
+end
+
+function rgbaToUint(r, g, b, a) return a * 16 ^ 6 + b * 16 ^ 4 + g * 16 ^ 2 + r end
+
+---@diagnostic disable: return-type-mismatch
+---Creates an `imgui.Button` with the action "{action} {object}s.".
+---@param action? string # The action the button will perform (e.g. `Place`, `Remove`, etc.)
+---@param object? string # The object group to perform it on (e.g. `Lines`, `SVs`, etc.)
+---@return boolean
+function activationButton(action, object)
+    action = action or "Place"
+    object = object or "Lines"
+    return imgui.Button(action .. " " .. object)
+end
+
+---Returns a boolean if a range is selected, and a corresponding button is activated.
+---@param action? string # The action the button will perform (e.g. `Place`, `Remove`, etc.)
+---@param object? string # The object group to perform it on (e.g. `Lines`, `SVs`, etc.)
+---@return boolean
+function RangeActivated(action, object)
+    action = action or "Place"
+    object = object or "Lines"
+    if rangeSelected() then
+        return activationButton(action) or (utils.IsKeyPressed(keys.A) and not utils.IsKeyDown(keys.LeftControl))
+    else
+        imgui.Text("Select a Region to " .. action .. " " .. object .. ".")
+        return false
+    end
+end
+
+---Returns a boolean if a note is selected, and a corresponding button is activated.
+---@param action? string # The action the button will perform (e.g. `Place`, `Remove`, etc.)
+---@param object? string # The object group to perform it on (e.g. `Lines`, `SVs`, etc.)
+---@return boolean
+function NoteActivated(action, object)
+    action = action or "Place"
+    object = object or "Lines"
+    if noteSelected() then
+        return activationButton(action) or (utils.IsKeyPressed(keys.A) and not utils.IsKeyDown(keys.LeftControl))
+    else
+        return imgui.Text("Select a Note to " .. action .. " " .. object .. ".")
+    end
+end
+
 function chooseMenu(tbl, menuID)
     if (tbl[menuID]) then
         tbl[menuID]();
@@ -2658,6 +2826,7 @@ function draw()
     -- IMPORTANT: DO NOT DELETE NEXT LINE BEFORE COMPILING.
     
 
+---@enum LINE_STANDARD_MENU_FUNCTIONS
 LINE_STANDARD_MENU_FUNCTIONS = {
     StandardSpreadMenu,
     function () StandardAtNotesMenu(2) end,
@@ -2665,18 +2834,21 @@ LINE_STANDARD_MENU_FUNCTIONS = {
     StandardRainbowMenu
 }
 
+---@enum LINE_FIXED_MENU_LIST
 LINE_FIXED_MENU_LIST = {
     'Manual',
     'Automatic',
     'Random'
 }
 
+---@enum LINE_FIXED_MENU_FUNCTIONS
 LINE_FIXED_MENU_FUNCTIONS = {
     FixedManualMenu,
     FixedAutomaticMenu,
     FixedRandomMenu
 }
 
+---@enum LINE_ANIMATION_MENU_LIST
 LINE_ANIMATION_MENU_LIST = {
     'Manual (Basic)',
     'Incremental',
@@ -2690,6 +2862,7 @@ LINE_ANIMATION_MENU_LIST = {
     'Trail (Follow)',
 }
 
+---@enum LINE_ANIMATION_MENU_FUNCTIONS
 LINE_ANIMATION_MENU_FUNCTIONS = {
     BasicManualAnimationMenu,
     IncrementalAnimationMenu,
@@ -2703,22 +2876,28 @@ LINE_ANIMATION_MENU_FUNCTIONS = {
     TrailFollowMenu
 }
 
+---@enum CREATE_LINE_TAB_FUNCTIONS
 CREATE_LINE_TAB_FUNCTIONS = {
     function () CreateMenu("Standard", "Standard Placement", LINE_STANDARD_MENU_LIST, LINE_STANDARD_MENU_FUNCTIONS) end,
     function () CreateMenu("Fixed", "Fixed Placement", LINE_FIXED_MENU_LIST, LINE_FIXED_MENU_FUNCTIONS) end,
     function () CreateMenu("Animation", "Animation", LINE_ANIMATION_MENU_LIST, LINE_ANIMATION_MENU_FUNCTIONS) end
 }
 
+---@enum SV_VIBRO_MENU_FUNCTIONS
 SV_VIBRO_MENU_FUNCTIONS = {
     linearVibroMenu,
     polynomialVibroMenu,
+    sinusoidalVibroMenu,
+    rampCycleVibroMenu,
     stackVibroMenu
 }
 
+---@enum CREATE_SV_TAB_FUNCTIONS
 CREATE_SV_TAB_FUNCTIONS = {
     function () CreateMenu("Still Vibro", "Vibro Placement", SV_VIBRO_MENU_LIST, SV_VIBRO_MENU_FUNCTIONS) end
 }
 
+---@enum EDIT_TAB_FUNCTIONS
 EDIT_TAB_FUNCTIONS = {
     AddForefrontTeleportMenu,
     CopyAndPasteMenu,
