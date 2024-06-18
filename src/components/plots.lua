@@ -39,11 +39,13 @@ function SinusoidalPlot(nx, phi, title)
 
     local tbl = {}
 
+    local PI = 3.14159265358979
+
     for i = 0, RESOLUTION do
         local x = i / RESOLUTION
         local fn = function (v) return nx[1] + (nx[2] - nx[1]) * v end
 
-        table.insert(tbl, math.sin(2 * math.pi * (x * fn(x) + phi)))
+        table.insert(tbl, math.sin(2 * PI * (x * fn(x) + phi)))
     end
 
     imgui.PlotLines("", tbl, #tbl, 0,
@@ -67,8 +69,8 @@ function Plot(fn, label, title)
     for i = 0, RESOLUTION do
         local y = fn(i / RESOLUTION)
         table.insert(tbl, y)
-        min = math.min(y, min)
-        max = math.max(y, max)
+        if (y < min) then min = y end
+        if (y > max) then max = y end
     end
 
     imgui.PlotLines(title .. " Plot", tbl, #tbl, 0,

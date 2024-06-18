@@ -17,7 +17,7 @@ function GlitchMenu()
             local upperBound = mapProgress(settings.msxBounds1[2], progress, settings.msxBounds2[2])
 
             msxTable = {}
-            for i = 1, settings.lineCount do
+            for _ = 1, settings.lineCount do
                 table.insert(msxTable, math.random(upperBound, lowerBound))
             end
             local tbl = tableToAffineFrame(msxTable, currentTime, 0, settings.spacing)

@@ -5,8 +5,8 @@
 ---@return TimingPointInfo[]
 function cleanLines(lines, lower, upper)
     local lastLineTime = upper
-    if (#lines > 0) then
-        lastLineTime = math.max(lines[#lines].StartTime, upper)
+    if (#lines > 0) and (lines[#lines].StartTime > upper) then
+        lastLineTime = lines[#lines].StartTime
     end
 
     local tbl = {}
