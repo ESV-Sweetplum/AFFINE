@@ -263,15 +263,16 @@ function polynomialVibroMenu()
     local settings = parameterWorkflow("polynomialVibro", "msxBounds", "boundCoefficients", "fps",
         "progressionExponent", "oneSided")
 
+    local vibroHeightFn = function (v)
+        return mapProgress(settings.msxBounds[1], evaluateCoefficients(settings.boundCoefficients,
+                getProgress(offsets.startOffset, v, offsets.endOffset, settings.progressionExponent)),
+            settings.msxBounds[2])
+    end
     if RangeActivated() then
-        local vibroHeightFn = function (v)
-            return mapProgress(settings.msxBounds[1], evaluateCoefficients(settings.boundCoefficients,
-                    getProgress(offsets.startOffset, v, offsets.endOffset, settings.progressionExponent)),
-                settings.msxBounds[2])
-        end
-
         placeVibratoGroupsByFn(vibroHeightFn, settings.oneSided, settings.fps)
     end
+
+    PolynomialPlot(settings.boundCoefficients, settings.progressionExponent)
 end
 
 ---@diagnostic disable: undefined-field
@@ -2038,23 +2039,23 @@ end
 ---Gets the first and last note offsets.
 ---@return {startOffset: integer, endOffset: integer}
 function getStartAndEndNoteOffsets()
-    local offsets = {}
+    local startOffset = 1 / 0
+    local endOffset = -1 / 0
 
     if (#state.SelectedHitObjects == 0) then
         return { startOffset = -1, endOffset = -1 }
     end
 
     for _, hitObject in pairs(state.SelectedHitObjects) do
-        if (table.contains(offsets, hitObject.StartTime)) then goto continue end
-        table.insert(offsets, hitObject.StartTime)
-        ::continue::
+        if (hitObject.StartTime < startOffset) then startOffset = hitObject.startTime end
+        if (hitObject.StartTime > endOffset) then endOffset = hitObject.startTime end
     end
 
-    if (#offsets == 1) then
-        return { startOffset = offsets[1], endOffset = -1 }
+    if (startOffset == endOffset) then
+        return { startOffset = startOffset, endOffset = -1 }
     end
 
-    return { startOffset = math.min(table.unpack(offsets)), endOffset = math.max(table.unpack(offsets)) }
+    return { startOffset = startOffset, endOffset = endOffset }
 end
 
 ---Gets all selected note offsets, with no duplicate values.
@@ -2066,11 +2067,13 @@ function getSelectedOffsets()
         return {}
     end
 
-    for _, hitObject in pairs(state.SelectedHitObjects) do
+    for _, hitObject in ipairs(state.SelectedHitObjects) do
         if (table.contains(offsets, hitObject.StartTime)) then goto continue end
         table.insert(offsets, hitObject.StartTime)
         ::continue::
     end
+
+    table.sort(offsets)
 
     return offsets
 end
@@ -2357,7 +2360,7 @@ function PolynomialPlot(plyCoeff, prgExp, title)
     state.SetValue("cachedCoefficients", plyCoeff)
     state.SetValue("cachedPlotValues", tbl)
 
-    imgui.PlotLines("Polynomial Plot", tbl, #tbl, 0,
+    imgui.PlotLines("", tbl, #tbl, 0,
         polynomialString(plyCoeff, prgExp),
         0, 1,
         { 250, 150 })
@@ -2381,7 +2384,7 @@ function SinusoidalPlot(nx, phi, title)
         table.insert(tbl, math.sin(2 * math.pi * (x * fn(x) + phi)))
     end
 
-    imgui.PlotLines("Sinusoidal Plot", tbl, #tbl, 0,
+    imgui.PlotLines("", tbl, #tbl, 0,
         "",
         -1, 1,
         { 250, 150 })

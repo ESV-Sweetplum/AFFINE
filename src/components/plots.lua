@@ -22,7 +22,7 @@ function PolynomialPlot(plyCoeff, prgExp, title)
     state.SetValue("cachedCoefficients", plyCoeff)
     state.SetValue("cachedPlotValues", tbl)
 
-    imgui.PlotLines("Polynomial Plot", tbl, #tbl, 0,
+    imgui.PlotLines("", tbl, #tbl, 0,
         polynomialString(plyCoeff, prgExp),
         0, 1,
         { 250, 150 })
@@ -46,7 +46,7 @@ function SinusoidalPlot(nx, phi, title)
         table.insert(tbl, math.sin(2 * math.pi * (x * fn(x) + phi)))
     end
 
-    imgui.PlotLines("Sinusoidal Plot", tbl, #tbl, 0,
+    imgui.PlotLines("", tbl, #tbl, 0,
         "",
         -1, 1,
         { 250, 150 })
