@@ -20,5 +20,7 @@ end
 ---@param max number # The maximum the value must be.
 ---@return number
 function clamp(value, min, max)
-    return math.max(math.min(value, max), min)
+    if (value > max) then return max end
+    if (value < min) then return min end
+    return value
 end

@@ -6,7 +6,7 @@ function matrixSz(mtrx)
     local rows, columns = 0, #mtrx
 
     for _, tbl in pairs(mtrx) do
-        rows = math.max(rows, #tbl)
+        if (#tbl > rows) then rows = #tbl end
     end
 
     return rows, columns
