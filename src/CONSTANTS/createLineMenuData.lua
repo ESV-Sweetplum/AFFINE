@@ -1,6 +1,7 @@
 ---@enum LINE_STANDARD_MENU_LIST
 LINE_STANDARD_MENU_LIST = {
     'Spread',
+    "Surrounding",
     'At Notes (Preserve Location)',
     'At Notes (Preserve Snap)',
     "Rainbow"
@@ -9,6 +10,7 @@ LINE_STANDARD_MENU_LIST = {
 ---@enum LINE_STANDARD_MENU_FUNCTIONS
 LINE_STANDARD_MENU_FUNCTIONS = {
     StandardSpreadMenu,
+    StandardSurroundingMenu,
     function () StandardAtNotesMenu(2) end,
     function () StandardAtNotesMenu(1) end,
     StandardRainbowMenu

@@ -20,7 +20,7 @@ function StandardRainbowMenu()
             end
         end
 
-        lines = cleanLines(lines, offsets[1] - 10, offsets[#offsets] + 10)
+        lines = cleanLines(lines, offsets.startOffset - 10, offsets.endOffset + 10)
 
         actions.PlaceTimingPointBatch(lines)
     end

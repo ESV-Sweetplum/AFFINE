@@ -30,7 +30,6 @@ OFFSET_SECURITY_CONSTANT = 2                 -- integer
 ---@enum LINE_STANDARD_MENU_LIST
 LINE_STANDARD_MENU_LIST = {
     'Spread',
-    "Surrounding",
     'At Notes (Preserve Location)',
     'At Notes (Preserve Snap)',
     "Rainbow"
@@ -69,8 +68,7 @@ EDIT_TAB_LIST = {
     "Add Forefront Teleport",
     "Copy + Paste",
     "Set Line Visibility",
-    "Reverse SV Order",
-    "Remove Overlapping SVs"
+    "Reverse SV Order"
 }
 
 function ManualDeleteTab()
@@ -363,43 +361,6 @@ function makeVibratoSVsByFn(vibroHeightFn, oneSided, fps, startTime, endTime)
     return svs
 end
 
-function StandardSurroundingMenu()
-    local settings = parameterWorkflow("standard_surrounding", 'distance', 'msxBounds')
-
-    if NoteActivated() then
-        local lines = {}
-        local ms = offsets.startOffset + settings.msxBounds[1]
-
-        local iterations = 0
-
-        while (ms <= offsets.startOffset + settings.msxBounds[2]) and (iterations < MAX_ITERATIONS) do
-            local progress = getProgress(offsets.startOffset + settings.msxBounds[1], ms,
-                offsets.startOffset + settings.msxBounds[2])
-
-            table.insert(lines, line(ms))
-
-            ms = ms + mapProgress(settings.distance[1], progress, settings.distance[2])
-
-            iterations = iterations + 1
-        end
-
-        local notes = getNotesInRange(offsets.startOffset + settings.msxBounds[1],
-            offsets.startOffset + settings.msxBounds[2])
-        if (type(notes) ~= "integer") then
-            for _, note in pairs(notes) do
-                lines = combineTables(lines, keepColorLine(note.StartTime, true))
-            end
-        end
-
-        lines = cleanLines(lines, offsets.startOffset + settings.msxBounds[1],
-            offsets.startOffset + settings.msxBounds[2])
-
-        setDebug("Line Count: " .. #lines) -- DEBUG TEXT
-
-        actions.PlaceTimingPointBatch(lines)
-    end
-end
-
 function StandardSpreadMenu()
     local settings = parameterWorkflow("standard_spread", 'distance')
 
@@ -456,7 +417,7 @@ function StandardRainbowMenu()
             end
         end
 
-        lines = cleanLines(lines, offsets.startOffset - 10, offsets.endOffset + 10)
+        lines = cleanLines(lines, offsets[1] - 10, offsets[#offsets] + 10)
 
         actions.PlaceTimingPointBatch(lines)
     end
@@ -1252,28 +1213,6 @@ function reverseSVs(svs, startTime, endTime, preserveTime)
         end
 
         return newTbl
-    end
-end
-
-function RemoveOverlappingSVsMenu() 
-    local btn = imgui.Button("Fix")
-
-    if (btn) then
-        local svs = map.ScrollVelocities ---@type SliderVelocityInfo[]
-
-        local svTimes = {}
-        local svsToRemove = {}
-
-        for _, sv in ipairs(svs) do
-            if (table.contains(svTimes, sv.StartTime)) then
-                table.insert(svsToRemove, sv)
-            end
-            table.insert(svTimes, sv.StartTime)
-        end
-
-        actions.PerformBatch({
-            utils.CreateEditorAction(action_type.RemoveScrollVelocityBatch, svsToRemove)
-        })
     end
 end
 
@@ -2262,8 +2201,8 @@ function cleanLines(lines, lower, upper)
         ::continue::
     end
 
-    -- table.insert(tbl, line(map.GetNearestSnapTimeFromTime(true, 1, lastLineTime) - 2))
-    -- table.insert(tbl, line(map.GetNearestSnapTimeFromTime(true, 1, lastLineTime)))
+    table.insert(tbl, line(map.GetNearestSnapTimeFromTime(true, 1, lastLineTime) - 2))
+    table.insert(tbl, line(map.GetNearestSnapTimeFromTime(true, 1, lastLineTime)))
 
     return tbl
 end
@@ -2893,7 +2832,6 @@ function draw()
 ---@enum LINE_STANDARD_MENU_FUNCTIONS
 LINE_STANDARD_MENU_FUNCTIONS = {
     StandardSpreadMenu,
-    StandardSurroundingMenu,
     function () StandardAtNotesMenu(2) end,
     function () StandardAtNotesMenu(1) end,
     StandardRainbowMenu
@@ -2968,7 +2906,6 @@ EDIT_TAB_FUNCTIONS = {
     CopyAndPasteMenu,
     SetVisibilityMenu,
     ReverseSVOrderMenu,
-    RemoveOverlappingSVsMenu
 }
 
     retrieveStateVariables("main", settings)

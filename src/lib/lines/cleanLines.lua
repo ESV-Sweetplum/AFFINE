@@ -22,8 +22,8 @@ function cleanLines(lines, lower, upper)
         ::continue::
     end
 
-    table.insert(tbl, line(map.GetNearestSnapTimeFromTime(true, 1, lastLineTime) - 2))
-    table.insert(tbl, line(map.GetNearestSnapTimeFromTime(true, 1, lastLineTime)))
+    -- table.insert(tbl, line(map.GetNearestSnapTimeFromTime(true, 1, lastLineTime) - 2))
+    -- table.insert(tbl, line(map.GetNearestSnapTimeFromTime(true, 1, lastLineTime)))
 
     return tbl
 end
