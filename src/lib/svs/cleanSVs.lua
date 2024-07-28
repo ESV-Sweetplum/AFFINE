@@ -12,7 +12,7 @@ function cleanSVs(svs, lower, upper)
         end
     end
 
-    table.insert(tbl, sv(lower, 0))
+    -- table.insert(tbl, sv(lower, 0))
     table.insert(tbl, sv(upper, 1))
 
     return tbl

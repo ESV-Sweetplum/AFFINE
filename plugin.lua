@@ -18,7 +18,7 @@ DEFAULT_PATH_COEFFICIENTS = { -1, 3, -3, 1 } -- integer[4]
 DEFAULT_COLOR_LIST = '1 8 4 16 12 2 3 6'     -- integer[any]
 DEFAULT_INTENSITY = 20                       -- integer
 
-INCREMENT = 64                               -- integer
+INCREMENT = 32                               -- integer
 MAX_ITERATIONS = 1000                        -- integer
 FRAME_SIZE = 690                             -- integer
 
@@ -54,7 +54,7 @@ SV_VIBRO_MENU_LIST = {
 
 ---@enum CREATE_SV_TAB_LIST
 CREATE_SV_TAB_LIST = {
-    "Still Vibro"
+    "PlumVibro"
 }
 
 ---@enum DELETION_TYPE_LIST
@@ -225,11 +225,13 @@ function sinusoidalVibroMenu()
         "fps",
         "progressionExponent", "oneSided")
 
+    local PI = 3.14159265358979
+
     if RangeActivated() then
         local vibroHeightFn = function (v)
             local x = getProgress(offsets.startOffset, v, offsets.endOffset, settings.progressionExponent)
             local fx = mapProgress(settings.msxBounds[1], x, settings.msxBounds[2])
-            return fx * math.sin(2 * math.pi * (settings.cycleCount * x + settings.phaseShift))
+            return fx * math.sin(2 * PI * (settings.cycleCount * x + settings.phaseShift))
         end
 
         placeVibratoGroupsByFn(vibroHeightFn, settings.oneSided, settings.fps)
@@ -246,12 +248,14 @@ function rampCycleVibroMenu()
         "fps",
         "progressionExponent", "oneSided")
 
+    local PI = 3.14159265358979
+
     if RangeActivated() then
         local vibroHeightFn = function (v)
             local x = getProgress(offsets.startOffset, v, offsets.endOffset, settings.progressionExponent)
             local fx = mapProgress(settings.msxBounds[1], x, settings.msxBounds[2])
             local ix = settings.cycleCount[1] * x + (settings.cycleCount[2] - settings.cycleCount[1]) / 2 * (x ^ 2)
-            return fx * math.sin(2 * math.pi * (ix + settings.phaseShift))
+            return fx * math.sin(2 * PI * (ix + settings.phaseShift))
         end
 
         placeVibratoGroupsByFn(vibroHeightFn, settings.oneSided, settings.fps)
@@ -815,7 +819,7 @@ function GlitchMenu()
             local upperBound = mapProgress(settings.msxBounds1[2], progress, settings.msxBounds2[2])
 
             msxTable = {}
-            for i = 1, settings.lineCount do
+            for _ = 1, settings.lineCount do
                 table.insert(msxTable, math.random(upperBound, lowerBound))
             end
             local tbl = tableToAffineFrame(msxTable, currentTime, 0, settings.spacing)
@@ -841,6 +845,22 @@ function GlitchMenu()
         generateAffines(lines, svs, offsets.startOffset, offsets.endOffset, "Glitch",
             constructDebugTable(lines, svs, stats))
         setDebug("Line Count: " .. #lines .. " // SV Count: " .. #svs)
+    end
+end
+
+function FlashbangMenu()
+    local settings = parameterWorkflow("fixed_automatic", 'msxBounds', 'distance', 'delay', 'spacing')
+
+    if NoteActivated() then
+        local tbl = placeAutomaticFrame(offsets.startOffset + settings.delay, settings.msxBounds[1],
+            settings.msxBounds[2],
+            settings.spacing, settings.distance)
+
+        tbl.svs = insertTeleport(tbl.svs, offsets.startOffset, -10000000, 0)
+        tbl.svs = insertTeleport(tbl.svs, (offsets.startOffset + offsets.endOffset) / 2, 10000000 + (offsets.endOffset - offsets.startOffset) / 2, 1)
+
+        generateAffines(tbl.lines, tbl.svs, offsets.startOffset, offsets.endOffset, "Flashbang")
+        setDebug("Line Count: " .. #tbl.lines .. " // SV Count: " .. #tbl.svs)
     end
 end
 
@@ -1483,7 +1503,7 @@ function matrixSz(mtrx)
     local rows, columns = 0, #mtrx
 
     for _, tbl in pairs(mtrx) do
-        rows = math.max(rows, #tbl)
+        if (#tbl > rows) then rows = #tbl end
     end
 
     return rows, columns
@@ -1594,7 +1614,7 @@ function cleanSVs(svs, lower, upper)
         end
     end
 
-    table.insert(tbl, sv(lower, 0))
+    -- table.insert(tbl, sv(lower, 0))
     table.insert(tbl, sv(upper, 1))
 
     return tbl
@@ -1799,7 +1819,9 @@ end
 ---@param max number # The maximum the value must be.
 ---@return number
 function clamp(value, min, max)
-    return math.max(math.min(value, max), min)
+    if (value > max) then return max end
+    if (value < min) then return min end
+    return value
 end
 
 ---Takes a table of coefficients, and returns a string representing the equation.
@@ -2245,8 +2267,8 @@ end
 ---@return TimingPointInfo[]
 function cleanLines(lines, lower, upper)
     local lastLineTime = upper
-    if (#lines > 0) then
-        lastLineTime = math.max(lines[#lines].StartTime, upper)
+    if (#lines > 0) and (lines[#lines].StartTime > upper) then
+        lastLineTime = lines[#lines].StartTime
     end
 
     local tbl = {}
@@ -2438,11 +2460,13 @@ function SinusoidalPlot(nx, phi, title)
 
     local tbl = {}
 
+    local PI = 3.14159265358979
+
     for i = 0, RESOLUTION do
         local x = i / RESOLUTION
         local fn = function (v) return nx[1] + (nx[2] - nx[1]) * v end
 
-        table.insert(tbl, math.sin(2 * math.pi * (x * fn(x) + phi)))
+        table.insert(tbl, math.sin(2 * PI * (x * fn(x) + phi)))
     end
 
     imgui.PlotLines("", tbl, #tbl, 0,
@@ -2466,8 +2490,8 @@ function Plot(fn, label, title)
     for i = 0, RESOLUTION do
         local y = fn(i / RESOLUTION)
         table.insert(tbl, y)
-        min = math.min(y, min)
-        max = math.max(y, max)
+        if (y < min) then min = y end
+        if (y > max) then max = y end
     end
 
     imgui.PlotLines(title .. " Plot", tbl, #tbl, 0,
@@ -2925,6 +2949,7 @@ LINE_ANIMATION_MENU_LIST = {
     'Converge / Diverge',
     'Trail (Static)',
     'Trail (Follow)',
+    'Flashbang'
 }
 
 ---@enum LINE_ANIMATION_MENU_FUNCTIONS
@@ -2938,7 +2963,8 @@ LINE_ANIMATION_MENU_FUNCTIONS = {
     ExpansionContractionMenu,
     ConvergeDivergeMenu,
     TrailStaticMenu,
-    TrailFollowMenu
+    TrailFollowMenu,
+    FlashbangMenu
 }
 
 ---@enum CREATE_LINE_TAB_FUNCTIONS
@@ -2959,7 +2985,7 @@ SV_VIBRO_MENU_FUNCTIONS = {
 
 ---@enum CREATE_SV_TAB_FUNCTIONS
 CREATE_SV_TAB_FUNCTIONS = {
-    function () CreateMenu("Still Vibro", "Vibro Placement", SV_VIBRO_MENU_LIST, SV_VIBRO_MENU_FUNCTIONS) end
+    function () CreateMenu("PlumVibro", "Vibro Placement", SV_VIBRO_MENU_LIST, SV_VIBRO_MENU_FUNCTIONS) end
 }
 
 ---@enum EDIT_TAB_FUNCTIONS

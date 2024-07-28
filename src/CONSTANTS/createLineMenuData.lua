@@ -44,6 +44,7 @@ LINE_ANIMATION_MENU_LIST = {
     'Converge / Diverge',
     'Trail (Static)',
     'Trail (Follow)',
+    'Flashbang'
 }
 
 ---@enum LINE_ANIMATION_MENU_FUNCTIONS
@@ -57,5 +58,6 @@ LINE_ANIMATION_MENU_FUNCTIONS = {
     ExpansionContractionMenu,
     ConvergeDivergeMenu,
     TrailStaticMenu,
-    TrailFollowMenu
+    TrailFollowMenu,
+    FlashbangMenu
 }
