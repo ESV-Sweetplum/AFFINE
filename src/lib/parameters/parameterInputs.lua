@@ -117,7 +117,9 @@ CUSTOM_INPUT_DICTIONARY = {
 function parameterInputs(parameterTable)
     for _, tbl in ipairs(parameterTable) do
         if (tbl.inputType ~= nil) then
-            tbl.value = CUSTOM_INPUT_DICTIONARY[tbl.inputType](tbl.label, tbl.value, tbl.tooltip, tbl.sameLine or false)
+            tbl.value = CUSTOM_INPUT_DICTIONARY[tbl.inputType](tbl.label, tbl.value,
+                tbl.tooltip or "Will make this later",
+                tbl.sameLine or false)
         else
             tbl.value = INPUT_DICTIONARY[tbl.key](tbl.value)
         end
