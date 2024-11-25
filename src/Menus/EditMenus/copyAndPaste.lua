@@ -42,7 +42,7 @@ function CopyAndPasteMenu()
         if (settings.includeBM) then tbl.storedBookmarks = zeroOffsetBookmarks end
     end
 
-    if (#tbl.storedLines > 0 or #tbl.storedSVs > 0) then
+    if (#tbl.storedLines > 0 or #tbl.storedSVs > 0 or #tbl.storedBookmarks > 0) then
         if NoteActivated("Paste") then
             if (type(offsets) == "integer") then return end
 
